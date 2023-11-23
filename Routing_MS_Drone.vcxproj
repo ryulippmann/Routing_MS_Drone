@@ -133,7 +133,11 @@
     <ClInclude Include="calcs.h" />
     <ClInclude Include="class_def.h" />
     <ClInclude Include="cluster.h" />
+    <ClInclude Include="mothership.h" />
+    <ClInclude Include="MSSoln.h" />
     <ClInclude Include="new.h" />
+    <ClInclude Include="tenders.h" />
+    <ClInclude Include="TSPheuristics_annotated.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

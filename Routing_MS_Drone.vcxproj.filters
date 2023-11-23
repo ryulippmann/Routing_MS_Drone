@@ -32,5 +32,17 @@
     <ClInclude Include="calcs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="mothership.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TSPheuristics_annotated.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tenders.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MSSoln.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

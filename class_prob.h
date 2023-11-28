@@ -84,7 +84,6 @@ private:
 	const int numClust;
 	const Pt depot;
 
-	const int tenderCap;
 	const int numTenders;
 
 	MS setMS(int msCap, Pt depot) {
@@ -146,6 +145,7 @@ public:
 
 	const MS ms = this->setMS(numClust, depot);
 
+	const int tenderCap;
 	const vector<Tender> tenders = this->setTenders(numTenders, tenderCap);
 };
 

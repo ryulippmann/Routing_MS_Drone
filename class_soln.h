@@ -202,29 +202,57 @@ public:
 	vector<Route_Tender> routes;
 	pair<Pt*, Pt*> launchPts;
 
-	vector<double> getTenderRouteDists(int c) {	//Cluster* cluster, Route_Tender route, pair<Pt*, Pt*> launchPts, vector<vector<double>> dMatrix
-		vector<double> route_dist;
-		for (int i = 0; i < routes.size(); i++) {
-			vector<Pt*> route = routes[i];
-			route.insert(route.begin(), launchPts.first);	// Insert launchPts.first at beginning of route vector
-			route.push_back(launchPts.second);				// Push launchPts.second at end of route vector
-			printf("%d\t(%.2f, %.2f)\n", route[i]->ID, route[i]->x, route[i]->y);
+	double getTenderRouteDist(int c = 0) {
+		vector<Pt*> route = routes[c];
+		//route.insert(route.begin(), launchPts.first);	// Insert launchPts.first at beginning of route vector
+		//route.push_back(launchPts.second);				// Push launchPts.second at end of route vector
+		//printf("%d\t(%.2f, %.2f)\n", route[c]->ID, route[c]->x, route[c]->y);
 
-			double summing_route_dist = 0;
-			vector<vector<double>> dMatrix = cluster->getdMatrix(c, launchPts);
-			for (int i = 0; i < route.size() - 1; ++i) {
-				summing_route_dist += dMatrix[findIndexByID(route[i]->ID, cluster->reefs)][findIndexByID(route[i + 1]->ID, cluster->reefs)];
-			}
-			route_dist.push_back(summing_route_dist);//getRouteDist(route, cluster->getdMatrix(c, launchPts), cluster));
+		double route_dist = 0;
+		vector<vector<double>> dMatrix = cluster->getdMatrix(c, launchPts);
+		//vector<Pt*> pt_list = cluster->reefs;
+		//pt_list.insert(pt_list.begin(), launchPts.first);
+		//pt_list.push_back(launchPts.second);
+		for (int i = 0; i < route.size() - 1; ++i) {
+			route_dist += dMatrix[findIndexByID(route[i]->ID, route)][findIndexByID(route[i + 1]->ID, route)];
 		}
-
-		//double summing_route_dist = 0;
-		//for (int i = 0; i < route.size() - 1; ++i) {
-		//	summing_route_dist += dMatrix[findIndexByID(route[i]->ID, cluster->reefs, launchPts)][findIndexByID(route[i+1]->ID, cluster->reefs, launchPts)];
-		//}
+		//route_dist = summing_route_dist;//getRouteDist(route, cluster->getdMatrix(c, launchPts), cluster));
 		return route_dist;
 	}
-
+	//// dist for each tender route in cluster c
+	//vector<double> getTenderRouteDists(int c = 0) {		//Cluster* cluster, Route_Tender route, pair<Pt*, Pt*> launchPts, vector<vector<double>> dMatrix
+	//	vector<double> route_dist;
+	//	//if (c == 0) {						// if c == 0, then return route dists for all clusters
+	//	for (int i = 0; i < routes.size(); i++) {
+	//		vector<Pt*> route = routes[i];
+	//		route.insert(route.begin(), launchPts.first);	// Insert launchPts.first at beginning of route vector
+	//		route.push_back(launchPts.second);				// Push launchPts.second at end of route vector
+	//		printf("%d\t(%.2f, %.2f)\n", route[i]->ID, route[i]->x, route[i]->y);
+	//
+	//		double summing_route_dist = 0;
+	//		vector<vector<double>> dMatrix = cluster->getdMatrix(c, launchPts);
+	//		for (int i = 0; i < route.size() - 1; ++i) {
+	//			summing_route_dist += dMatrix[findIndexByID(route[i]->ID, cluster->reefs)][findIndexByID(route[i + 1]->ID, cluster->reefs)];
+	//		}
+	//		route_dist.push_back(summing_route_dist);//getRouteDist(route, cluster->getdMatrix(c, launchPts), cluster));
+	//	}
+	//	//}
+	//	//else {								// else return route dist for cluster c
+	//	//	vector<Pt*> route = routes[c];
+	//	//	route.insert(route.begin(), launchPts.first);	// Insert launchPts.first at beginning of route vector
+	//	//	route.push_back(launchPts.second);				// Push launchPts.second at end of route vector
+	//	//	printf("%d\t(%.2f, %.2f)\n", route[c]->ID, route[c]->x, route[c]->y);
+	//
+	//	//	double summing_route_dist = 0;
+	//	//	vector<vector<double>> dMatrix = cluster->getdMatrix(c, launchPts);
+	//	//	for (int i = 0; i < route.size() - 1; ++i) {
+	//	//		summing_route_dist += dMatrix[findIndexByID(route[i]->ID, cluster->reefs)][findIndexByID(route[i + 1]->ID, cluster->reefs)];
+	//	//	}
+	//	//	route_dist.push_back(summing_route_dist);//getRouteDist(route, cluster->getdMatrix(c, launchPts), cluster));
+	//	//}
+	//
+	//	return route_dist;
+	//}
 private:
 	static int count;
 };

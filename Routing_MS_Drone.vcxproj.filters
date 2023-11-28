@@ -20,7 +20,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="class_def.h">
+    <ClInclude Include="class_prob.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="new.h">
@@ -42,6 +42,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MSSoln.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="class_soln.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

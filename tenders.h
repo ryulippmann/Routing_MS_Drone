@@ -2,7 +2,7 @@
 #include <vector>
 #include <cmath>
 using namespace std;
-#include "class_def.h"
+//#include "class_def.h"
 
 // RETURN reefs visited
 int reefsVisited(const vector<Pt*>& reefs) { 
@@ -13,8 +13,6 @@ int reefsVisited(const vector<Pt*>& reefs) {
     }
     return visit_count;
 }//reefsVisited
-
-
 
 //vehicles argument not referenced, so are not updated...
 vector<vector<Pt*>> droneWithinClusterNearestNeighbour(const MSSoln* ms, const int c,
@@ -28,7 +26,7 @@ vector<vector<Pt*>> droneWithinClusterNearestNeighbour(const MSSoln* ms, const i
     //vector<vector<int>> route_stops;                     // create routes to output to csv
     bool printStops = false;
     if (printStops) { cout << "\n\nNEAREST NEIGHBOUR\n"; }
-    vector<vector<Pt*>> routes(inst->tenders.size(), vector<Pt*>(inst->tenders[c].cap, nullptr)); // create routes to save in TenderSoln.routes
+    vector<vector<Pt*>> routes(inst->tenders.size(), vector<Pt*>(inst->tenderCap, nullptr)); // create routes to save in TenderSoln.routes
     vector<bool> visited(cluster->reefs.size(), false);
     const vector<vector<double>> dMatrix = ms->clustSoln->clusters[c]->getdMatrix(c, make_pair(ms->launchPts[c], ms->launchPts[c+1]));//[u];                        // for u vector in dMatrix
 
@@ -119,3 +117,76 @@ vector<vector<Pt*>> droneWithinClusterNearestNeighbour(const MSSoln* ms, const i
     //if (csv_print) { csvPrintStops(cluster->reefs, "points"); csvPrintRoutes(routes.first, "nn_route_list"); }
     return /*cluster*/routes;
 }//nearestNeighbour
+
+vector<vector<Pt*>> droneWithinCluster2Opt(const MSSoln* ms, const int c,
+    bool csv_print = false) {
+    vector <vector<Pt*> > routes;
+
+    const Problem* inst = ms->inst;
+    const Cluster* cluster = ms->clustSoln->clusters[c];
+    pair<Pt*, Pt*> launchPts = make_pair(ms->launchPts[c], ms->launchPts[c + 1]);
+
+
+    return routes;
+}
+
+vector<vector<Pt*>> greedyCluster(TenderSoln* clustTendersoln, const vector<vector<double>> dMatrix, //const MSSoln* ms, /*vector<vector<Pt*>>& routes, */const int c,
+    bool csv_print = false, bool print = false) {
+    //const Problem* inst = ms->inst;
+    // dMatrix includes launch/retrieve pts and free link back to launchpt
+    //const vector<vector<double>> dMatrix = ms->clustSoln->clusters[c]->getdMatrix(c, make_pair(ms->launchPts[c], ms->launchPts[c + 1]));//[u];                        // for u vector in dMatrix
+    vector<vector<Pt*>>& routes = clustTendersoln->routes;
+    
+    //int n = ms->clustSoln->clusters.size();//centroids.size();  // number of clusters accounted for in main file...
+    
+    double gd_2opt_dists;
+    if (print) cout << "\n---- GREEDY M/S CLUSTERS ----\n";
+    for (int v = 0; v < clustTendersoln->routes.size(); v++) {      // iterate for each tender in cluster
+        vector<int> i_tour(dMatrix.size()/*init_solution.mothership.centroidMatrix.size()*/, 0);                         // ai_tour = city_index for each tour -> nearest neighbour
+        //printf("%d\t", v);
+        for (int i = 0; i < dMatrix.size()/*init_solution.mothership.centroidMatrix.size()*/; i++) { 
+            // return the index of stop in route list
+            i_tour[i] = i;//ms->clustSoln->clusters/*init_solution.clustOrder.first*/[i];
+        }//for(i=from_pts)
+
+        pair<double, vector<int>> gd_out = gd_local_2opt_search(i_tour.size(), dMatrix, i_tour, false);      // args = (int ai_n, vector<vector<double>> &ad_dist, vector<int> &ai_tour, bool ab_full_nbrhd)
+        gd_2opt_dists = gd_out.first;
+        vector<int> gd_route_id;
+        double route_dist = clustTendersoln->getTenderRouteDist(v)/*[i]*/;        
+        if (print) {
+            printf("Vehicle\t\tInitial\t\tGreedy 2-Opt\n");
+            printf("\t\t%7.3f  \t%7.3f\t", route_dist, gd_2opt_dists);
+        }
+        double improvement = route_dist - gd_2opt_dists;
+        if (improvement > 0.0001 * route_dist) {                //if greedy solution is better than current
+            if (print) printf("\t%.2f%%\tIMPROVEMENT\t", improvement * 100 / route_dist);
+            route_dist = gd_2opt_dists;						 // update route dist
+
+            vector<Pt*> route_new;
+            for (int i = 0; i < gd_route_id.size(); i++) {    // for every stop INDEX in Gd route
+                route_new.push_back(getPtByID(gd_route_id[i], routes[v]));
+			    clustTendersoln->routes[i] = clustTendersoln->routes[i];//gd_out.second;
+		    }
+            clustTendersoln->routes[v] = route_new;
+            
+            // vector<int> d = closeandOrientClusterLoop(gd_out, init_solution.mothership, init_solution.clustOrder);
+            //init_solution.mothership.launch_stops = d;//UPDATE ROUTE LIST
+            ////mothership.launch_stops = gd_out.second;//UPDATE ROUTE LIST
+            //
+            //init_solution.clustOrder = make_pair(init_solution.mothership.launch_stops, gd_out.first);
+            //if (print) {
+            //    cout << "\n\t\t";
+            //    for (const auto& stop : init_solution.mothership.launch_stops) { cout << "\t" << stop; }
+            //    cout << "\n\n";
+            //}
+        }
+    }//for(v=vehicles)
+
+    //if (print) {
+    //    printMSroute(init_solution.mothership, centroids);
+    //    cout << "------------- ^^Gd M/S^^ --------------\n";
+    //}
+    return routes/*init_solution.clustOrder*/;
+}
+
+

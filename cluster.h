@@ -1,6 +1,6 @@
 #pragma once
-#include "class_def.h"
-#include "calcs.h"
+//#include "class_def.h"
+//#include "calcs.h"
 
 #include <iostream>
 #include <vector>

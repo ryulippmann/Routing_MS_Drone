@@ -3,9 +3,10 @@
 
 #include <iostream>
 
-#include "class_def.h"
+#include "class_prob.h"
 //#include "MSSoln.h"
 #include "calcs.h"
+#include "class_soln.h"
 #include "cluster.h"
 #include "mothership.h"
 #include "tenders.h"
@@ -87,6 +88,15 @@ int main()
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 	//\\//\\//\\//\\// TenderSoln Construction //\\//\\//\\//\\//
 
+	//	// Function to find Pt by ID
+	//auto findPtByID = [&pts](int targetID) -> const Pt* {
+	//	auto it = std::find_if(pts.begin(), pts.end(), [targetID](const Pt& pt) {
+	//		return pt.ID == targetID;
+	//		});
+
+	//	return (it != pts.end()) ? &(*it) : nullptr;
+	//	};
+
 	vector<TenderSoln> tenderSolns;
 	for (int c = 0; c < clustSoln.clusters.size(); c++)	{
 		// , &clustSoln.clusters[c]->reefs
@@ -102,14 +112,18 @@ int main()
 			printf("\n");
 		}
 		printf("\n");
-
 		//\\//\\//\\//\\// TenderSoln Initialised //\\//\\//\\//\\//
 		// Tendersoln Nearest Neighbour
 		vector<vector<Pt*>> cluster_routes = droneWithinClusterNearestNeighbour(/*&inst, clustSoln.clusters[c], */&msSoln, c);
 		
+		TenderSoln clustTendersoln (clustSoln.clusters[c], cluster_routes, make_pair(msSoln.launchPts[c], msSoln.launchPts[c + 1]));
+		
 		// Tendersoln 2-Opt
-
-
+		////////////////////////////////
+		cluster_routes = greedyCluster(&clustTendersoln , &msSoln, /*clustSoln.clusters[c], cluster_routes,*/ c);
+			//droneWithinCluster2Opt(&msSoln, c);
+		////////////////////////////////
+		
 		// Tendersoln Swaps
 	
 
@@ -119,7 +133,6 @@ int main()
 		// Tendersoln Swaps: Out
 
 
-		//_tenderSolns_.push_back(TenderSoln (clustSoln.clusters[c], cluster_routes));
 	}//(&clustSoln.clusters, &msSoln);
 
 	

@@ -2,14 +2,124 @@
 
 ////////////////////////////////////////////////////////////////////////////
 
-struct Cluster {
+//struct Cluster {
+//public:
+//	Cluster(vector<Pt*> reefs/*, Pt start, Pt end*/) : ID(count++), reefs(reefs)/*, start(start), end(end)*/ {}
+//
+//	const int ID;
+//	const vector<Pt*> reefs;
+//	//Pt centroid = this->getCentroid(/*reefs*/);
+//	Pt getCentroid() {
+//		double x = 0.0;
+//		double y = 0.0;
+//		for (auto& reef : reefs) {
+//			x += reef->x;
+//			y += reef->y;
+//		}
+//		Pt centroid(x / reefs.size(), y / reefs.size());
+//		return centroid;
+//	}
+//
+//	// includes launchpts and free link back to launchpt
+//	vector<vector<double>> getdMatrix(const int c, pair <Pt*, Pt*> launchpts) {	//mothership, cluster
+//		vector<double> launchDists{ 0.0 };			// launchpt to itself = 0
+//		for (auto& reef : reefs) {					// launchpt to each reef
+//			double dist = sqrt(pow(reef->x - launchpts.first->x, 2) + pow(reef->y - launchpts.first->y, 2));
+//			launchDists.push_back(dist);			// dist launchpt to each reef
+//		} launchDists.push_back(DBL_MAX);			// launchpt to retrieve pt = inf
+//
+//		vector<vector<double>> dMatrix;
+//		dMatrix.push_back(launchDists);				// launchpt to each reef
+//
+//		vector<double> retrieveDists;				// retrieve pt to each reef
+//		retrieveDists.push_back(0.0);				// retrieve pt to itself = 0
+//		for (auto& reef : reefs) {					// retrieve pt to each reef
+//			double dist = sqrt(pow(reef->x - launchpts.second->x, 2) + pow(reef->y - launchpts.second->y, 2));
+//			retrieveDists.push_back(dist);			// dist retrieve pt to each reef
+//		} retrieveDists.push_back(0.0);				// FREE-LINK: retrieve pt return to launchpt
+//
+//		for (int r = 0; r < reefs.size(); r++) {
+//			vector<double> row;
+//			row.push_back(launchDists[r + 1]);
+//
+//			for (int s = 0; s < reefs.size(); s++) {
+//				double dist = sqrt(pow(reefs[r]->x - reefs[s]->x, 2) + pow(reefs[r]->y - reefs[s]->y, 2));
+//				row.push_back(dist);
+//			}
+//			row.push_back(retrieveDists[r + 1]);
+//			dMatrix.push_back(row);
+//		}
+//		dMatrix.push_back(retrieveDists);
+//
+//
+//		return dMatrix;
+//	}
+//
+//private:
+//	static int count;
+//};
+
+////////////////////////////////////////////////////////////////////////////
+
+struct ClusterSoln {
 public:
-	Cluster(vector<Pt*> reefs/*, Pt start, Pt end*/) : ID(count++), reefs(reefs)/*, start(start), end(end)*/ {}
+	ClusterSoln(const Problem& inst) : ID(count++), inst(inst) {}
+	ClusterSoln(const Problem& inst, const vector<Pt*> reefs) : ID(count++), inst(inst), reefs(reefs) {}
+	//ClusterSoln(const vector<Pt*> reefs, const vector<vector<double>>& centroidMatrix) :
+	//	ID(count++), reefs(reefs), centroidMatrix(centroidMatrix) {}
+	//ClusterSoln(const vector<Cluster*>& clusters) : ID(count++), clusters(clusters) {}
+	//ClusterSoln(const vector<Cluster*>& clusters, const vector<vector<double>>& centroidMatrix) :
+	//	ID(count++), clusters(clusters), centroidMatrix(centroidMatrix) {}
 
 	const int ID;
+	const Problem& inst;
 	const vector<Pt*> reefs;
-	//Pt centroid = this->getCentroid(/*reefs*/);
-	Pt getCentroid() {
+
+	vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, const Pt depot) {
+		vector<vector<double>> centroidMatrix;
+		//centroids.insert(centroids.begin(), ClusterPoint(depot.first, depot.second));
+		vector<double> depot_row;
+		depot_row.push_back(0);
+		for (int i = 0; i < clusters.size(); i++) {		// for each cluster
+			depot_row.push_back(calculatePtDistance(depot, clusters[i]->getCentroid()));
+		}
+		centroidMatrix.push_back(depot_row);
+
+		for (int i = 0; i < clusters.size(); i++) {		// for each cluster
+			vector<double> row(clusters.size() + 1);
+			row[0] = depot_row[i + 1];
+			for (int j = 0; j < clusters.size(); j++) {	// for each cluster
+				row[j + 1] = calculatePtDistance(clusters[i]->getCentroid(), clusters[j]->getCentroid());
+			}
+			centroidMatrix.push_back(row);
+		}
+
+		return centroidMatrix;
+	}
+
+	//vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, const Pt depot) {
+	//	vector<vector<double>> centroidMatrix;
+	//	//centroids.insert(centroids.begin(), ClusterPoint(depot.first, depot.second));
+	//	vector<double> depot_row;
+	//	depot_row.push_back(0);
+	//	for (int i = 0; i < clusters.size(); i++) {		// for each cluster
+	//		depot_row.push_back(calculatePtDistance(depot, clusters[i]->getCentroid()));
+	//	}
+	//	centroidMatrix.push_back(depot_row);
+	//
+	//	for (int i = 0; i < clusters.size(); i++) {		// for each cluster
+	//		vector<double> row(clusters.size() + 1);
+	//		row[0] = depot_row[i + 1];
+	//		for (int j = 0; j < clusters.size(); j++) {	// for each cluster
+	//			row[j + 1] = calculatePtDistance(clusters[i]->getCentroid(), clusters[j]->getCentroid());
+	//		}
+	//		centroidMatrix.push_back(row);
+	//	}
+	//
+	//	return centroidMatrix;
+	//}
+
+	Pt getCentroid() const {
 		double x = 0.0;
 		double y = 0.0;
 		for (auto& reef : reefs) {
@@ -21,7 +131,7 @@ public:
 	}
 
 	// includes launchpts and free link back to launchpt
-	vector<vector<double>> getdMatrix(const int c, pair <Pt*, Pt*> launchpts) {	//mothership, cluster
+	vector<vector<double>> getdMatrix(const int c, pair <Pt*, Pt*> launchpts) const {	//mothership, cluster
 		vector<double> launchDists{ 0.0 };			// launchpt to itself = 0
 		for (auto& reef : reefs) {					// launchpt to each reef
 			double dist = sqrt(pow(reef->x - launchpts.first->x, 2) + pow(reef->y - launchpts.first->y, 2));
@@ -59,35 +169,17 @@ private:
 	static int count;
 };
 
-////////////////////////////////////////////////////////////////////////////
-
-struct ClusterSoln {
-public:
-	ClusterSoln() : ID(count++) {}
-	ClusterSoln(const vector<Cluster*>& clusters) : ID(count++), clusters(clusters) {}
-	ClusterSoln(const vector<Cluster*>& clusters, const vector<vector<double>>& centroidMatrix) :
-		ID(count++), clusters(clusters), centroidMatrix(centroidMatrix) {}
-	//typedef vector<ReefPt*> Cluster;
-
-	const int ID;
-	vector<Cluster*> clusters;
-	vector<vector<double>> centroidMatrix;
-
-private:
-	static int count;
-};
-
 struct MSSoln {
 public:
 	//MSSoln(const Problem& inst) : ID(count++), inst(inst) {}
-	MSSoln(const Problem* inst, ClusterSoln* clustSoln) :
-		ID(count++), inst(inst), clustSoln(clustSoln), launchPts(clustSoln->clusters.size() + 1, nullptr) {}
+	MSSoln(const Problem& inst, vector<ClusterSoln*> clustSolns) :
+		ID(count++), inst(inst), clustSolns(clustSolns), launchPts(clustSolns.size() + 1, nullptr) {}
 	//MSSoln(const Problem& inst, vector<Cluster*> clustOrder/*, vector<Route_MS*> routes*/) :
 	//	ID(count++), inst(inst), clustOrder(clustOrder)/*, routes(routes)*/{}
 
 	const int ID;
-	const Problem* inst;				// problem instance
-	ClusterSoln* clustSoln;
+	const Problem& inst;				// problem instance
+	vector<ClusterSoln*> clustSolns;
 
 	//vector<Cluster*> clustOrder;		// ordered clusters		////vector<int> clustOrder;		// ordered clusters by ID
 	vector<Pt*> launchPts;
@@ -97,17 +189,17 @@ public:
 		vector<vector<double>> dMatrix;
 		vector<double> depotDists;
 		depotDists.push_back(0.0);
-		for (auto& clust : clustSoln->clusters) {
-			double dist = sqrt(pow(inst->ms.depot.x - clust->getCentroid().x, 2) + pow(inst->ms.depot.y - clust->getCentroid().y, 2));
+		for (auto& clust : clustSolns) {
+			double dist = sqrt(pow(inst.ms.depot.x - clust->getCentroid().x, 2) + pow(inst.ms.depot.y - clust->getCentroid().y, 2));
 			depotDists.push_back(dist);
 		}
 		dMatrix.push_back(depotDists); // is this dangerous in case where order changes?!
 
-		for (int c = 0; c < clustSoln->clusters.size(); c++) {
+		for (int c = 0; c < clustSolns.size(); c++) {
 			vector<double> clustDists;
 			clustDists.push_back(depotDists[c + 1]);
-			for (int d = 0; d < clustSoln->clusters.size(); d++) {
-				double dist = sqrt(pow(clustSoln->clusters[c]->getCentroid().x - clustSoln->clusters[d]->getCentroid().x, 2) + pow(clustSoln->clusters[c]->getCentroid().y - clustSoln->clusters[d]->getCentroid().y, 2));
+			for (int d = 0; d < clustSolns.size(); d++) {
+				double dist = sqrt(pow(clustSolns[c]->getCentroid().x - clustSolns[d]->getCentroid().x, 2) + pow(clustSolns[c]->getCentroid().y - clustSolns[d]->getCentroid().y, 2));
 				clustDists.push_back(dist);
 			}
 			dMatrix.push_back(clustDists);
@@ -120,7 +212,7 @@ public:
 		vector<double> depotDists;
 		depotDists.push_back(0.0);
 		for (auto& launch : launchPts) {
-			double dist = sqrt(pow(inst->ms.depot.x - launch->x, 2) + pow(inst->ms.depot.y - launch->y, 2));
+			double dist = sqrt(pow(inst.ms.depot.x - launch->x, 2) + pow(inst.ms.depot.y - launch->y, 2));
 			depotDists.push_back(dist);
 		}
 		dMatrix.push_back(depotDists); // is this dangerous in case where order changes?!
@@ -138,27 +230,27 @@ public:
 	}
 
 	double getDist() const {
-		double dist = //calculatePtDistance(inst->ms.depot, clustOrder[0]->getCentroid());
-			sqrt(pow(inst->ms.depot.x - launchPts[0]->x, 2) + pow(inst->ms.depot.y - launchPts[0]->y, 2));
-		for (int c = 0; c < clustSoln->clusters.size(); c++) {
+		double dist = //calculatePtDistance(inst.ms.depot, clustOrder[0]->getCentroid());
+			sqrt(pow(inst.ms.depot.x - launchPts[0]->x, 2) + pow(inst.ms.depot.y - launchPts[0]->y, 2));
+		for (int c = 0; c < clustSolns.size(); c++) {
 			dist += sqrt(pow(launchPts[c]->x - launchPts[c + 1]->x, 2) + pow(launchPts[c]->y - launchPts[c + 1]->y, 2));
 			//calculatePtDistance(
 			//	clustOrder[c]->getCentroid(), 
 			//	clustOrder[c+1]->getCentroid()
 			//);
 		}
-		dist += sqrt(pow(inst->ms.depot.x - launchPts[clustSoln->clusters.size()]->x, 2) + pow(inst->ms.depot.y - launchPts[clustSoln->clusters.size()]->y, 2));//calculatePtDistance(inst->ms.depot, clustOrder[clustOrder.size()-1]->getCentroid());
-		//sqrt(pow(inst->ms.depot.x - launchPts[clustOrder.size() - 1]->x, 2) + pow(inst->ms.depot.y - launchPts[clustOrder.size() - 1]->y, 2));
+		dist += sqrt(pow(inst.ms.depot.x - launchPts[clustSolns.size()]->x, 2) + pow(inst.ms.depot.y - launchPts[clustSolns.size()]->y, 2));//calculatePtDistance(inst.ms.depot, clustOrder[clustOrder.size()-1]->getCentroid());
+		//sqrt(pow(inst.ms.depot.x - launchPts[clustOrder.size() - 1]->x, 2) + pow(inst.ms.depot.y - launchPts[clustOrder.size() - 1]->y, 2));
 		return dist;
 	}
 
 	vector<Pt*> getRoute() {			//update/check this! use mp's of centroids...
 		vector<Pt*> route;//(launchPts.size() + 1, nullptr);
-		route.push_back(new Pt(inst->ms.depot)); // Assuming Pt has a copy/move constructor
+		route.push_back(new Pt(inst.ms.depot)); // Assuming Pt has a copy/move constructor
 		for (auto& pt : launchPts) {
 			route.push_back(pt);
 		}
-		route.push_back(new Pt(inst->ms.depot)); // Assuming Pt has a copy/move constructor
+		route.push_back(new Pt(inst.ms.depot)); // Assuming Pt has a copy/move constructor
 		return route;
 	}
 	//Cluster& getCluster(int ID) {
@@ -180,17 +272,17 @@ struct TenderSoln {
 	typedef vector<Pt*> Route_Tender;
 public:
 	//TenderSoln() : ID(count++), cluster(cluster), greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
-	TenderSoln(Cluster* cluster) : ID(count++), cluster(cluster) {}
-	TenderSoln(Cluster* cluster, vector<Route_Tender>& routes) :
+	TenderSoln(ClusterSoln* cluster) : ID(count++), cluster(cluster) {}
+	TenderSoln(ClusterSoln* cluster, vector<Route_Tender>& routes) :
 		ID(count++), cluster(cluster), routes(routes) {}//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
-	TenderSoln(Cluster* cluster, vector<vector<Pt*>> routes, pair<Pt*, Pt*> launchPts) :
+	TenderSoln(ClusterSoln* cluster, vector<vector<Pt*>> routes, pair<Pt*, Pt*> launchPts) :
 		ID(count++), cluster(cluster), routes(routes), launchPts(launchPts) {}//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
 	//TenderSoln(Cluster& cluster, vector<Route_Tender> routes, bool greedy, bool without_clust, bool within_clust, bool greedy_again) :
 	//	ID(count++), cluster(cluster), routes(routes), greedy(greedy), without_clust(without_clust), within_clust(within_clust), greedy_again(greedy_again) {}
 
 	const int ID;
 
-	Cluster* cluster;
+	ClusterSoln* cluster;
 	vector<Route_Tender> routes;
 	pair<Pt*, Pt*> launchPts;
 

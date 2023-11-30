@@ -3,7 +3,10 @@
 //#include <ctime>
 //#include <sstream>
 #include <fstream>
-//using namespace std;
+
+
+//comment out when linked...
+using namespace std;
 
 struct SAparams {
     int initial_temp;

@@ -1,8 +1,6 @@
 #pragma once
 #include <vector>
 #include <cmath>
-using namespace std;
-//#include "class_def.h"
 
 // RETURN reefs visited
 int reefsVisited(const vector<Pt*>& reefs) { 
@@ -17,8 +15,8 @@ int reefsVisited(const vector<Pt*>& reefs) {
 //vehicles argument not referenced, so are not updated...
 vector<vector<Pt*>> droneWithinClusterNearestNeighbour(const MSSoln* ms, const int c,
     bool csv_print = false) {
-    const Problem* inst = ms->inst;
-    const Cluster* cluster = ms->clustSoln->clusters[c];
+    const Problem& inst = ms->inst;
+    const ClusterSoln* cluster = ms->clustSolns[c];
     pair<Pt*, Pt*> launchPts = make_pair(ms->launchPts[c], ms->launchPts[c + 1]);
     //int reefs_visit_count = reefsVisited(cluster->reefs);    // int of number of reefs visited
     int u = -1;                                          // initialise current reef index
@@ -26,11 +24,11 @@ vector<vector<Pt*>> droneWithinClusterNearestNeighbour(const MSSoln* ms, const i
     //vector<vector<int>> route_stops;                     // create routes to output to csv
     bool printStops = false;
     if (printStops) { cout << "\n\nNEAREST NEIGHBOUR\n"; }
-    vector<vector<Pt*>> routes(inst->tenders.size(), vector<Pt*>(inst->tenderCap, nullptr)); // create routes to save in TenderSoln.routes
+    vector<vector<Pt*>> routes(inst.tenders.size(), vector<Pt*>(inst.tenderCap, nullptr)); // create routes to save in TenderSoln.routes
     vector<bool> visited(cluster->reefs.size(), false);
-    const vector<vector<double>> dMatrix = ms->clustSoln->clusters[c]->getdMatrix(c, make_pair(ms->launchPts[c], ms->launchPts[c+1]));//[u];                        // for u vector in dMatrix
+    const vector<vector<double>> dMatrix = cluster->getdMatrix(c, make_pair(ms->launchPts[c], ms->launchPts[c+1]));//[u];                        // for u vector in dMatrix
 
-    for (int m = 0; m < inst->tenders.size() /*&& reefs_visit_count < cluster->reefs.size() - 2*/; m++) {     //FOR EACH VEHICLE!!
+    for (int m = 0; m < inst.tenders.size() /*&& reefs_visit_count < cluster->reefs.size() - 2*/; m++) {     //FOR EACH VEHICLE!!
         vector<Pt*> row;                            // create row for routes
         // add drop off pt to row
         double route_dist = 0;
@@ -46,7 +44,7 @@ vector<vector<Pt*>> droneWithinClusterNearestNeighbour(const MSSoln* ms, const i
             //cluster.drones[m].reef_stops
             //row.push_back(cluster->reefs[u]);                        // append current reef to current vehicle reef stop list
         }//if(v.stops==0)       vv      // 3: Find the shortest edge connecting current vertex u and an unvisited vertex v.
-        for (int k = 0; k < inst->tenders[m].cap/* && reefs_visit_count < cluster->reefs.size()*/; k++) {            // for stops within vehicle capacity
+        for (int k = 0; k < inst.tenders[m].cap/* && reefs_visit_count < cluster->reefs.size()*/; k++) {            // for stops within vehicle capacity
             //                          msSoln.clustSoln->clusters[c]->getdMatrix
             
             const vector<double>& neighbours = dMatrix[u];//cluster->getdMatrix(m, make_pair(ms->launchPts[m], ms->launchPts[m]));//[u];                        // for u vector in dMatrix

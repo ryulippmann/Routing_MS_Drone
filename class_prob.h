@@ -39,6 +39,9 @@ public:
 	Pt(double x = 0.0, double y = 0.0) : ID(count++), x(x), y(y) {}	// Default constructor
 	Pt(pair<double, double> coords) : ID(count++), x(coords.first), y(coords.second) {}
 
+	// Copy constructor
+	Pt(const Pt& other) : ID(other.ID), x(other.x), y(other.y) {}
+	
 	const int ID;
 	const double x;
 	const double y;

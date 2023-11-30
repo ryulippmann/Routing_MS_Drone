@@ -46,6 +46,35 @@ Pt calcCentroid(const vector<Pt*> cluster) {
 double calculatePtDistance(const Pt& a, const Pt& b) {
     return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2));
 }//calculatePtDistance
+double calculatePtDistance(const Pt& a, const Pt* b) {
+    return sqrt(pow(a.x - b->x, 2) + pow(a.y - b->y, 2));
+}//calculatePtDistance
+double calculatePtDistance(const Pt* a, const Pt* b) {
+    return sqrt(pow(a->x - b->x, 2) + pow(a->y - b->y, 2));
+}//calculatePtDistance
+
+vector<vector<double>> centroidMatrix(Problem& inst, vector<Pt*> reefs) {
+    vector<vector<double>> centroidMatrix;
+    //centroids.insert(centroids.begin(), ClusterPoint(depot.first, depot.second));
+    vector<double> depot_row;
+    depot_row.push_back(0);
+    for (int i = 0; i < reefs.size(); i++) {		// for each cluster
+        depot_row.push_back(calculatePtDistance(inst.ms.depot, reefs[i]));
+    }
+    centroidMatrix.push_back(depot_row);
+
+    for (int i = 0; i < reefs.size(); i++) {		// for each cluster
+        vector<double> row(reefs.size() + 1);
+        row[0] = depot_row[i + 1];
+        for (int j = 0; j < reefs.size(); j++) {	// for each cluster
+            row[j + 1] = calculatePtDistance(reefs[i], reefs[j]);
+        }
+        centroidMatrix.push_back(row);
+    }
+    return centroidMatrix;
+}
+
+
 
 double CalcCentroidDist(const vector<Pt> cluster, const Pt centroid) {
     double summing_centroid_dist = 0;

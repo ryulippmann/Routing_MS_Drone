@@ -47,5 +47,8 @@
     <ClInclude Include="class_soln.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="swaps.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

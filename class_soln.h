@@ -73,38 +73,9 @@ public:
 	vector<Cluster*> clusters;
 	vector<vector<double>> centroidMatrix;
 
-	//void setClusters(vector<Cluster*>& clusters_in) {
-	//	clusters = clusters_in;
-	//}
-
 private:
 	static int count;
 };
-
-//struct Route_MS {
-//public:
-//	Route_MS(vector<Cluster*> clustOrder) : ID(count++), clustOrder(clustOrder) {}
-//	vector<Pt> getLaunchPts() {
-//		vector<Pt> centroids;
-//		for (auto& clust : clustOrder) {
-//			centroids.push_back(clust->getCentroid(/*clust->getReefs()*/));
-//		}
-//		vector<Pt> launchPts;
-//		for (int c = 0; c < centroids.size()-1; c++) {
-//			Pt launchPt((centroids[c].getXY().first + centroids[c + 1].getXY().first) / 2, (centroids[c].getXY().second + centroids[c + 1].getXY().second) / 2);
-//			launchPts.push_back(launchPt);
-//		}
-//		return launchPts;
-//	}
-//
-//private:
-//	static int count;
-//	const int ID;
-//	const vector<Cluster*> clustOrder;
-//	//MS* ms;
-//	const Pt depot;// ->? = problem.getDepot();
-//	vector<Pt> launchPts = this->getLaunchPts();
-//};
 
 struct MSSoln {
 public:
@@ -130,8 +101,7 @@ public:
 			double dist = sqrt(pow(inst->ms.depot.x - clust->getCentroid().x, 2) + pow(inst->ms.depot.y - clust->getCentroid().y, 2));
 			depotDists.push_back(dist);
 		}
-		dMatrix.push_back(depotDists);
-		// is this dangerous in case where order changes?!
+		dMatrix.push_back(depotDists); // is this dangerous in case where order changes?!
 
 		for (int c = 0; c < clustSoln->clusters.size(); c++) {
 			vector<double> clustDists;
@@ -145,7 +115,29 @@ public:
 		return dMatrix;
 	}
 
-	double getDist() {
+	vector<vector<double>> launchPt_dMatrix() {
+		vector<vector<double>> dMatrix;
+		vector<double> depotDists;
+		depotDists.push_back(0.0);
+		for (auto& launch : launchPts) {
+			double dist = sqrt(pow(inst->ms.depot.x - launch->x, 2) + pow(inst->ms.depot.y - launch->y, 2));
+			depotDists.push_back(dist);
+		}
+		dMatrix.push_back(depotDists); // is this dangerous in case where order changes?!
+
+		for (int s = 0; s < launchPts.size(); s++) {
+			vector<double> launchDists;
+			launchDists.push_back(depotDists[s + 1]);
+			for (int d = 0; d < launchPts.size(); d++) {
+				double dist = sqrt(pow(launchPts[s]->x - launchPts[d]->x, 2) + pow(launchPts[s]->y - launchPts[d]->y, 2));
+				launchDists.push_back(dist);
+			}
+			dMatrix.push_back(launchDists);
+		}
+		return dMatrix;
+	}
+
+	double getDist() const {
 		double dist = //calculatePtDistance(inst->ms.depot, clustOrder[0]->getCentroid());
 			sqrt(pow(inst->ms.depot.x - launchPts[0]->x, 2) + pow(inst->ms.depot.y - launchPts[0]->y, 2));
 		for (int c = 0; c < clustSoln->clusters.size(); c++) {
@@ -191,7 +183,7 @@ public:
 	TenderSoln(Cluster* cluster) : ID(count++), cluster(cluster) {}
 	TenderSoln(Cluster* cluster, vector<Route_Tender>& routes) :
 		ID(count++), cluster(cluster), routes(routes) {}//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
-	TenderSoln(Cluster* cluster, vector<vector<Pt*>>& routes, pair<Pt*, Pt*> launchPts) :
+	TenderSoln(Cluster* cluster, vector<vector<Pt*>> routes, pair<Pt*, Pt*> launchPts) :
 		ID(count++), cluster(cluster), routes(routes), launchPts(launchPts) {}//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
 	//TenderSoln(Cluster& cluster, vector<Route_Tender> routes, bool greedy, bool without_clust, bool within_clust, bool greedy_again) :
 	//	ID(count++), cluster(cluster), routes(routes), greedy(greedy), without_clust(without_clust), within_clust(within_clust), greedy_again(greedy_again) {}
@@ -202,7 +194,7 @@ public:
 	vector<Route_Tender> routes;
 	pair<Pt*, Pt*> launchPts;
 
-	double getTenderRouteDist(int c = 0) {
+	double getTenderRouteDist(int c = -1) {
 		vector<Pt*> route = routes[c];
 		//route.insert(route.begin(), launchPts.first);	// Insert launchPts.first at beginning of route vector
 		//route.push_back(launchPts.second);				// Push launchPts.second at end of route vector
@@ -219,6 +211,16 @@ public:
 		//route_dist = summing_route_dist;//getRouteDist(route, cluster->getdMatrix(c, launchPts), cluster));
 		return route_dist;
 	}
+
+	// total dist for all tenders
+	double getTotalDist() {
+		double dist = 0;
+		for (int c = 0; c < routes.size(); c++) {
+			dist += getTenderRouteDist(c);
+		}
+		return dist;
+	}
+
 	//// dist for each tender route in cluster c
 	//vector<double> getTenderRouteDists(int c = 0) {		//Cluster* cluster, Route_Tender route, pair<Pt*, Pt*> launchPts, vector<vector<double>> dMatrix
 	//	vector<double> route_dist;
@@ -261,21 +263,39 @@ struct FullSoln {
 public:
 	//FullSoln(Problem* dat, MSSoln* msSoln, TenderSoln* tenderSoln, vector<Cluster*> clusters) :
 	//		ID(count++), dat(dat), msSoln(msSoln), tenderSoln(tenderSoln), clusters(clusters) {}
-	FullSoln(Problem* dat, MSSoln* msSoln, ClusterSoln* clusterSolns, vector<TenderSoln*> tenderSoln) :
-		ID(count++), dat(dat), msSoln(msSoln), clusterSolns(clusterSolns), tenderSolns(tenderSoln),
+	FullSoln(const MSSoln* msSoln, vector< TenderSoln*> tenderSolns) :
+		ID(count++), msSoln(msSoln), tenderSolns(tenderSolns),
 		greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
+	FullSoln(const MSSoln* msSoln, vector< TenderSoln*> tenderSolns, bool greedy, bool without_clust, bool within_clust, bool greedy_again) :
+		ID(count++), msSoln(msSoln), tenderSolns(tenderSolns), 
+		greedy(greedy), without_clust(without_clust), within_clust(within_clust), greedy_again(greedy_again) {}
+		
+	// Copy constructor
+	FullSoln(const FullSoln& other) :
+		ID(other.ID), msSoln(other.msSoln), tenderSolns(other.tenderSolns), 
+		greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again) {
+	
+	}
 
-	int ID;
-	const Problem* dat;
-	ClusterSoln* clusterSolns;
-	MSSoln* msSoln;
-	vector<TenderSoln*> tenderSolns;
-	//vector<Cluster*> clusters;
+	const int ID;
+	const MSSoln* msSoln;
+	const vector<TenderSoln*> tenderSolns;
+	//const Problem* dat;			//contained in msSoln
+	//ClusterSoln* clusterSolns;	//contained in msSoln
+	//vector<Cluster*> clusters;	//contained in msSoln
 
 	const bool greedy;
 	const bool without_clust;
 	const bool within_clust;
 	const bool greedy_again;
+
+	double getTotalDist() {
+		double dist = msSoln->getDist();
+		for (auto& tenderSoln : tenderSolns) {
+			dist += tenderSoln->getTenderRouteDist();
+		}
+		return dist;
+	}
 
 private:
 	static int count;

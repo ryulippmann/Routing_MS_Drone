@@ -118,19 +118,19 @@ vector<vector<Pt*>> droneWithinClusterNearestNeighbour(const MSSoln* ms, const i
     return /*cluster*/routes;
 }//nearestNeighbour
 
-vector<vector<Pt*>> droneWithinCluster2Opt(const MSSoln* ms, const int c,
-    bool csv_print = false) {
-    vector <vector<Pt*> > routes;
+//vector<vector<Pt*>> droneWithinCluster2Opt(const MSSoln* ms, const int c,
+//    bool csv_print = false) {
+//    vector <vector<Pt*> > routes;
+//
+//    const Problem* inst = ms->inst;
+//    const Cluster* cluster = ms->clustSoln->clusters[c];
+//    pair<Pt*, Pt*> launchPts = make_pair(ms->launchPts[c], ms->launchPts[c + 1]);
+//
+//
+//    return routes;
+//}
 
-    const Problem* inst = ms->inst;
-    const Cluster* cluster = ms->clustSoln->clusters[c];
-    pair<Pt*, Pt*> launchPts = make_pair(ms->launchPts[c], ms->launchPts[c + 1]);
-
-
-    return routes;
-}
-
-vector<vector<Pt*>> greedyCluster(TenderSoln* clustTendersoln, const vector<vector<double>> dMatrix, //const MSSoln* ms, /*vector<vector<Pt*>>& routes, */const int c,
+vector<vector<Pt*>> greedyTenderCluster(TenderSoln* clustTendersoln, const vector<vector<double>> dMatrix, //const MSSoln* ms, /*vector<vector<Pt*>>& routes, */const int c,
     bool csv_print = false, bool print = false) {
     //const Problem* inst = ms->inst;
     // dMatrix includes launch/retrieve pts and free link back to launchpt

@@ -137,6 +137,7 @@
     <ClInclude Include="mothership.h" />
     <ClInclude Include="MSSoln.h" />
     <ClInclude Include="new.h" />
+    <ClInclude Include="swaps.h" />
     <ClInclude Include="tenders.h" />
     <ClInclude Include="TSPheuristics_annotated.h" />
   </ItemGroup>

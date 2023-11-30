@@ -113,11 +113,8 @@ public:
 		}
 		return reefPtrs; 
 	}
-	//int getnumClusters() const { return numClust; }
-	//Pt getDepot() const { return depot; }
-	//MS getMS() const { return ms; }
-	//int getnumTenders() const { return numTenders; }
-	//vector<Tender> getTenders() const { return tenders; }
+	int getnumClusters() const { return numClust; }
+	int getnumTenders() const { return numTenders; }
 	vector<vector<double>> getDMatrix(vector<Pt> reefs, Pt depot) {
 		vector<vector<double>> dMatrix;
 		vector<double> depotDists;

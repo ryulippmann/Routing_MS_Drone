@@ -54,7 +54,7 @@ vector<Cluster*> clusterCentroidNearestNeighbour(const ClusterSoln& clustSoln,
     return nearestCentroids;
 }//nearestNeighbour
 
-void greedyCluster(MSSoln& msSoln, //const ClusterSoln& clustSoln, //const vector<Cluster*>& clusters,
+void greedyMSCluster(MSSoln& msSoln, //const ClusterSoln& clustSoln, //const vector<Cluster*>& clusters,
     bool csv_print = false, bool print = true) {
     if (print) cout << "\n---- GREEDY M/S CLUSTERS ----\n";
     const ClusterSoln* clustSoln = msSoln.clustSoln;
@@ -67,12 +67,13 @@ void greedyCluster(MSSoln& msSoln, //const ClusterSoln& clustSoln, //const vecto
     }//for(i=from_pts)
     route_dist += clustSoln->centroidMatrix[msSoln.clustSoln->clusters.back()->ID + 1][0];
 
-    vector<int> i_tour(clustSoln->centroidMatrix.size(), 0);                         // ai_tour = city_index for each tour -> nearest neighbour
+    vector<int> i_tour(1, 0);                         // ai_tour = city_index for each tour -> nearest neighbour
     for (int i = 0; i < clustSoln->clusters.size(); i++) {
-        i_tour[i+1] = msSoln.clustSoln->clusters[i]->ID+1; 
+        i_tour.push_back(clustSoln->clusters[i]->ID + 1);
     }//for(i=from_pts)
+    i_tour.push_back(0);                                                            // add depot as last stop
 
-    pair<double, vector<int>> gd_out = gd_local_2opt_search(n, clustSoln->centroidMatrix, i_tour, false);      // args = (int ai_n, vector<vector<double>> &ad_dist, vector<int> &ai_tour, bool ab_full_nbrhd)
+    pair<double, vector<int>> gd_out = gd_local_2opt_search(i_tour.size(), clustSoln->centroidMatrix, i_tour, false);      // args = (int ai_n, vector<vector<double>> &ad_dist, vector<int> &ai_tour, bool ab_full_nbrhd)
     gd_2opt_dists = gd_out.first;
     if (print) { printf("Vehicle\t\tInitial\t\tGreedy 2-Opt\n\t\t%7.3f  \t%7.3f\t", route_dist, gd_2opt_dists); }
     
@@ -89,13 +90,13 @@ void greedyCluster(MSSoln& msSoln, //const ClusterSoln& clustSoln, //const vecto
         //    for (const auto& stop : init_solution.mothership.launch_stops) { cout << "\t" << stop; }
         //    cout << "\n\n";
         //}
+        vector<Cluster*> temp_clust(clustSoln->clusters.size(), nullptr);
+        for (int i = 0; i < clustSoln->clusters.size(); i++) {
+		    temp_clust[i] = clustSoln->clusters[gd_out.second[i+1]-1];
+	    }
+        msSoln.clustSoln->clusters = temp_clust;                        // UPDATE CLUSTER ORDER
     } else if (print) { printf("\tNO IMPROVEMENT\n"); }//else
 
-    vector<Cluster*> temp_clust(clustSoln->clusters.size(), nullptr);
-    for (int i = 0; i < clustSoln->clusters.size(); i++) {
-		temp_clust[i] = clustSoln->clusters[gd_out.second[i+1]-1];
-	}
-    msSoln.clustSoln->clusters = temp_clust;                        // UPDATE CLUSTER ORDER
 
     //if (print) {
     //    printMSroute(init_solution.mothership, centroids);
@@ -104,7 +105,7 @@ void greedyCluster(MSSoln& msSoln, //const ClusterSoln& clustSoln, //const vecto
     return;     					// updated clustSoln.clusters
 }
 
-void setLaunchPts(MSSoln& msSoln,
+vector<vector<double>> setLaunchPts(MSSoln& msSoln,
     bool csv_print = false, bool print = true) {
     const ClusterSoln& clustSoln = *msSoln.clustSoln;
     if (print) printf("\n---- SET LAUNCH POINTS ----\n");
@@ -123,14 +124,24 @@ void setLaunchPts(MSSoln& msSoln,
         (msSoln.inst->ms.depot.y + clustSoln.clusters.back()->getCentroid().y) / 2));
     //launchPts.push_back(new Pt(msSoln.inst->ms.depot));       // add depot as first launch point
 	msSoln.launchPts = launchPts;
+    vector<vector<double>> dMatrix_launchpt = msSoln.launchPt_dMatrix();
 	if (print) {
         printf("\tID\t(  x  ,  y  )\n");
         cout << string(30, '-') << "\n";
+        printf("\t%d\t( %.2f, %.2f)\n", msSoln.inst->ms.depot.ID, msSoln.inst->ms.depot.x, msSoln.inst->ms.depot.y);
 		for (const auto& stop : msSoln.launchPts) { 
             printf("\t%d\t( %.2f, %.2f)\n", stop->ID, stop->x, stop->y);
+        } printf("\n");
+        for (int i = 0; i < dMatrix_launchpt.size(); i++) {
+            for (int j = 0; j < dMatrix_launchpt[i].size(); j++) {
+                printf("\t%.2f", dMatrix_launchpt[i][j]);
+            }
+            printf("\n");
         }
-	}
-	return;
+        cout << string(30, '-') << "\n";
+        printf("%.2f =\t%.2f +\t%.2f +\t%.2f +\t%.2f +\t%.2f", (dMatrix_launchpt[0][1] + dMatrix_launchpt[1][2] + dMatrix_launchpt[2][3] + dMatrix_launchpt[3][4] + dMatrix_launchpt[4][0]), dMatrix_launchpt[4][0], dMatrix_launchpt[0][1], dMatrix_launchpt[1][2], dMatrix_launchpt[2][3], dMatrix_launchpt[3][4]);
+	}    
+	return dMatrix_launchpt;
 }
 
 //vector<Pt*> setLaunchPts(const vector<Cluster*>& clusters) {

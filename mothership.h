@@ -57,7 +57,7 @@ void greedyMSCluster(Problem& inst, MSSoln& msSoln,
     //const ClusterSoln& clustSoln, //const vector<Cluster*>& clusters,
     bool csv_print = false, bool print = true) {
     if (print) cout << "\n---- GREEDY M/S CLUSTERS ----\n";
-    const vector<ClusterSoln*> clusters = msSoln.clustSolns;
+    const vector<ClusterSoln*> clusters = msSoln.clusters;
     int n = clusters.size();
     double gd_2opt_dists;
     const vector<vector<double>> centroidMatrix = calc_centMatrix(clusters, inst.ms.depot);
@@ -95,7 +95,8 @@ void greedyMSCluster(Problem& inst, MSSoln& msSoln,
         for (int i = 0; i < clusters.size(); i++) {
 		    temp_clust[i] = clusters[gd_out.second[i+1]-1];
 	    }
-        msSoln.clustSolns = temp_clust;                        // UPDATE CLUSTER ORDER
+
+        msSoln.clusters = temp_clust;                        // UPDATE CLUSTER ORDER
     } else if (print) { printf("\tNO IMPROVEMENT\n"); }//else
 
     //if (print) {
@@ -105,9 +106,10 @@ void greedyMSCluster(Problem& inst, MSSoln& msSoln,
     return;     					// updated clustSoln.clusters
 }
 
+// warning: this needs to be set before msSoln.getDist() is called
 vector<vector<double>> setLaunchPts(Problem& inst, MSSoln& msSoln,
     bool csv_print = false, bool print = true) {
-    const vector<ClusterSoln*> clusters = msSoln.clustSolns;
+    const vector<ClusterSoln*> clusters = msSoln.clusters;
     if (print) printf("\n---- SET LAUNCH POINTS ----\n");
     vector<Pt*> launchPts;
     //launchPts.push_back(new Pt(inst.ms.depot));       // add depot as first launch point
@@ -139,7 +141,14 @@ vector<vector<double>> setLaunchPts(Problem& inst, MSSoln& msSoln,
             printf("\n");
         }
         cout << string(30, '-') << "\n";
-        printf("%.2f =\t%.2f +\t%.2f +\t%.2f +\t%.2f +\t%.2f", (dMatrix_launchpt[0][1] + dMatrix_launchpt[1][2] + dMatrix_launchpt[2][3] + dMatrix_launchpt[3][4] + dMatrix_launchpt[4][0]), dMatrix_launchpt[4][0], dMatrix_launchpt[0][1], dMatrix_launchpt[1][2], dMatrix_launchpt[2][3], dMatrix_launchpt[3][4]);
+        double total_dist = 0;
+        printf("\t%.2f +", dMatrix_launchpt.back()[0]);
+        total_dist += dMatrix_launchpt.back()[0];
+        for (int i = 0; i < dMatrix_launchpt.size()-1; i++) {
+			printf("\t%.2f +", dMatrix_launchpt[i][i+1]);
+            total_dist += dMatrix_launchpt[i][i+1];
+		}
+        printf("\n = %.2f", total_dist);
 	}    
 	return dMatrix_launchpt;
 }

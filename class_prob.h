@@ -46,11 +46,22 @@ public:
 	const double x;
 	const double y;
 	//pair<double, double> getXY() const { return make_pair(x, y); }
-
+	
 	//static Pt* getPtByID(int targetID);
 private:
 	static int count;
 };
+
+vector<Pt> initReefs(int no_pts=100, int sol_space = 100) {
+	vector<Pt> reefs;
+	for (int i = 0; i < no_pts; i++) {
+		Pt pt = Pt(rand() % sol_space, rand() % sol_space);
+		reefs.push_back(pt);
+	}//for(pts) //cout << "\n";
+	return reefs;
+}
+
+
 
 struct MS {
 public:

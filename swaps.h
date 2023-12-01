@@ -2,11 +2,15 @@
 //#include <chrono>
 //#include <ctime>
 //#include <sstream>
+
 #include <fstream>
 
-
-//comment out when linked...
+//#include <iostream>
+//#include <random>
+//#include <vector>
 using namespace std;
+//comment out when linked...
+
 
 struct SAparams {
     int initial_temp;
@@ -45,7 +49,7 @@ string csvPrintSA(SAlog log, SAparams sa_params, string file_name, string c) {
 		}
 		file.close();
 	}
-	else cout << "Unable to open file";
+	else printf("Unable to open file");
 	return filename;
 }
 
@@ -83,7 +87,7 @@ int randSwapStopChoice(int size, int randomSeed = 12345) {
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 
-pair<vector<vector<int>>, double> random_d_in_Swap(TenderSoln tender, const vector<vector<double>> dMatrix, int iteration, bool swap_print = false) { // d_route = ; tours = d_tours in this cluster
+pair<vector<vector<int>>, double> random_d_in_Swap(TenderSoln* tender, const vector<vector<double>> dMatrix, int iteration, bool swap_print = false) { // d_route = ; tours = d_tours in this cluster
 
     // check if d_routes > 2
 
@@ -113,21 +117,32 @@ pair<vector<vector<int>>, double> random_d_in_Swap(TenderSoln tender, const vect
 }
 
 FullSoln IN_ClusterSwaps(FullSoln soln,  int iteration, bool print = false) {
-    int c = randSwapChoice(soln.msSoln->clustSoln->clusters.size(), iteration).first;    // generate swap pair of routes
-    pair<vector<vector<int>>, double> temp_route = random_d_in_Swap(soln.tenderSolns[c], soln.msSoln->clustSoln->clusters[c]->getdMatrix(c, make_pair(soln.msSoln->launchPts[c], soln.msSoln->launchPts[c + 1])), iteration); //, cluster.routes);
-    Cluster new_clust;            //drone_cluster_routes[c] =
-    new_clust.routes = temp_route.first;
+    vector<ClusterSoln*> clusters = soln.msSoln.clustSolns;
+    int c = randSwapChoice(clusters.size(), iteration).first;    // generate swap pair of routes
+    pair<Pt*, Pt*> launchPts = make_pair(soln.msSoln.launchPts[c], soln.msSoln.launchPts[c + 1]);
+    pair<vector<vector<int>>, double> temp_route = random_d_in_Swap(soln.tenderSolns[c], clusters[c]->getdMatrix(c, launchPts), iteration); //, cluster.routes);
+    TenderSoln new_clust(clusters[c], launchPts);            //drone_cluster_routes[c] =
+    // transform temp_route.first to vector<vector<Pt*>> routes
+
+    for (int d = 0; d < temp_route.first.size(); d++) {   // UPDATE ROUTES incl -1 and -2 nodes!
+        new_clust.routes[d].push_back(0);
+        for (int s = 0; s < temp_route.first[d].size(); s++) {
+            new_clust.routes[d].push_back(temp_route.first[d][s] + 1);//new_clust.routes[d].reef_stops.push_back(new_cluster.routes[d][s]);
+        }
+    }
+    
+    new_clust.routes = temp_route.first;        // vector<vector<Pt*>> <- vector<vector<int>> routes
     new_clust.route_dist = temp_route.second;
-    new_clust = droneWithinClusterGreedy(soln.msSoln->clustSoln->clusters[soln.clustOrder.first[c + 1] - 1]);       ///*vector<Reef_pt>& reefs, */
-    soln.msSoln->clustSoln->clusters[soln.clustOrder.first[c + 1] - 1] = new_clust;
+    new_clust = droneWithinClusterGreedy(clusters[soln.clustOrder.first[c + 1] - 1]);       ///*vector<Reef_pt>& reefs, */
+    clusters[soln.clustOrder.first[c + 1] - 1] = new_clust;
 
     /* PRINT ROUTES AND DISTS FOR EACH SUB - TOUR!! */
     if (print) {
-        cout << "\nOriginal route:\t" << soln.getTotalDist() << "\n";
-        for (const auto& route : soln.routes) { 
-            for (const auto& node : route) { 
+        printf("\nOriginal route:\t%d\n", soln.getTotalDist());
+        for (const auto& tender : soln.tenderSolns) { 
+            for (const auto& node : tender->routes) {
                 printf("\t%d", node); 
-            } cout << "\n"; 
+            } printf("\n"); 
         }
     }
     return soln;

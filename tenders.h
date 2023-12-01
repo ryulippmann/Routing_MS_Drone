@@ -16,7 +16,7 @@ int reefsVisited(const vector<Pt*>& reefs) {
 vector<vector<Pt*>> droneWithinClusterNearestNeighbour(const MSSoln* ms, const int c,
     bool csv_print = false) {
     const Problem& inst = ms->inst;
-    const ClusterSoln* cluster = ms->clustSolns[c];
+    const ClusterSoln* cluster = ms->clusters[c];
     pair<Pt*, Pt*> launchPts = make_pair(ms->launchPts[c], ms->launchPts[c + 1]);
     //int reefs_visit_count = reefsVisited(cluster->reefs);    // int of number of reefs visited
     int u = -1;                                          // initialise current reef index
@@ -51,12 +51,13 @@ vector<vector<Pt*>> droneWithinClusterNearestNeighbour(const MSSoln* ms, const i
             double min = DBL_MAX;                                       // initialise min dist as MAX
             int v = -1;                                                 // initialise index as -1
 
-            for (int w = 1; w < cluster->reefs.size()+2; w++) {
+            for (int w = 1; w < cluster->reefs.size()+1; w++) {
                 if (neighbours[w] < min && visited[w-1] == false /*&& cluster->reefs[w].id != -1 && cluster->reefs[w].id != -2*/) { // if closer unvisited reef:
                     v = w;                                              // update index
                     min = neighbours[v];                                // update min
                 }//if
             }//for
+
             /*cluster.drones[m].*/route_dist += min;                              // add dist travelled to route dist
             u = v;                                                      // Update u=v as new index of closest pt
             /*cluster->reefs[u].*/visited[u-1] = true;                                    // Mark u=v(new) as visited.
@@ -128,29 +129,29 @@ vector<vector<Pt*>> droneWithinClusterNearestNeighbour(const MSSoln* ms, const i
 //    return routes;
 //}
 
-vector<vector<Pt*>> greedyTenderCluster(TenderSoln* clustTendersoln, const vector<vector<double>> dMatrix, //const MSSoln* ms, /*vector<vector<Pt*>>& routes, */const int c,
+vector<vector<Pt*>> greedyTenderCluster(const TenderSoln* clustTendersoln, const vector<vector<double>> dMatrix, //const MSSoln* ms, /*vector<vector<Pt*>>& routes, */const int c,
     bool csv_print = false, bool print = false) {
     //const Problem* inst = ms->inst;
     // dMatrix includes launch/retrieve pts and free link back to launchpt
     //const vector<vector<double>> dMatrix = ms->clustSoln->clusters[c]->getdMatrix(c, make_pair(ms->launchPts[c], ms->launchPts[c + 1]));//[u];                        // for u vector in dMatrix
-    vector<vector<Pt*>>& routes = clustTendersoln->routes;
-    
+    vector<vector<Pt*>> routes = clustTendersoln->routes;
+    //vector<vector<Pt*>> routes_new;
     //int n = ms->clustSoln->clusters.size();//centroids.size();  // number of clusters accounted for in main file...
-    
     double gd_2opt_dists;
-    if (print) cout << "\n---- GREEDY M/S CLUSTERS ----\n";
+    int tenderCap = clustTendersoln->cluster->inst.tenderCap;
+    if (print) cout << "\n---- GREEDY TENDER CLUSTERS ----\n";
     for (int v = 0; v < clustTendersoln->routes.size(); v++) {      // iterate for each tender in cluster
-        vector<int> i_tour(dMatrix.size()/*init_solution.mothership.centroidMatrix.size()*/, 0);                         // ai_tour = city_index for each tour -> nearest neighbour
+        vector<int> i_tour;                 //(tenderCap/*init_solution.mothership.centroidMatrix.size()*/, 0);                         // ai_tour = city_index for each tour -> nearest neighbour
         //printf("%d\t", v);
-        for (int i = 0; i < dMatrix.size()/*init_solution.mothership.centroidMatrix.size()*/; i++) { 
+        for (auto &pt : routes[v]) {        //(int i = 0; i < tenderCap/*init_solution.mothership.centroidMatrix.size()*/; i++) {
             // return the index of stop in route list
-            i_tour[i] = i;//ms->clustSoln->clusters/*init_solution.clustOrder.first*/[i];
+            i_tour.push_back(findIndexByID(pt->ID, clustTendersoln->cluster->reefs, clustTendersoln->launchPts));              //ms->clustSoln->clusters/*init_solution.clustOrder.first*/[i];
         }//for(i=from_pts)
 
         pair<double, vector<int>> gd_out = gd_local_2opt_search(i_tour.size(), dMatrix, i_tour, false);      // args = (int ai_n, vector<vector<double>> &ad_dist, vector<int> &ai_tour, bool ab_full_nbrhd)
         gd_2opt_dists = gd_out.first;
-        vector<int> gd_route_id;
-        double route_dist = clustTendersoln->getTenderRouteDist(v)/*[i]*/;        
+        vector<int> gd_route_id = gd_out.second;
+        double route_dist = clustTendersoln->getTenderRouteDist(v);        
         if (print) {
             printf("Vehicle\t\tInitial\t\tGreedy 2-Opt\n");
             printf("\t\t%7.3f  \t%7.3f\t", route_dist, gd_2opt_dists);
@@ -159,14 +160,15 @@ vector<vector<Pt*>> greedyTenderCluster(TenderSoln* clustTendersoln, const vecto
         if (improvement > 0.0001 * route_dist) {                //if greedy solution is better than current
             if (print) printf("\t%.2f%%\tIMPROVEMENT\t", improvement * 100 / route_dist);
             route_dist = gd_2opt_dists;						 // update route dist
-
             vector<Pt*> route_new;
-            for (int i = 0; i < gd_route_id.size(); i++) {    // for every stop INDEX in Gd route
-                route_new.push_back(getPtByID(gd_route_id[i], routes[v]));
-			    clustTendersoln->routes[i] = clustTendersoln->routes[i];//gd_out.second;
+            vector<Pt*> reef_list = clustTendersoln->cluster->reefs;
+            reef_list.insert(reef_list.begin(), clustTendersoln->launchPts.first);
+            reef_list.push_back(clustTendersoln->launchPts.second);
+            for (int a : gd_route_id) {    // for every stop INDEX in Gd route
+                route_new.push_back(reef_list[a]);//getPtByID(gd_route_id[i], routes[v]));
 		    }
-            clustTendersoln->routes[v] = route_new;
-            
+            routes[v] = route_new;
+
             // vector<int> d = closeandOrientClusterLoop(gd_out, init_solution.mothership, init_solution.clustOrder);
             //init_solution.mothership.launch_stops = d;//UPDATE ROUTE LIST
             ////mothership.launch_stops = gd_out.second;//UPDATE ROUTE LIST
@@ -184,7 +186,7 @@ vector<vector<Pt*>> greedyTenderCluster(TenderSoln* clustTendersoln, const vecto
     //    printMSroute(init_solution.mothership, centroids);
     //    cout << "------------- ^^Gd M/S^^ --------------\n";
     //}
-    return routes/*init_solution.clustOrder*/;
+    return routes;//*init_solution.clustOrder*/;
 }
 
 

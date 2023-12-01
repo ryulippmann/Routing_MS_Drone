@@ -38,25 +38,27 @@ int main()
 	random_device rd;
 	mt19937 gen(0);
 	uniform_int_distribution<int> distribution(1, 10);		// Define the distribution for integers between 1 and 10 (inclusive)
-	for (int i = 0; i < 12; i++) {
-		int rnd_num_x = distribution(gen);						// Generate a random number
-		int rnd_num_y = distribution(gen);						// Generate a random number
-		reefPts.push_back(Pt(rnd_num_x, rnd_num_y));
-			cout << reefPts[i].ID << "\t(" << reefPts[i].x << ", " << reefPts[i].y << ")" << endl;
-	}
 
-	int numClust =3;
+	int numClust = 10;//3;
+	// depot must be first point initialised! ID = 0
 	Pt depot = Pt(0,0);
 	int numTenders = 2;
-	int tenderCap = 2;
+	int tenderCap = 5;//2;
 
-	Problem inst(reefPts, numClust, depot, numTenders, tenderCap);		// create instance of problem
+	//for (int i = 0; i < 12; i++) {
+	//	int rnd_num_x = distribution(gen);						// Generate a random number
+	//	int rnd_num_y = distribution(gen);						// Generate a random number
+	//	reefPts.push_back(Pt(rnd_num_x, rnd_num_y));
+	//		cout << reefPts[i].ID << "\t(" << reefPts[i].x << ", " << reefPts[i].y << ")" << endl;
+	//}
+	//Problem inst(reefPts, numClust, depot, numTenders, tenderCap);		// create instance of problem
+	Problem inst(initReefs(), numClust, depot, numTenders, tenderCap);
 	///////////////// Problem Initialised /////////////////
 	
 	////////////   Cluster Soln Construction - function out   ////////////
 	//\\//\\//\\//\\// Create clusters \\//\\//\\//\\//
 	vector<ClusterSoln*> clusters = kMeansConstrained(
-		inst, 1000, false);
+		inst, /*1000*/100000, false);
 	
 	//ClusterSoln clustSoln(clusters);
 	// print clusters
@@ -75,44 +77,51 @@ int main()
 	//\\//\\//\\//\\//   MS Soln Construction   //\\//\\//\\//\\//
 	MSSoln msSoln(inst, clusters);
 	//\\//\\//\\// clustOrder for MS route solution \\//\\//\\//
-	msSoln.clustSolns = clusterCentroidNearestNeighbour(inst, clusters);
-	greedyMSCluster(inst, msSoln);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
-	// ^^ unconfirmed if this is working correctly ^^
+	msSoln.clusters = clusterCentroidNearestNeighbour(inst, clusters);		// clusters ordered by NN
+	// print MSSoln total route dist
+	setLaunchPts(inst, msSoln);
+	cout << "\n" << msSoln.getDist() << "\n";
 
-	vector<vector<double>> dMatrix_launchpt = setLaunchPts(inst, msSoln);			// Set MS Launchpts: msSoln.launchPts
+	greedyMSCluster(inst, msSoln);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
+	// print MSSoln total route dist
+	setLaunchPts(inst, msSoln);
+	cout << "\n" << msSoln.getDist() << "\n";
+
+	//vector<vector<double>> dMatrix_launchpt = setLaunchPts(inst, msSoln);			// Set MS Launchpts: msSoln.launchPts
 	
 	double msDist = msSoln.getDist();
-	vector<Pt*> ms_route = msSoln.getRoute();
+	vector<Pt*> ms_launch_route = msSoln.getRoute();
 	//\\//\\//\\//\\//   MS Soln Initialised   //\\//\\//\\//\\//
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 	//\\//\\//\\//\\// TenderSoln Construction //\\//\\//\\//\\//
-	vector<TenderSoln*> tenderSolns;
+	vector<TenderSoln> tenderSolns;
 		// for each cluster
 	for (int c = 0; c < clusters.size(); c++)	{										// for each cluster
 		pair<Pt*, Pt*> launchPts = make_pair(msSoln.launchPts[c], msSoln.launchPts[c + 1]);		// launchPts for cluster
-		vector<vector<double>> clusterMatrix = msSoln.clustSolns[c]->getdMatrix(c, launchPts);	// distance matrix for cluster
-		Pt centroid = clusters[c]->getCentroid();										// centroid for cluster	
-		printf("\nCluster %d\tcentroid: (%.2f, %.2f)\n", centroid.ID, centroid.x, centroid.y);
+		vector<vector<double>> clusterMatrix = msSoln.clusters[c]->getdMatrix(c, launchPts);	// distance matrix for cluster
+		Pt centroid = msSoln.clusters[c]->getCentroid();										// centroid for cluster	
+		printf("\nCluster %d\tcentroid: (%.2f, %.2f)\n", msSoln.clusters[c]->ID, centroid.x, centroid.y);
 		// print distance matrix
 		for (int i = 0; i < clusterMatrix.size(); i++) { for (int j = 0; j < clusterMatrix[i].size(); j++) { printf("%.2f\t", clusterMatrix[i][j]); } printf("\n"); } printf("\n");
 		//\\//\\//\\//\\// TenderSoln Initialised //\\//\\//\\//\\//
 		// Tendersoln Nearest Neighbour
-		TenderSoln clustTendersoln (clusters[c], droneWithinClusterNearestNeighbour(&msSoln, c), 
-			make_pair(msSoln.launchPts[c], msSoln.launchPts[c + 1]) );		//vector<vector<Pt*>> cluster_routes = droneWithinClusterNearestNeighbour(&msSoln, c);		
+		TenderSoln tenderSoln (msSoln.clusters[c], 
+			droneWithinClusterNearestNeighbour(&msSoln, c),
+			launchPts);		//vector<vector<Pt*>> cluster_routes = droneWithinClusterNearestNeighbour(&msSoln, c);		
 		
 		// Tendersoln Greedy 2-Opt update
-		clustTendersoln.routes = greedyTenderCluster(&clustTendersoln, msSoln.clustSolns[c]->getdMatrix(c, make_pair(msSoln.launchPts[c], msSoln.launchPts[c + 1])));
+		tenderSoln.routes = greedyTenderCluster(&tenderSoln, clusterMatrix);
 
-		tenderSolns.push_back(&clustTendersoln);
+		printf("\nERROR HERE - ADDING tenderSoln to tenderSolns...\n");
+		tenderSolns.emplace_back(tenderSoln);
 		// print routes
-		for (int i = 0; i < clustTendersoln.routes.size(); i++) {
-			printf("Route %d:\n", i);
-			for (int j = 0; j < clustTendersoln.routes[i].size(); j++) {
-				printf("%d\t(%.2f, %.2f)\n", clustTendersoln.routes[i][j]->ID, clustTendersoln.routes[i][j]->x, clustTendersoln.routes[i][j]->y);
+		for (int i = 0; i < tenderSoln.routes.size(); i++) { printf("Route %d:\n", i);
+			for (int j = 0; j < tenderSoln.routes[i].size(); j++) {
+				printf("%d\t(%.2f, %.2f)\n", tenderSoln.routes[i][j]->ID, tenderSoln.routes[i][j]->x, tenderSoln.routes[i][j]->y);
 			}// for each node in route
 		}// for each route
 	}// for each cluster
-	FullSoln gd(&msSoln, tenderSolns);
+	FullSoln gd(msSoln, tenderSolns);
 	////////////////////////////////
 
 	// Tendersoln Swaps

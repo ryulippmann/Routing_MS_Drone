@@ -103,12 +103,14 @@ double calcRouteDist(vector<vector<Pt*>> routes) {
 }
 
 // Function to find index of Pt in vector by Pt ID
-int findIndexByID(int targetID, const vector<Pt*>& myList) {
+int findIndexByID(int targetID, const vector<Pt*>& myList, pair<Pt*, Pt*> launchPts = make_pair(nullptr, nullptr)) {
     for (int index = 0; index < myList.size(); index++) {
-        if (myList[index]->ID == targetID) {
-			return index+1;
-		}
+        if (myList[index]->ID == targetID) { return index+1; }
 	}
+    if (launchPts.first->ID == targetID) { return 0; }
+    else if (launchPts.second->ID == targetID) { return myList.size() + 1; }
+	else throw invalid_argument("Pt ID not found");
+	//
 	return -1;  // Return a special value (e.g., -1) to indicate that the ID was not found
 }
 
@@ -119,7 +121,10 @@ Pt* getPtByID(int targetID, vector<Pt*> route) {
             return Pt;
         }
     }
-    return nullptr; // ID not found
+    if (targetID == 0)  return route[0];
+	else if (targetID == route.size() - 1) return route.back();
+	else throw invalid_argument("Pt ID not found");
+    //return nullptr; // ID not found
 }
 //double getRouteDist(vector<Pt*> route, vector<vector<double>> dMatrix, Cluster* cluster) {
 //    double summing_route_dist = 0;

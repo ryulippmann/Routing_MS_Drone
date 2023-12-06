@@ -3,6 +3,9 @@
 using namespace std;
 
 #include <iostream>
+#include <vector>
+#include <cmath>
+#include <utility>
 
 #include "class_prob.h"
 //#include "MSSoln.h"
@@ -11,7 +14,7 @@ using namespace std;
 #include "cluster.h"
 #include "mothership.h"
 #include "tenders.h"
-//#include "swaps.h"
+#include "swaps.h"
 
 
 int Pt::count = 0;
@@ -26,7 +29,7 @@ int FullSoln::count = 0;
 
 int main()
 {
-    cout << "Hello World!\n";
+	std::cout << "Hello World!\n";
 	vector<Pt> reefPts;
  //   for (int i = 0; i < 12; i++) {
 	//	ReefPt rp(i+1,0);
@@ -80,12 +83,12 @@ int main()
 	msSoln.clusters = clusterCentroidNearestNeighbour(inst, clusters);		// clusters ordered by NN
 	// print MSSoln total route dist
 	setLaunchPts(inst, msSoln);
-	cout << "\n" << msSoln.getDist() << "\n";
+	std::cout << "\n" << msSoln.getDist() << "\n";
 
 	greedyMSCluster(inst, msSoln);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
 	// print MSSoln total route dist
 	setLaunchPts(inst, msSoln);
-	cout << "\n" << msSoln.getDist() << "\n";
+	std::cout << "\n" << msSoln.getDist() << "\n";
 
 	//vector<vector<double>> dMatrix_launchpt = setLaunchPts(inst, msSoln);			// Set MS Launchpts: msSoln.launchPts
 	
@@ -98,7 +101,7 @@ int main()
 		// for each cluster
 	for (int c = 0; c < clusters.size(); c++)	{										// for each cluster
 		pair<Pt*, Pt*> launchPts = make_pair(msSoln.launchPts[c], msSoln.launchPts[c + 1]);		// launchPts for cluster
-		vector<vector<double>> clusterMatrix = msSoln.clusters[c]->getdMatrix(c, launchPts);	// distance matrix for cluster
+		vector<vector<double>> clusterMatrix = msSoln.clusters[c]->getdMatrix(launchPts);	// distance matrix for cluster
 		Pt centroid = msSoln.clusters[c]->getCentroid();										// centroid for cluster	
 		printf("\nCluster %d\tcentroid: (%.2f, %.2f)\n", msSoln.clusters[c]->ID, centroid.x, centroid.y);
 		// print distance matrix
@@ -121,15 +124,20 @@ int main()
 			}// for each node in route
 		}// for each route
 	}// for each cluster
-	FullSoln gd(msSoln, tenderSolns);
+	vector<TenderSoln*> ptr_tenderSolns;
+	for (const auto& soln : tenderSolns) {
+		ptr_tenderSolns.push_back(new TenderSoln(soln)); // Assuming TenderSoln has a copy constructor
+	}
+	FullSoln gd(&msSoln, ptr_tenderSolns);
 	////////////////////////////////
 
 	// Tendersoln Swaps
 
-	// Tendersoln Swaps: Out
-	//string filename = SwapFunction(gd, 0);
-
 	// Tendersoln Swaps: In
+	bool in_out = 1;
+	string filename = SwapFunction(gd, in_out);
+
+	// Tendersoln Swaps: Out
 
 
 	////////////////////////////////

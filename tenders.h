@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <cmath>
+using namespace std;
 
 // RETURN reefs visited
 int reefsVisited(const vector<Pt*>& reefs) { 
@@ -26,7 +27,7 @@ vector<vector<Pt*>> droneWithinClusterNearestNeighbour(const MSSoln* ms, const i
     if (printStops) { cout << "\n\nNEAREST NEIGHBOUR\n"; }
     vector<vector<Pt*>> routes(inst.tenders.size(), vector<Pt*>(inst.tenderCap, nullptr)); // create routes to save in TenderSoln.routes
     vector<bool> visited(cluster->reefs.size(), false);
-    const vector<vector<double>> dMatrix = cluster->getdMatrix(c, make_pair(ms->launchPts[c], ms->launchPts[c+1]));//[u];                        // for u vector in dMatrix
+    const vector<vector<double>> dMatrix = cluster->getdMatrix(make_pair(ms->launchPts[c], ms->launchPts[c+1]));//[u];                        // for u vector in dMatrix
 
     for (int m = 0; m < inst.tenders.size() /*&& reefs_visit_count < cluster->reefs.size() - 2*/; m++) {     //FOR EACH VEHICLE!!
         vector<Pt*> row;                            // create row for routes

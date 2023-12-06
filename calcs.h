@@ -2,6 +2,7 @@
 #include <vector>
 //#include <iostream>
 #include <cmath>
+#include <random>
 using namespace std;
 
 //#ifndef class_def_h
@@ -10,7 +11,6 @@ using namespace std;
 //struct Pt;
 //
 //#endif // !class_def_h
-
 
 double sum(vector<double>& vec_to_sum) {
     double sum_of_elems = 0.0;
@@ -74,8 +74,6 @@ vector<vector<double>> centroidMatrix(Problem& inst, vector<Pt*> reefs) {
     return centroidMatrix;
 }
 
-
-
 double CalcCentroidDist(const vector<Pt> cluster, const Pt centroid) {
     double summing_centroid_dist = 0;
     for (int i = 0; i < cluster.size(); ++i) {  // i = node id in cluster
@@ -133,3 +131,13 @@ Pt* getPtByID(int targetID, vector<Pt*> route) {
 //    }
 //    return summing_route_dist;
 //}
+
+// Helper function for random number generation
+int getRandomNumber(int size, int randomSeed) {
+    mt19937 gen(randomSeed);
+    //// Seed the random number generator
+    //random_device rd;
+    //mt19937 gen(rd());
+    uniform_int_distribution<int> dist(0, size - 1);
+    return dist(gen);
+}

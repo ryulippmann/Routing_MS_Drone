@@ -2,10 +2,9 @@
 //#include "class_def.h"
 //#include "calcs.h"
 
-#include <iostream>
+
 #include <vector>
 #include <cmath>
-#include <random>
 #include <functional>
 
 void randomSwapClusters(vector<Pt*>& clust_a, vector<Pt*>& clust_b, const pair<double, double> dists, pair<Pt, Pt> centroids, const int randomSeed, bool swap_print = false) {

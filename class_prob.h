@@ -1,9 +1,5 @@
 #pragma once
 using namespace std;
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <utility>
 //#include "MSSoln.h"
 //class MSSoln;
 // 
@@ -60,8 +56,6 @@ vector<Pt> initReefs(int no_pts=100, int sol_space = 100) {
 	}//for(pts) //cout << "\n";
 	return reefs;
 }
-
-
 
 struct MS {
 public:
@@ -129,7 +123,7 @@ public:
 	}
 	int getnumClusters() const { return numClust; }
 	int getnumTenders() const { return numTenders; }
-	vector<vector<double>> getDMatrix(vector<Pt> reefs, Pt depot) {
+	vector<vector<double>> getDMatrix(/*vector<Pt> reefs, Pt depot*/) {
 		vector<vector<double>> dMatrix;
 		vector<double> depotDists;
 		depotDists.push_back(0.0);					// depot to itself = 0
@@ -151,7 +145,7 @@ public:
 		}
 		return dMatrix;
 	}
-	const vector<vector<double>> dMatrix = this->getDMatrix(reefs, depot);
+	//const vector<vector<double>> dMatrix = this->getDMatrix(reefs, depot);
 	const vector<Pt> reefs;
 
 	const MS ms = this->setMS(numClust, depot);

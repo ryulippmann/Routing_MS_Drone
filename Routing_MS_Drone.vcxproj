@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClInclude Include="calcs.h" />
     <ClInclude Include="class_prob.h" />
+    <ClInclude Include="class_SA.h" />
     <ClInclude Include="class_soln.h" />
     <ClInclude Include="cluster.h" />
     <ClInclude Include="mothership.h" />

@@ -246,3 +246,40 @@ FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, bool print = false) {
     return soln;
 }
 
+
+
+
+
+
+
+FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, bool print = false) {
+    int c = randChoice(soln.msSoln->clusters.size(), iteration);    // generate random route to swap within
+    //pair<vector<vector<int>>, double> temp_route = random_d_in_Swap(soln.tenderSolns[c], clusters[c]->getdMatrix(launchPts), iteration); //, cluster.routes);
+
+    // DONT CREATE COPY, as soln is NOT reference
+    //TenderSoln* new_clust = soln.tenderSolns[c];
+    //soln.tenderSolns[c]->routes = 
+    random_d_in_Swap(*soln.tenderSolns[c], iteration);
+
+    ClusterSoln* cluster = soln.msSoln->clusters[c];
+    pair<Pt*, Pt*> launchPts = make_pair(soln.msSoln->launchPts[c], soln.msSoln->launchPts[c + 1]);
+    vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
+
+    vector<vector<Pt*>> routes = greedyTenderCluster(soln.tenderSolns[c], dMatrix);//clusters[soln.clustOrder.first[c + 1] - 1]);       ///*vector<Reef_pt>& reefs, */
+    // vector<vector<Pt*>> greedyTenderCluster(const TenderSoln* clustTendersoln, const vector<vector<double>> dMatrix
+    //clusters[soln.clustOrder.first[c + 1] - 1] = new_clust;
+    FullSoln new_soln = FullSoln(soln, routes, c);
+    /* PRINT ROUTES AND DISTS FOR EACH SUB - TOUR!! */
+    if (print) {
+        printf("\nOriginal route:\t%d\n", soln.getTotalDist());
+        for (const auto& tender : new_soln.tenderSolns) {
+            for (const auto& route : tender->routes) {
+                for (const auto& node : route) {
+                    printf("\t%d ->", node->ID);
+                } printf("\n");         //}printf("\t%d", node); 
+            } printf("\n");
+        }
+    }
+    return new_soln;
+}
+

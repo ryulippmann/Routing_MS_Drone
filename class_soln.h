@@ -1,7 +1,6 @@
 #pragma once
 
 ////////////////////////////////////////////////////////////////////////////
-
 //struct Cluster {
 //public:
 //	Cluster(vector<Pt*> reefs/*, Pt start, Pt end*/) : ID(count++), reefs(reefs)/*, start(start), end(end)*/ {}
@@ -58,13 +57,12 @@
 //private:
 //	static int count;
 //};
-
 ////////////////////////////////////////////////////////////////////////////
 
 struct ClusterSoln {
 public:
 	ClusterSoln(const Problem& inst) : ID(count++), inst(inst) {}
-	ClusterSoln(const Problem& inst, const vector<Pt*> reefs) : ID(count++), inst(inst), reefs(reefs) {}
+	ClusterSoln(const Problem& inst, /*const*/ vector<Pt*> reefs) : ID(count++), inst(inst), reefs(reefs) {}
 	//ClusterSoln(const vector<Pt*> reefs, const vector<vector<double>>& centroidMatrix) :
 	//	ID(count++), reefs(reefs), centroidMatrix(centroidMatrix) {}
 	//ClusterSoln(const vector<Cluster*>& clusters) : ID(count++), clusters(clusters) {}
@@ -73,7 +71,7 @@ public:
 
 	const int ID;
 	const Problem& inst;
-	const vector<Pt*> reefs;
+	/*const*/ vector<Pt*> reefs;
 
 	vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, const Pt depot) {
 		vector<vector<double>> centroidMatrix;
@@ -171,17 +169,15 @@ private:
 
 struct MSSoln {
 public:
-	//MSSoln(const Problem& inst) : ID(count++), inst(inst) {}
 	MSSoln(const Problem& inst, vector<ClusterSoln*> clustSolns) :
 		ID(count++), inst(inst), clusters(clustSolns), launchPts(clustSolns.size() + 1, nullptr) {}
+	//MSSoln(const Problem& inst) : ID(count++), inst(inst) {}
 	//MSSoln(const Problem& inst, vector<Cluster*> clustOrder/*, vector<Route_MS*> routes*/) :
 	//	ID(count++), inst(inst), clustOrder(clustOrder)/*, routes(routes)*/{}
 
 	const int ID;
 	const Problem& inst;				// problem instance -> pull out of MSSoln, and up to FullSoln
 	vector<ClusterSoln*> clusters;
-
-	//vector<Cluster*> clustOrder;		// ordered clusters		////vector<int> clustOrder;		// ordered clusters by ID
 	vector<Pt*> launchPts;
 
 	//check this works correctly between correct points...
@@ -231,16 +227,11 @@ public:
 
 	// warning: launchPts need to be updated before this is called
 	double getDist() const {
-		double dist = //calculatePtDistance(inst.ms.depot, clustOrder[0]->getCentroid());
-			sqrt(pow(inst.ms.depot.x - launchPts[0]->x, 2) + pow(inst.ms.depot.y - launchPts[0]->y, 2));
+		double dist = sqrt(pow(inst.ms.depot.x - launchPts[0]->x, 2) + pow(inst.ms.depot.y - launchPts[0]->y, 2));
 		for (int c = 0; c < clusters.size(); c++) {
 			dist += sqrt(pow(launchPts[c]->x - launchPts[c + 1]->x, 2) + pow(launchPts[c]->y - launchPts[c + 1]->y, 2));
-			//calculatePtDistance(
-			//	clustOrder[c]->getCentroid(), 
-			//	clustOrder[c+1]->getCentroid()
-			//);
 		}
-		dist += sqrt(pow(inst.ms.depot.x - launchPts[clusters.size()]->x, 2) + pow(inst.ms.depot.y - launchPts[clusters.size()]->y, 2));//calculatePtDistance(inst.ms.depot, clustOrder[clustOrder.size()-1]->getCentroid());
+		dist += sqrt(pow(inst.ms.depot.x - launchPts[clusters.size()]->x, 2) + pow(inst.ms.depot.y - launchPts[clusters.size()]->y, 2));
 		//sqrt(pow(inst.ms.depot.x - launchPts[clustOrder.size() - 1]->x, 2) + pow(inst.ms.depot.y - launchPts[clustOrder.size() - 1]->y, 2));
 		return dist;
 	}
@@ -254,56 +245,43 @@ public:
 		route.push_back(new Pt(inst.ms.depot)); // Assuming Pt has a copy/move constructor
 		return route;
 	}
-	//Cluster& getCluster(int ID) {
-	//	for (auto& clust : clustOrder) {
-	//		if (clust->getID() == ID) {
-	//			return *clust;
-	//		}
-	//	}
-	//}
 
-	//int getClusterIndex(Cluster& cluster) {
-	//	return cluster.getID() - 1;
-	//}
 private:
 	static int count;
 };
 
-struct TenderSoln {
-	//typedef vector<Pt*> Route_Tender;
+struct TenderSoln {		//typedef vector<Pt*> Route_Tender;
 public:
-	//TenderSoln() : ID(count++), cluster(cluster), greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
 	TenderSoln(ClusterSoln* cluster) : ID(count++), cluster(cluster) {}
-	//TenderSoln(ClusterSoln* cluster, vector<Route_Tender>& routes) :
-	//	ID(count++), cluster(cluster), routes(routes) {}//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
-	//TenderSoln(ClusterSoln* cluster, pair<Pt*, Pt*> launchPts) :
-	//	ID(count++), cluster(cluster), launchPts(launchPts) {}//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
 	TenderSoln(ClusterSoln* cluster, vector<vector<Pt*>> routes, pair<Pt*, Pt*> launchPts) :
 		ID(count++), cluster(cluster), routes(routes), launchPts(launchPts) {}//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
-	//TenderSoln(Cluster& cluster, vector<Route_Tender> routes, bool greedy, bool without_clust, bool within_clust, bool greedy_again) :
-	//	ID(count++), cluster(cluster), routes(routes), greedy(greedy), without_clust(without_clust), within_clust(within_clust), greedy_again(greedy_again) {}
 
 	const int ID;
-
 	ClusterSoln* cluster;
 	vector<vector<Pt*>> routes;
 	pair<Pt*, Pt*> launchPts;
 
+	// does this include launchPts in route?! - check!
 	double getTenderRouteDist(int c = -1) const {
 		vector<Pt*> route = routes[c];
 		//route.insert(route.begin(), launchPts.first);	// Insert launchPts.first at beginning of route vector
 		//route.push_back(launchPts.second);				// Push launchPts.second at end of route vector
 		//printf("%d\t(%.2f, %.2f)\n", route[c]->ID, route[c]->x, route[c]->y);
-
 		double route_dist = 0;
 		vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
-		//vector<Pt*> pt_list = cluster->reefs;
-		//pt_list.insert(pt_list.begin(), launchPts.first);
-		//pt_list.push_back(launchPts.second);
 		for (int i = 0; i < route.size() - 1; ++i) {
 			route_dist += dMatrix[findIndexByID(route[i]->ID, route)][findIndexByID(route[i + 1]->ID, route)];
 		}
-		//route_dist = summing_route_dist;//getRouteDist(route, cluster->getdMatrix(c, launchPts), cluster));
+		return route_dist;
+	}
+	double getTenderRouteDist(vector<Pt*> route) const {
+		//vector<Pt*> route = routes[c];
+		double route_dist = 0;
+		//vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
+		for (int i = 0; i < route.size() - 1; ++i) {
+			route_dist += calculatePtDistance(route[i], route[i + 1]);
+			//route_dist += dMatrix[findIndexByID(route[i]->ID, cluster->reefs, launchPts)][findIndexByID(route[i + 1]->ID, cluster->reefs, launchPts)];
+		}
 		return route_dist;
 	}
 
@@ -424,22 +402,18 @@ public:
 	FullSoln(const MSSoln* msSoln, vector<TenderSoln*>& tenderSolns) :
 		ID(count++), msSoln(msSoln), tenderSolns(tenderSolns),
 		greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
-
 	FullSoln(const MSSoln* msSoln) :
 		ID(count++), msSoln(msSoln),
 		greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
-
 	// Copy constructor
 	FullSoln(const FullSoln& other) :
 		ID(count++), msSoln(new MSSoln(*other.msSoln)), // Deep copy
 		tenderSolns(), greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again) {
-
 		for (auto& tendersoln : other.tenderSolns) {
 			this->tenderSolns.push_back(new TenderSoln(*tendersoln));
 		}
 	}
-
-	// Copy constructor with additional routes parameter
+	// IN_SWAPS: Copy constructor with additional routes parameter
 	FullSoln(const FullSoln& other, const vector<vector<Pt*>>& routes, int c) :
 		ID(count++), msSoln(new MSSoln(*other.msSoln)), // Deep copy
 		tenderSolns(), greedy(other.greedy), without_clust(other.without_clust),
@@ -448,7 +422,7 @@ public:
 		// Copy new TenderSoln objects with updated routes
 		for (int i = 0; i < other.tenderSolns.size(); ++i) {
 			// Ensure the routes vector is not out of bounds
-			if (i == c) {  
+			if (i == c) {
 				// Modify the route for the specified index (c)
 				TenderSoln* modifiedTenderSoln = new TenderSoln(*other.tenderSolns[i]);
 				modifiedTenderSoln->routes = routes;
@@ -460,7 +434,32 @@ public:
 			}
 		}
 	}
+	// OUT_SWAPS: Copy constructor with additional routes parameters
+	FullSoln(const FullSoln& other, const pair <vector<vector<Pt*>>, vector<vector<Pt*>>>& routes, pair<int, int> c) :
+		ID(count++), msSoln(new MSSoln(*other.msSoln)), // Deep copy - UPDATE based on TenderSoln!
+		tenderSolns(), greedy(other.greedy), without_clust(other.without_clust),
+		within_clust(other.within_clust), greedy_again(other.greedy_again) {
 
+		// Copy new TenderSoln objects with updated routes
+		for (int i = 0; i < other.tenderSolns.size(); ++i) {
+			if (i == c.first) {
+				// Modify the route for the specified index (c)
+				TenderSoln* modifiedTenderSoln = new TenderSoln(*other.tenderSolns[i]);
+				modifiedTenderSoln->routes = routes.first;
+				this->tenderSolns.push_back(modifiedTenderSoln);
+			}
+			else if (i == c.second) {
+				// Modify the route for the specified index (c)
+				TenderSoln* modifiedTenderSoln = new TenderSoln(*other.tenderSolns[i]);
+				modifiedTenderSoln->routes = routes.second;
+				this->tenderSolns.push_back(modifiedTenderSoln);
+			}
+			else {
+				// Use the original route if no replacement is provided
+				this->tenderSolns.push_back(new TenderSoln(*other.tenderSolns[i]));
+			}
+		}
+	}
 	// Copy assignment operator
 	FullSoln& operator=(const FullSoln& other) {
 		if (this != &other) {
@@ -495,10 +494,13 @@ public:
 	bool within_clust;
 	bool greedy_again;
 
+	// Total dist = ms + sum(tender)
 	double getTotalDist() const {
 		double dist = msSoln->getDist();
 		for (auto& tenderSoln : tenderSolns) {
-			dist += tenderSoln->getTenderRouteDist();
+			for (auto& route : tenderSoln->routes) {
+				dist += tenderSoln->getTenderRouteDist(route);
+			}
 		}
 		return dist;
 	}

@@ -7,6 +7,16 @@ using namespace std;
 #include <random>
 
 #include "class_prob.h"
+int numClust = 10;//3;//
+Pt depot = Pt(0, 0);		// depot must be first point initialised! ID = 0
+int numTenders = 2;
+int tenderCap = 5;//2;//
+int no_pts = 100;
+//if (numClust * numTenders * tenderCap != no_pts) throw invalid_argument("numClust * numTenders * tenderCap != no_pts");
+// create instance of problem
+const Problem inst(initReefs(no_pts), numClust, depot, numTenders, tenderCap);
+///////////////// Problem Initialised /////////////////
+
 #include "calcs.h"
 #include "class_soln.h"
 #include "cluster.h"
@@ -23,33 +33,24 @@ int MSSoln::count = 0;
 int TenderSoln::count = 0;
 int FullSoln::count = 0;
 
+vector<Pt> reefPts;
+//for (int i = 0; i < 12; i++) {
+//	ReefPt rp(i+1,0);
+//	reefPts.push_back(rp);
+//	cout << rp.getID() << "\t(" << rp.getXY().first << ", " << rp.getXY().second << ")" << endl;
+//}
+
+random_device rd;
+mt19937 gen(0);
+uniform_int_distribution<int> distribution(1, 10);		// Define the distribution for integers between 1 and 10 (inclusive)
+
 int main()
 {
 	//cout << "Hello World!\n";
-	vector<Pt> reefPts;
-	//for (int i = 0; i < 12; i++) {
-	//	ReefPt rp(i+1,0);
-	//	reefPts.push_back(rp);
-	//	cout << rp.getID() << "\t(" << rp.getXY().first << ", " << rp.getXY().second << ")" << endl;
-	//}
-
-	random_device rd;
-	mt19937 gen(0);
-	uniform_int_distribution<int> distribution(1, 10);		// Define the distribution for integers between 1 and 10 (inclusive)
-
-	int numClust = 10;//3;//
-	Pt depot = Pt(0,0);		// depot must be first point initialised! ID = 0
-	int numTenders = 2;
-	int tenderCap = 5;//2;//
-	int no_pts = 100;
-	if (numClust * numTenders * tenderCap != no_pts) throw invalid_argument("numClust * numTenders * tenderCap != no_pts");
-	// create instance of problem
-	Problem inst(initReefs(no_pts), numClust, depot, numTenders, tenderCap);
-	///////////////// Problem Initialised /////////////////
 	
 	////////////   Cluster Soln Construction - function out   ////////////
 	//\\//\\//\\//\\// Create clusters \\//\\//\\//\\//
-	vector<ClusterSoln*> clusters = kMeansConstrained(inst, /*1000*/100000, false);
+	vector<ClusterSoln*> clusters = kMeansConstrained(/*1000*/100000, false);
 	//\\//\\//\\//\\// Clusters created \\//\\//\\//\\//
 	// PRINT clusters //
 	for (int i = 0; i < clusters.size(); i++) {
@@ -62,16 +63,16 @@ int main()
 	//\\//\\//\\//\\// Cluster Soln Initialised //\\//\\//\\//\\//
 	
 	//\\//\\//\\//\\//   MS Soln Construction   //\\//\\//\\//\\//
-	MSSoln msSoln(inst, clusters);
+	MSSoln msSoln(clusters);
 	//\\//\\//\\// clustOrder for MS route solution \\//\\//\\//
-	msSoln.clusters = clusterCentroidNearestNeighbour(inst, clusters);		// clusters ordered by NN
+	msSoln.clusters = clusterCentroidNearestNeighbour(clusters);		// clusters ordered by NN
 	// print MSSoln total route dist
-	setLaunchPts(inst, msSoln);
+	setLaunchPts(msSoln);
 	printf("\n%.2f\n", msSoln.getDist());
 
-	greedyMSCluster(inst, msSoln);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
+	greedyMSCluster(msSoln);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
 	// print MSSoln total route dist
-	setLaunchPts(inst, msSoln);
+	setLaunchPts(msSoln);
 	printf("\n%.2f\n", msSoln.getDist());
 	
 	double msDist = msSoln.getDist();
@@ -89,8 +90,9 @@ int main()
 		for (int i = 0; i < clusterMatrix.size(); i++) { for (int j = 0; j < clusterMatrix[i].size(); j++) { printf("%.2f\t", clusterMatrix[i][j]); } printf("\n"); } printf("\n");
 		//\\//\\//\\//\\// TenderSoln Initialised //\\//\\//\\//\\//
 		// Tendersoln Nearest Neighbour
-		TenderSoln tenderSoln (msSoln.clusters[c], 
-			TenderWithinClusterNearestNeighbour(&msSoln, c),
+		vector<vector<Pt*>> tenderRoutes = TenderWithinClusterNearestNeighbour(msSoln, c);
+		TenderSoln tenderSoln (*msSoln.clusters[c],
+			tenderRoutes,//TenderWithinClusterNearestNeighbour(msSoln, c),
 			launchPts);		
 		// Tendersoln Greedy 2-Opt update
 		tenderSoln.routes = greedyTenderCluster(tenderSoln, clusterMatrix);
@@ -108,7 +110,7 @@ int main()
 	for (const auto& soln : tenderSolns) {
 		ptr_tenderSolns.push_back(new TenderSoln(soln)); // Assuming TenderSoln has a copy constructor
 	}
-	FullSoln gd(&msSoln, ptr_tenderSolns);
+	FullSoln gd(msSoln, ptr_tenderSolns);
 	////////////////////////////////
 	printf("\nGd Dist: \t%.2f", gd.getTotalDist());
 	// Tendersoln Swaps

@@ -8,7 +8,6 @@ using namespace std;
 //#ifndef calcs_h
 //#define calcs_h
 
-//#include "calcs.h"
 
 //struct Pt {
 //public:

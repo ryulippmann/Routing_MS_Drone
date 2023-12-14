@@ -7,12 +7,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Routing_MS_Drone", "Routing
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug_alt|x64 = Debug_alt|x64
+		Debug_alt|x86 = Debug_alt|x86
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{701830F7-94E3-4B46-9B55-00858EACF1D9}.Debug_alt|x64.ActiveCfg = Debug_alt|x64
+		{701830F7-94E3-4B46-9B55-00858EACF1D9}.Debug_alt|x64.Build.0 = Debug_alt|x64
+		{701830F7-94E3-4B46-9B55-00858EACF1D9}.Debug_alt|x86.ActiveCfg = Debug_alt|Win32
+		{701830F7-94E3-4B46-9B55-00858EACF1D9}.Debug_alt|x86.Build.0 = Debug_alt|Win32
 		{701830F7-94E3-4B46-9B55-00858EACF1D9}.Debug|x64.ActiveCfg = Debug|x64
 		{701830F7-94E3-4B46-9B55-00858EACF1D9}.Debug|x64.Build.0 = Debug|x64
 		{701830F7-94E3-4B46-9B55-00858EACF1D9}.Debug|x86.ActiveCfg = Debug|Win32

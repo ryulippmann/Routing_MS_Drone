@@ -81,8 +81,8 @@ pair<TenderSoln, TenderSoln> random_d_out_Swap(pair<TenderSoln, TenderSoln> tend
     if (to_stop == 0 || to_stop > tenders.second.routes[s.second].size() - 3) { throw runtime_error("Error: Invalid to_stop chosen"); }
     // ^^ this only true if tender route contains launchpts - this is to safeguard them being swapped...
 
-    swap(tenders.first.cluster->reefs[findIndexByID(tenders.first.routes[s.first][from_stop]->ID, tenders.first.cluster->reefs)-1],
-        tenders.second.cluster->reefs[findIndexByID(tenders.second.routes[s.second][to_stop]->ID, tenders.second.cluster->reefs)-1]);
+    swap(tenders.first.cluster.reefs[findIndexByID(tenders.first.routes[s.first][from_stop]->ID, tenders.first.cluster.reefs)-1],
+        tenders.second.cluster.reefs[findIndexByID(tenders.second.routes[s.second][to_stop]->ID, tenders.second.cluster.reefs)-1]);
     swap(tenders.first.routes[s.first][from_stop], tenders.second.routes[s.second][to_stop]);
 
     if (swap_print) {
@@ -98,9 +98,9 @@ pair<TenderSoln, TenderSoln> random_d_out_Swap(pair<TenderSoln, TenderSoln> tend
 }
 
 // arg FullSoln incumbent -> changeable
-FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, bool print = false) {
+FullSoln OUT_ClusterSwaps(const FullSoln soln, int iteration, bool print = false) {
     if (print) printf("---- OUT_Swap ----");
-    pair<int, int> c = randSwapChoice(soln.msSoln->clusters.size(), iteration);    // generate swap pair of routes
+    pair<int, int> c = randSwapChoice(soln.msSoln.clusters.size(), iteration);    // generate swap pair of routes
     if (print) printf("\nSwap clusters:\t\t%d\tand\t%d", c.first, c.second);
 
     //throw runtime_error("TenderSoln created as pointer, need to be new object as clusters are swapped");
@@ -111,24 +111,24 @@ FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, bool print = false) {
     random_d_out_Swap(make_pair(*soln.tenderSolns[c.first], *soln.tenderSolns[c.second]), iteration);
 
     pair <pair<Pt*, Pt*>, pair<Pt*, Pt*>>
-        launchPts = make_pair(make_pair(soln.msSoln->launchPts[c.first], soln.msSoln->launchPts[c.first + 1]), make_pair(soln.msSoln->launchPts[c.second], soln.msSoln->launchPts[c.second + 1]));
+        launchPts = make_pair(make_pair(soln.msSoln.launchPts[c.first], soln.msSoln.launchPts[c.first + 1]), make_pair(soln.msSoln.launchPts[c.second], soln.msSoln.launchPts[c.second + 1]));
     pair <vector<vector<double>>, vector<vector<double>>> 
-        dMatrix = make_pair(tenders.first.cluster->getdMatrix(launchPts.first),
-                            tenders.second.cluster->getdMatrix(launchPts.second));
+        dMatrix = make_pair(tenders.first.cluster.getdMatrix(launchPts.first),
+                            tenders.second.cluster.getdMatrix(launchPts.second));
     
     pair <vector<vector<Pt*>>, vector<vector<Pt*>>> routes;
     routes.first = greedyTenderCluster(tenders.first, dMatrix.first);
     routes.second = greedyTenderCluster(tenders.second, dMatrix.second);
-    pair<vector<Pt*>, vector<Pt*>> reefs = make_pair(tenders.first.cluster->reefs, tenders.second.cluster->reefs);
+    pair<vector<Pt*>, vector<Pt*>> reefs = make_pair(tenders.first.cluster.reefs, tenders.second.cluster.reefs);
     //create new clusterSoln* with updated reefs
-    pair< ClusterSoln*, ClusterSoln*> clusters = make_pair(new ClusterSoln(soln.msSoln->inst, reefs.first),
-															new ClusterSoln(soln.msSoln->inst, reefs.second));
+    pair< ClusterSoln, ClusterSoln> clusters = make_pair(ClusterSoln(inst, reefs.first),
+															ClusterSoln(inst, reefs.second));
     FullSoln new_soln = FullSoln(soln, routes, clusters, c);              // create new FullSoln copy incl new routes for updated clusters
 
     // DO THIS OUTSIDE THIS FUNCTION?!
     // RE-CLUSTER
     //pair<vector<vector<Reef_pt>>, vector<ClusterPoint> > cc = clusterAndCentroid(reefs, numClusters, noDrones, dCap, clusters, false, false);
-    /*vector<vector<Reef_pt>> clusteredPoints = */
+    ////vector<vector<Reef_pt>> clusteredPoints = 
     //clusterAndCentroid(soln/*problem, solution*/, false, false);                                 //vector<ClusterPoint> centroids = cc.second;
     
     //for (int c = 0; c < clusteredPoints.size(); c++) {
@@ -137,25 +137,6 @@ FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, bool print = false) {
     //vector<pair<vector<vector<int>>, double>> drone_cluster_routes(problem.numClusters);
     // /////////////////////////////////////////////////////////////////
     /**** ADD LAUNCH AND RETRIEVAL NODES TO CLUSTERS ****/
-    //for (int a = 1; a < soln.msSoln->clusters.size() + 1; a++) {
-    //    pair<Pt*, Pt*> launchPts = make_pair(soln.msSoln->launchPts[a], soln.msSoln->launchPts[a + 1]);
-    //    ////Add drop off and pick up pts to each cluster...
-    //    /* ~ Create new TenderSoln?! ~ */
-    //    TenderSoln new_clustTendersoln(clusters[a], TenderWithinClusterNearestNeighbour(soln.msSoln, a),
-    //        launchPts);		//vector<vector<Pt*>> cluster_routes = TenderWithinClusterNearestNeighbour(&msSoln, c);		
-    //    //Cluster* new_cluster;
-    //    //new_cluster = TenderWithinClusterNearestNeighbour(        // INITIALISE SOLUTION = Nearest Neighbour for each cluster...
-    //    //    clusters[solution.clustOrder.first[a] - 1]);
-    //    for (int d = 0; d < new_clustTendersoln.routes.size(); d++) {   // UPDATE ROUTES incl -1 and -2 nodes!
-    //        //new_cluster.drones[d].reef_stops.push_back(0/*-1*/);
-    //        for (int s = 0; s < new_clustTendersoln.routes[d].size(); s++) {
-    //            ;//new_clustTendersoln.routes[d].reef_stops.push_back(new_cluster.routes[d][s]);
-    //        }
-    //    }
-    //    new_clustTendersoln.routes = greedyTenderCluster(&new_clustTendersoln, clusters[a]->getdMatrix(launchPts));     // IMPROVE SOLUTION = Greedy 2-Opt for each cluster...
-    //    //Cluster* cluster, vector<vector<Pt*>> routes, pair<Pt*, Pt*> launchPts
-    //    //soln.tenderSolns[a] = TenderSoln(new_clustTendersoln;
-    //}
     if (print) printf("-- ^^ OUT_Swap ^^ --");
     return new_soln;
 }
@@ -190,7 +171,7 @@ void random_d_in_Swap(TenderSoln& tender, int iteration, bool swap_print = false
 
 // MODIFY Fullsoln soln (not ref) and return the swapped copy to save as proposed - mutated cluster_index c to swap within
 FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, bool print = false) {
-    int c = randChoice(soln.msSoln->clusters.size(), iteration);    // generate random route to swap within
+    int c = randChoice(soln.msSoln.clusters.size(), iteration);    // generate random route to swap within
     if (print) {
         for (auto& route : soln.tenderSolns[c]->routes) {
             for (auto& node : route) {
@@ -212,8 +193,8 @@ FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, bool print = false) {
             //throw runtime_error("Error: Route dist calc not working!!");
         }
     }
-    ClusterSoln* cluster = soln.msSoln->clusters[c];
-    pair<Pt*, Pt*> launchPts = make_pair(soln.msSoln->launchPts[c], soln.msSoln->launchPts[c + 1]);
+    ClusterSoln* cluster = soln.msSoln.clusters[c];
+    pair<Pt*, Pt*> launchPts = make_pair(soln.msSoln.launchPts[c], soln.msSoln.launchPts[c + 1]);
     vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
     vector<vector<Pt*>> routes = greedyTenderCluster(*soln.tenderSolns[c], dMatrix);
     FullSoln new_soln = FullSoln(soln, routes, c);
@@ -240,12 +221,19 @@ FullSoln SA_fn(const FullSoln initialSolution,
     const SAparams sa_params, SAlog& log, bool print = false) {
     FullSoln incumbent = initialSolution;
     FullSoln best = initialSolution;
+    FullSoln proposed = initialSolution;
     double temp = sa_params.initial_temp;           // is this redundant? - temp is updated in SAlog
     for (int iter_num = 1; iter_num < sa_params.num_iterations; ++iter_num) {
+        if (best.msSoln.launchPts.size() == 0) {
+            throw runtime_error("Launch points not set!");
+        }
         double dist_best = best.getTotalDist();
         double dist_incumbent = incumbent.getTotalDist();
         printf("\n%d\tbest: %.3f\tincumbent: %.3f",               iter_num, best.getTotalDist(), dist_incumbent);
-        FullSoln proposed = mutator(incumbent, iter_num, print);
+        proposed = mutator(incumbent, iter_num, print);
+        // WHY ARE LAUNCHPTS ERASED/RESET?! ... HERE ...
+        //FullSoln =operator
+        printf("stop here");
         dist_incumbent = incumbent.getTotalDist();
         dist_best = best.getTotalDist();
         double dist_proposed = proposed.getTotalDist();
@@ -272,11 +260,12 @@ FullSoln SwapFunction(const FullSoln gd_soln, bool in_out, int num_iterations = 
 
     FullSoln best(gd_soln);
     if (in_out == 0) {      //best = OUT_ClusterSwaps(gd_soln, 0, true);
-        SAparams sa_params = SAparams(400, 100, 0.99);// initial temp ~ 2000 -> 
+        //SAparams(int num_iterations, double initial_temp, double cooling_rate)
+        SAparams sa_params = SAparams(1000, 1500, 0.995);// initial temp ~ 2000 -> 
         best = SA_fn(gd_soln, OUT_ClusterSwaps, sa_params, log); 
     }
     else {                  //best = IN_ClusterSwaps(gd_soln, 0, true);
-        SAparams sa_params = SAparams(1000, 1500, 0.995);
+        SAparams sa_params = SAparams(400, 100, 0.99);
         best = SA_fn(gd_soln, IN_ClusterSwaps, sa_params, log);
     }
     //FullSoln best = FullSoln(gd_soln, OUT_ClusterSwaps, sa_params, log);

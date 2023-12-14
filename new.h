@@ -226,10 +226,10 @@ FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, bool print = false) {
     for (int a = 1; a < clusters.size() + 1; a++) {
         pair<Pt*, Pt*> launchPts = make_pair(soln.msSoln->launchPts[a], soln.msSoln->launchPts[a + 1]);
         ////Add drop off and pick up pts to each cluster...
-        TenderSoln new_clustTendersoln(clusters[a], droneWithinClusterNearestNeighbour(soln.msSoln, a),
-            launchPts);		//vector<vector<Pt*>> cluster_routes = droneWithinClusterNearestNeighbour(&msSoln, c);		
+        TenderSoln new_clustTendersoln(clusters[a], TenderWithinClusterNearestNeighbour(soln.msSoln, a),
+            launchPts);		//vector<vector<Pt*>> cluster_routes = TenderWithinClusterNearestNeighbour(&msSoln, c);		
         //Cluster* new_cluster;
-        //new_cluster = droneWithinClusterNearestNeighbour(        // INITIALISE SOLUTION = Nearest Neighbour for each cluster...
+        //new_cluster = TenderWithinClusterNearestNeighbour(        // INITIALISE SOLUTION = Nearest Neighbour for each cluster...
         //    clusters[solution.clustOrder.first[a] - 1]);
         for (int d = 0; d < new_clustTendersoln.routes.size(); d++) {   // UPDATE ROUTES incl -1 and -2 nodes!
             //new_cluster.drones[d].reef_stops.push_back(0/*-1*/);

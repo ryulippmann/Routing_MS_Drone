@@ -27,7 +27,7 @@ int main()
 {
 	//cout << "Hello World!\n";
 	vector<Pt> reefPts;
- //   for (int i = 0; i < 12; i++) {
+	//for (int i = 0; i < 12; i++) {
 	//	ReefPt rp(i+1,0);
 	//	reefPts.push_back(rp);
 	//	cout << rp.getID() << "\t(" << rp.getXY().first << ", " << rp.getXY().second << ")" << endl;
@@ -37,26 +37,28 @@ int main()
 	mt19937 gen(0);
 	uniform_int_distribution<int> distribution(1, 10);		// Define the distribution for integers between 1 and 10 (inclusive)
 
-	int numClust = 10;	//3;
+	int numClust = 10;//3;//
 	Pt depot = Pt(0,0);		// depot must be first point initialised! ID = 0
 	int numTenders = 2;
-	int tenderCap = 5;	//2;
-
-	Problem inst(initReefs(), numClust, depot, numTenders, tenderCap);		// create instance of problem
+	int tenderCap = 5;//2;//
+	int no_pts = 100;
+	if (numClust * numTenders * tenderCap != no_pts) throw invalid_argument("numClust * numTenders * tenderCap != no_pts");
+	// create instance of problem
+	Problem inst(initReefs(no_pts), numClust, depot, numTenders, tenderCap);
 	///////////////// Problem Initialised /////////////////
 	
 	////////////   Cluster Soln Construction - function out   ////////////
 	//\\//\\//\\//\\// Create clusters \\//\\//\\//\\//
 	vector<ClusterSoln*> clusters = kMeansConstrained(inst, /*1000*/100000, false);
-	
-	// print clusters
+	//\\//\\//\\//\\// Clusters created \\//\\//\\//\\//
+	// PRINT clusters //
 	for (int i = 0; i < clusters.size(); i++) {
 		printf("\tCluster: %d\n", i);					// Print clusters
 		for (int j = 0; j < clusters[i]->reefs.size(); j++) {	// for reefs in cluster
 			printf("%d\t(%.2f, %.2f)\n", clusters[i]->reefs[j]->ID, clusters[i]->reefs[j]->x, clusters[i]->reefs[j]->y);
-		}
+		} // print ID (x,y) for each reef in cluster
 		printf("Centroid:\t\t%d\t(%.2f, %.2f)\n", clusters[i]->getCentroid().ID, clusters[i]->getCentroid().x, clusters[i]->getCentroid().y);
-	} 
+	} // for each cluster
 	//\\//\\//\\//\\// Cluster Soln Initialised //\\//\\//\\//\\//
 	
 	//\\//\\//\\//\\//   MS Soln Construction   //\\//\\//\\//\\//
@@ -88,12 +90,12 @@ int main()
 		//\\//\\//\\//\\// TenderSoln Initialised //\\//\\//\\//\\//
 		// Tendersoln Nearest Neighbour
 		TenderSoln tenderSoln (msSoln.clusters[c], 
-			droneWithinClusterNearestNeighbour(&msSoln, c),
+			TenderWithinClusterNearestNeighbour(&msSoln, c),
 			launchPts);		
 		// Tendersoln Greedy 2-Opt update
-		tenderSoln.routes = greedyTenderCluster(&tenderSoln, clusterMatrix);
+		tenderSoln.routes = greedyTenderCluster(tenderSoln, clusterMatrix);
 
-		printf("\nERROR HERE - ADDING tenderSoln to tenderSolns...\n");
+		// FIXED - deep copy operator: printf("\nERROR HERE - main L97 - ADDING tenderSoln to tenderSolns...\nIs this line necessary/doing anything?\n");
 		tenderSolns.emplace_back(tenderSoln);
 		// print routes
 		for (int i = 0; i < tenderSoln.routes.size(); i++) { printf("Route %d:\n", i);

@@ -219,29 +219,33 @@ FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, bool print = false) {
 FullSoln SA_fn(const FullSoln initialSolution,
     function<FullSoln(const FullSoln currentSolution, const int, const bool)> mutator,
     const SAparams sa_params, SAlog& log, bool print = false) {
-    FullSoln incumbent = initialSolution;
-    FullSoln best = initialSolution;
-    FullSoln proposed = initialSolution;
     double temp = sa_params.initial_temp;           // is this redundant? - temp is updated in SAlog
+    
+    FullSoln best = initialSolution;
+    FullSoln incumbent = initialSolution;
+    FullSoln proposed = initialSolution;
+    
+    double dist_best = best.getTotalDist();
+    double dist_incumbent = incumbent.getTotalDist();
+    double dist_proposed = proposed.getTotalDist();
+    printf("\n\tBEST\tINCUMBENT\tPROPOSED");
     for (int iter_num = 1; iter_num < sa_params.num_iterations; ++iter_num) {
-        if (best.msSoln.launchPts.size() == 0) {
-            throw runtime_error("Launch points not set!");
-        }
-        double dist_best = best.getTotalDist();
-        double dist_incumbent = incumbent.getTotalDist();
-        printf("\n%d\tbest: %.3f\tincumbent: %.3f",               iter_num, best.getTotalDist(), dist_incumbent);
+        if (best.msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); }
+        printf("\n%d\t%.3f\t%.3f", iter_num, best.getTotalDist(), dist_incumbent);
         proposed = mutator(incumbent, iter_num, print);
-        // WHY ARE LAUNCHPTS ERASED/RESET?! ... HERE ...
-        //FullSoln =operator
-        printf("stop here");
+        //printf("\t\tstop here");
         dist_incumbent = incumbent.getTotalDist();
         dist_best = best.getTotalDist();
-        double dist_proposed = proposed.getTotalDist();
-        printf("\n%d\tbest: %.3f\tincumbent: %.3f\tproposed: %.3f", iter_num, best.getTotalDist(), dist_incumbent, dist_proposed);
+        printf("\n%d\t%.3f\t%.3f\t%.3f", iter_num, best.getTotalDist(), dist_incumbent, dist_proposed);
 
         if (accept_new_solution(incumbent.getTotalDist(), proposed.getTotalDist(), temp)) {
             incumbent = proposed;       // overwrite old solution, but have been set as const...
-            if (proposed.getTotalDist() < best.getTotalDist()) { best = proposed; }
+            dist_incumbent = incumbent.getTotalDist();
+            printf("\tACCEPTED Proposed soln\n\t%.3f\t%.3f\t%.3f", best.getTotalDist(), dist_incumbent, dist_proposed);
+            if (proposed.getTotalDist() < best.getTotalDist()) { 
+                best = proposed; 
+                printf("\n\t!!IMPROVED!! Proposed soln\n\t%.3f\t%.3f\t%.3f", best.getTotalDist(), incumbent.getTotalDist(), dist_proposed);
+            }
         }
         temp *= sa_params.cooling_rate;
         log = SAlog(dist_proposed, dist_incumbent, dist_best, temp);        //update log
@@ -269,18 +273,6 @@ FullSoln SwapFunction(const FullSoln gd_soln, bool in_out, int num_iterations = 
         best = SA_fn(gd_soln, IN_ClusterSwaps, sa_params, log);
     }
     //FullSoln best = FullSoln(gd_soln, OUT_ClusterSwaps, sa_params, log);
-
-    //string filename_SA = "";
-    //if (in_out == 0) {
-    //    filename_SA = csvPrintSA(//log.solution_best_dist, log.solution_current_dist, log.solution_new_dist, log.solution_temp,
-    //        //initial_temperature, cooling_rate, num_iterations, 
-    //        log, sa_params, "d_opt_stops-SA_plot", "out");
-    //}
-    //else {
-    //    filename_SA = csvPrintSA(//log.solution_best_dist, log.solution_current_dist, log.solution_new_dist, log.solution_temp,
-    //        //initial_temperature, cooling_rate, num_iterations, 
-    //        log, sa_params, "d_opt_stops-SA_plot", "in");
-    //}
     cout << "\n------------- ^^ CLUST_OPT_D_TOURS ^^ --------------\n";
     return best;
 }

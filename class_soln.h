@@ -76,7 +76,7 @@ public:
 	ClusterSoln& operator=(const ClusterSoln& other) {
 		if (this != &other) {  // Check for self-assignment
 			// Clean up existing reefs
-			for (auto& reef : reefs) { delete reef; }
+			for (auto& reef : reefs) { delete reef; }		//careful with delete
 			reefs.clear();
 			// Copy new Pt objects in the reefs vector
 			for (auto& reef : other.reefs) {
@@ -272,22 +272,22 @@ public:
 	}
 
 	// Copy assignment operator for deep copy
-	MSSoln& operator=(const MSSoln& other) {
+	MSSoln& operator=(const MSSoln/*&*/ other) {
 		if (this != &other) {
 			// Deep copy clusters
-			for (auto& cluster : clusters) { delete cluster; }
+			for (auto& cluster : clusters) { delete cluster; }		//careful with delete
 			clusters.clear();
 			for (auto& cluster : other.clusters) {
 				clusters.push_back(new ClusterSoln(*cluster));
 			}
 
-			// Deep copy launchPts
-			for (auto& pt : launchPts) { delete pt; }
-			launchPts.clear();
-
-			for (auto& pt : other.launchPts) {
-				launchPts.push_back(new Pt(*pt));
-			}
+			launchPts = other.launchPts;
+			//// Deep copy launchPts
+			//for (auto& pt : launchPts) { delete pt; }			//careful with delete
+			//launchPts.clear();
+			//for (auto& pt : other.launchPts) {
+			//	launchPts.push_back(new Pt(*pt));
+			//}
 		}
 		return *this;
 	}
@@ -340,7 +340,7 @@ public:
 			// Clear existing routes
 			for (auto& route : routes) {
 				for (auto& pt : route) {
-					delete pt;
+					delete pt;				//careful with delete
 				}
 				route.clear();
 			}
@@ -434,71 +434,6 @@ private:
 	static int count;
 };
 
-//struct FullSoln {
-//public:
-//	//FullSoln(Problem* dat, MSSoln* msSoln, TenderSoln* tenderSoln, vector<Cluster*> clusters) :
-//	//		ID(count++), dat(dat), msSoln(msSoln), tenderSoln(tenderSoln), clusters(clusters) {}
-//	FullSoln(/*const*/ MSSoln* msSoln, vector<TenderSoln>& tenderSolns) :
-//		ID(count++), msSoln(msSoln), tenderSolns(tenderSolns),
-//		greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
-//	FullSoln(/*const*/ MSSoln* msSoln) :
-//		ID(count++), msSoln(msSoln),
-//		greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
-//	//FullSoln(const MSSoln& msSoln, vector< TenderSoln*> tenderSolns, bool greedy, bool without_clust, bool within_clust, bool greedy_again) :
-//	//	ID(count++), msSoln(msSoln), tenderSolns(tenderSolns), 
-//	//	greedy(greedy), without_clust(without_clust), within_clust(within_clust), greedy_again(greedy_again) {}
-//		
-//	// Copy constructor
-//	FullSoln(const FullSoln& other) :
-//		ID(count++), msSoln(new MSSoln(*other.msSoln)), // Deep copy
-//		tenderSolns(other.tenderSolns), greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again) {}
-//
-//	// Copy assignment operator
-//	FullSoln& operator=(const FullSoln& other) {
-//		if (this != &other) {			// Deep copy members as needed
-//			delete msSoln; // Release the existing object
-//			//ID = count++;
-//			msSoln = new MSSoln(*other.msSoln); // Deep copy
-//			vector<TenderSoln> temp;
-//			for (int i = 0; i<other.tenderSolns.size(); i++) {//auto& tendersoln : other.tenderSolns) {
-//				//this->tenderSolns.emplace_back(new TenderSoln(tendersoln));
-//				this->tenderSolns[i] = new TenderSoln(other.tenderSolns[i]);	
-//			}
-//			// ... Copy other members ...
-//	
-//			// Update other members accordingly
-//			greedy = other.greedy;
-//			without_clust = other.without_clust;
-//			within_clust = other.within_clust;
-//			greedy_again = other.greedy_again;
-//		}
-//		return *this;
-//	}
-//
-//	const int ID;
-//	const MSSoln* msSoln;
-//	/*const*/ vector<TenderSoln> tenderSolns;
-//	//const Problem* dat;			//contained in msSoln
-//	//ClusterSoln* clusterSolns;	//contained in msSoln
-//	//vector<Cluster*> clusters;	//contained in msSoln
-//
-//	/*const*/ bool greedy;
-//	/*const*/ bool without_clust;
-//	/*const*/ bool within_clust;
-//	/*const*/ bool greedy_again;
-//
-//	double getTotalDist() {
-//		double dist = msSoln->getDist();
-//		for (auto& tenderSoln : tenderSolns) {
-//			dist += tenderSoln.getTenderRouteDist();
-//		}
-//		return dist;
-//	}
-//
-//private:
-//	static int count;
-//};
-
 struct FullSoln {
 public:
 	FullSoln(const MSSoln msSoln, vector<TenderSoln*>& tenderSolns) :
@@ -570,14 +505,14 @@ public:
 	FullSoln& operator=(const FullSoln other) {
 		if (this != &other) {
 			// Release existing TenderSoln objects
-			for (auto& ptr : tenderSolns) {
-				delete ptr;
-			}
+			//for (auto& ptr : tenderSolns) {
+			//	delete ptr;
+			//}
 			tenderSolns.clear();
 
 			// Copy new TenderSoln objects
 			for (auto& tendersoln : other.tenderSolns) {
-				/*this->*/tenderSolns.push_back(new TenderSoln(*tendersoln));
+				tenderSolns.push_back(new TenderSoln(*tendersoln/*, true*/)); // Pass 'true' to avoid copying launchPts
 			}
 
 			// Update other members accordingly
@@ -615,3 +550,68 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
+
+//struct FullSoln {
+//public:
+//	//FullSoln(Problem* dat, MSSoln* msSoln, TenderSoln* tenderSoln, vector<Cluster*> clusters) :
+//	//		ID(count++), dat(dat), msSoln(msSoln), tenderSoln(tenderSoln), clusters(clusters) {}
+//	FullSoln(/*const*/ MSSoln* msSoln, vector<TenderSoln>& tenderSolns) :
+//		ID(count++), msSoln(msSoln), tenderSolns(tenderSolns),
+//		greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
+//	FullSoln(/*const*/ MSSoln* msSoln) :
+//		ID(count++), msSoln(msSoln),
+//		greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
+//	//FullSoln(const MSSoln& msSoln, vector< TenderSoln*> tenderSolns, bool greedy, bool without_clust, bool within_clust, bool greedy_again) :
+//	//	ID(count++), msSoln(msSoln), tenderSolns(tenderSolns), 
+//	//	greedy(greedy), without_clust(without_clust), within_clust(within_clust), greedy_again(greedy_again) {}
+//		
+//	// Copy constructor
+//	FullSoln(const FullSoln& other) :
+//		ID(count++), msSoln(new MSSoln(*other.msSoln)), // Deep copy
+//		tenderSolns(other.tenderSolns), greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again) {}
+//
+//	// Copy assignment operator
+//	FullSoln& operator=(const FullSoln& other) {
+//		if (this != &other) {			// Deep copy members as needed
+//			delete msSoln; // Release the existing object
+//			//ID = count++;
+//			msSoln = new MSSoln(*other.msSoln); // Deep copy
+//			vector<TenderSoln> temp;
+//			for (int i = 0; i<other.tenderSolns.size(); i++) {//auto& tendersoln : other.tenderSolns) {
+//				//this->tenderSolns.emplace_back(new TenderSoln(tendersoln));
+//				this->tenderSolns[i] = new TenderSoln(other.tenderSolns[i]);	
+//			}
+//			// ... Copy other members ...
+//	
+//			// Update other members accordingly
+//			greedy = other.greedy;
+//			without_clust = other.without_clust;
+//			within_clust = other.within_clust;
+//			greedy_again = other.greedy_again;
+//		}
+//		return *this;
+//	}
+//
+//	const int ID;
+//	const MSSoln* msSoln;
+//	/*const*/ vector<TenderSoln> tenderSolns;
+//	//const Problem* dat;			//contained in msSoln
+//	//ClusterSoln* clusterSolns;	//contained in msSoln
+//	//vector<Cluster*> clusters;	//contained in msSoln
+//
+//	/*const*/ bool greedy;
+//	/*const*/ bool without_clust;
+//	/*const*/ bool within_clust;
+//	/*const*/ bool greedy_again;
+//
+//	double getTotalDist() {
+//		double dist = msSoln->getDist();
+//		for (auto& tenderSoln : tenderSolns) {
+//			dist += tenderSoln.getTenderRouteDist();
+//		}
+//		return dist;
+//	}
+//
+//private:
+//	static int count;
+//};

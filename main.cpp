@@ -40,8 +40,6 @@ vector<Pt> reefPts;
 //	cout << rp.getID() << "\t(" << rp.getXY().first << ", " << rp.getXY().second << ")" << endl;
 //}
 
-random_device rd;
-mt19937 gen(0);
 uniform_int_distribution<int> distribution(1, 10);		// Define the distribution for integers between 1 and 10 (inclusive)
 
 int main()
@@ -94,8 +92,9 @@ int main()
 		TenderSoln tenderSoln (*msSoln.clusters[c],
 			tenderRoutes,//TenderWithinClusterNearestNeighbour(msSoln, c),
 			launchPts);		
-		// Tendersoln Greedy 2-Opt update
-		tenderSoln.routes = greedyTenderCluster(tenderSoln, clusterMatrix);
+
+		//// Tendersoln Greedy 2-Opt update
+		//tenderSoln.routes = greedyTenderCluster(tenderSoln, clusterMatrix);
 
 		// FIXED - deep copy operator: printf("\nERROR HERE - main L97 - ADDING tenderSoln to tenderSolns...\nIs this line necessary/doing anything?\n");
 		tenderSolns.emplace_back(tenderSoln);
@@ -118,13 +117,13 @@ int main()
 	// Tendersoln Swaps: In
 	//bool in_out = 1;
 	///*string filename*/ 
-	//FullSoln best_in = SwapFunction(gd, in_out);
+	//FullSoln best_in = SwapShell(gd, in_out);
 	//printf("\nGd Dist: \t%.2f", gd.getTotalDist());
 	//printf("\nIn_Swap distance:\t%.2f\n", best_in.getTotalDist());
 
 	// Tendersoln Swaps: Out
 	bool in_out = 0;
-	FullSoln best_out = SwapFunction(gd/*best_in*/, in_out);
+	FullSoln best_out = SwapShell(gd/*best_in*/, in_out);
 	printf("\nGd Dist: \t%.2f", gd.getTotalDist());
 	//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
 	printf("\nOut_Swap distance:\t%.2f\n", best_out.getTotalDist());

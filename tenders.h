@@ -79,18 +79,6 @@ vector<vector<Pt*>> TenderWithinClusterNearestNeighbour(const MSSoln& ms, const 
     return routes;
 }//nearestNeighbour
 
-//vector<vector<Pt*>> droneWithinCluster2Opt(const MSSoln* ms, const int c,
-//    bool csv_print = false) {
-//    vector <vector<Pt*> > routes;
-//
-//    const Problem* inst = ms->inst;
-//    const Cluster* cluster = ms->clustSoln->clusters[c];
-//    pair<Pt*, Pt*> launchPts = make_pair(ms->launchPts[c], ms->launchPts[c + 1]);
-//
-//
-//    return routes;
-//}
-
 vector<vector<Pt*>> greedyTenderCluster(const TenderSoln& clustTendersoln, const vector<vector<double>> dMatrix, //const MSSoln* ms, /*vector<vector<Pt*>>& routes, */const int c,
     bool csv_print = false, bool print = false) {
     //const Problem* inst = ms->inst;
@@ -150,5 +138,3 @@ vector<vector<Pt*>> greedyTenderCluster(const TenderSoln& clustTendersoln, const
     //}
     return routes;//*init_solution.clustOrder*/;
 }
-
-

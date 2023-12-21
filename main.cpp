@@ -4,7 +4,6 @@ using namespace std;
 #include <vector>
 #include <cmath>
 #include <utility>
-#include <random>
 
 #include "class_prob.h"
 int numClust = 10;//3;//
@@ -40,7 +39,7 @@ vector<Pt> reefPts;
 //	cout << rp.getID() << "\t(" << rp.getXY().first << ", " << rp.getXY().second << ")" << endl;
 //}
 
-uniform_int_distribution<int> distribution(1, 10);		// Define the distribution for integers between 1 and 10 (inclusive)
+//uniform_int_distribution<int> distribution(1, 10);		// Define the distribution for integers between 1 and 10 (inclusive)
 
 int main()
 {
@@ -48,7 +47,7 @@ int main()
 	
 	////////////   Cluster Soln Construction - function out   ////////////
 	//\\//\\//\\//\\// Create clusters \\//\\//\\//\\//
-	vector<ClusterSoln*> clusters = kMeansConstrained(/*1000*/100000, false);
+	vector<ClusterSoln*> clusters = kMeansConstrained(1000/*0*/, false);
 	//\\//\\//\\//\\// Clusters created \\//\\//\\//\\//
 	// PRINT clusters //
 	for (int i = 0; i < clusters.size(); i++) {
@@ -114,20 +113,19 @@ int main()
 	printf("\nGd Dist: \t%.2f", gd.getTotalDist());
 	// Tendersoln Swaps
 
-	// Tendersoln Swaps: In
-	//bool in_out = 1;
-	///*string filename*/ 
-	//FullSoln best_in = SwapShell(gd, in_out);
+	//// Tendersoln Swaps: Out
+	//bool out = 0;
+	//FullSoln best_out = SwapShell(gd/*best_in*/, out);
 	//printf("\nGd Dist: \t%.2f", gd.getTotalDist());
-	//printf("\nIn_Swap distance:\t%.2f\n", best_in.getTotalDist());
+	////printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
+	//printf("\nOut_Swap distance:\t%.2f\n", best_out.getTotalDist());
 
-	// Tendersoln Swaps: Out
-	bool in_out = 0;
-	FullSoln best_out = SwapShell(gd/*best_in*/, in_out);
+	// Tendersoln Swaps: In
+	bool in = 1;
+	/*string filename*/ 
+	FullSoln best_in = SwapShell(gd, in);
 	printf("\nGd Dist: \t%.2f", gd.getTotalDist());
-	//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
-	printf("\nOut_Swap distance:\t%.2f\n", best_out.getTotalDist());
-
+	printf("\nIn_Swap distance:\t%.2f\n", best_in.getTotalDist());
 
 	////////////////////////////////
 

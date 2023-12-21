@@ -6,8 +6,8 @@
 
 using namespace std;
 
-random_device rd;
-mt19937 gen(rd());
+random_device rd;       // Seed for the random number generator
+mt19937 gen(rd());      // Mersenne Twister engine
 
 double sum(vector<double>& vec_to_sum) {
     double sum_of_elems = 0.0;

@@ -88,7 +88,7 @@ vector<vector<Pt*>> greedyTenderCluster(const TenderSoln& clustTendersoln, const
     //vector<vector<Pt*>> routes_new;
     //int n = ms->clustSoln->clusters.size();//centroids.size();  // number of clusters accounted for in main file...
     double gd_2opt_dists;
-    int tenderCap = clustTendersoln.cluster.inst.tenderCap;
+    int tenderCap = inst.tenderCap;
     if (print) cout << "\n---- GREEDY TENDER CLUSTERS ----\n";
     for (int v = 0; v < clustTendersoln.routes.size(); v++) {      // iterate for each tender in cluster
         vector<int> i_tour;                 //(tenderCap/*init_solution.mothership.centroidMatrix.size()*/, 0);                         // ai_tour = city_index for each tour -> nearest neighbour

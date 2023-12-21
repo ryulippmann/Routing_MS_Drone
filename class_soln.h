@@ -2,11 +2,11 @@
 
 struct ClusterSoln {
 public:
-	ClusterSoln(const Problem& inst) : ID(count++), inst(inst) {}
-	ClusterSoln(const Problem& inst, /*const*/ vector<Pt*> reefs) : ID(count++), inst(inst), reefs(reefs) {}
+	ClusterSoln(const Problem& inst) : ID(count++)/*, inst(inst)*/ {}
+	ClusterSoln(const Problem& inst, /*const*/ vector<Pt*> reefs) : ID(count++),/* inst(inst),*/ reefs(reefs) {}
 	// Copy constructor for deep copy
 	ClusterSoln(const ClusterSoln& other) :
-		ID(other.ID), inst(other.inst), reefs() {
+		ID(other.ID), /*inst(other.inst), */reefs() {
 		// Copy new Pt objects in the reefs vector
 		for (auto& reef : other.reefs) {
 			this->reefs.push_back(new Pt(*reef));
@@ -14,7 +14,7 @@ public:
 	}
 
 	const int ID;
-	const Problem& inst;
+	//const Problem& inst;
 	/*const*/ vector<Pt*> reefs;
 
 	vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, const Pt depot) {

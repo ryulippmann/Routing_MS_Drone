@@ -1,7 +1,4 @@
 #pragma once
-//#include <chrono>
-//#include <ctime>
-//#include <sstream>
 
 #include <fstream>
 
@@ -34,13 +31,13 @@ bool accept_new_solution(double current_dist, double proposed_dist, double tempe
 
 // Function for swapping routes
 // return pair of random indices [0, size_a) and [0, size_b) for swapping routes or stops
-pair<int, int> randSwapChoice(int size_a, /*int randomSeed = 12345, */int size_b = -1, bool within_clust = true) {       // RANDOMLY CHOOSE WHICH d_route TO SWAP
+pair<int, int> randSwapChoice(int size_a, /*int randomSeed = 12345, */int size_b = -1, bool duplicate_rule = true) {       // RANDOMLY CHOOSE WHICH d_route TO SWAP
     // if size = 2, and routes must be different, set one to 0, one to 1
     if (size_b == -1) { size_b = size_a; }
     int d_route_a = getRandomNumber(size_a/*, randomSeed*/);
     int d_route_b = getRandomNumber(size_b/*, randomSeed%10*/);
     int count = 0;
-    while (within_clust && d_route_a == d_route_b) {        // if same routes chosen
+    while (duplicate_rule && d_route_a == d_route_b) {        // if same routes chosen
         d_route_b = getRandomNumber(size_b/*, randomSeed + count*/);    // re-choose route to swap out TO   current d_routes
         count++;
     }
@@ -48,8 +45,9 @@ pair<int, int> randSwapChoice(int size_a, /*int randomSeed = 12345, */int size_b
 }
 
 // return random number [1, size-2] for swapping stops
-int randChoice(int size/*, int randomSeed = 12345*/) {
-    return getRandomNumber(size - 3/*, randomSeed*/) + 1;
+int randChoice(int size/*, int randomSeed = 12345*/, bool clust_choice = false) {
+    if (clust_choice) return getRandomNumber(size);
+    else return getRandomNumber(size - 3/*, randomSeed*/) + 1;
 }
 //    mt19937 gen_stop(randomSeed);                      // check d_route to ensure d_route.size-2 is the right size distribution
 //    uniform_int_distribution<int> dist(1, size - 3);     //!constrict swaps between launch/retrieval nodes - i.e. only reef nodes
@@ -68,6 +66,8 @@ pair<TenderSoln, TenderSoln> random_d_out_Swap(pair<TenderSoln, TenderSoln> tend
     pair<int, int> s = randSwapChoice(  tenders.first.routes.size(), //iteration, 
                                         tenders.second.routes.size(), false);   // RANDOMLY CHOOSE WHICH d_route TO SWAP
     if (swap_print) printf("\nSwap between d_routes:\t%d\tand\t%d", s.first, s.second);
+
+    // pair<int, int> stops = randSwapChoice(..., ..., false); // make sure indices are correct. i.e. +1 ?
 
     /* RANDOMLY CHOOSE WHICH d_route TO SWAP FROM*/
     int from_stop = randChoice(tenders.first.routes[s.first].size()/*, iteration*/);        // choose stop number to swap out from current d_routes
@@ -132,6 +132,8 @@ void random_d_in_Swap(TenderSoln& tender, /*int iteration, */bool swap_print = f
     pair<int, int> s = randSwapChoice(tender.routes.size()/*, iteration*/);   // RANDOMLY CHOOSE WHICH d_routes TO SWAP
     if (swap_print) printf("\nSwap between d_routes:\t%d\tand\t%d", s.first, s.second);
 
+    // pair<int, int> stops = randSwapChoice(..., ..., false); // make sure indices are correct. i.e. +1 ?
+
     int from_stop = randChoice(tender.routes[s.first].size()/*, iteration*/);     // randomly choose stop number to swap out from current/chosen d_routes
     if (swap_print) printf("\nSwap From\tindex %d: node = %d\t", from_stop, tender.routes[s.first][from_stop]->ID);
     if (from_stop == 0 || from_stop > tender.routes[s.first].size()-3) {throw runtime_error ("Error: Invalid from_stop chosen");}
@@ -163,16 +165,18 @@ void printTenderRoutes(const TenderSoln* tender) {
 
 // MODIFY Fullsoln soln (not ref) and return the swapped copy to save as proposed - mutated cluster_index c to swap within
 FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, vector<int> randoms, bool print = false) {
-    int c = randChoice(soln.msSoln.clusters.size()/*, iteration*/);    // generate random route to swap within
+    int c = randChoice(soln.msSoln.clusters.size()/*, iteration*/, true);    // generate random CLUSTER to swap within
+    //throw runtime_error("Not all clusters swappable! randChoice limits choice [1,clusters.size()-3]");
     if (print) {
-        printTenderRoutes(soln.tenderSolns[c]);
-        cout << string(50, '~') << "\n";
+        cout << "\n" << string(50, '~') << "\n";
+        printf("\nSwap cluster:\t\t%d\n", c);
+        //printTenderRoutes(soln.tenderSolns[c]);
     }
     // DONT CREATE COPY, as soln is NOT reference
     random_d_in_Swap(*soln.tenderSolns[c]/*, iteration*/);
-    if (print) {
-        printTenderRoutes(soln.tenderSolns[c]);
-    }
+    //if (print) {
+    //    printTenderRoutes(soln.tenderSolns[c]);
+    //}
     ClusterSoln* cluster = soln.msSoln.clusters[c];
     pair<Pt*, Pt*> launchPts = make_pair(soln.msSoln.launchPts[c], soln.msSoln.launchPts[c + 1]);
     vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
@@ -180,15 +184,10 @@ FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, vector<int> randoms, bool
     FullSoln new_soln = FullSoln(soln, routes, c);
     /* PRINT ROUTES AND DISTS FOR EACH SUB - TOUR!! */
     if (print) {
-        printf("\nOriginal route:\t%d\n", soln.getTotalDist());
-        for (const auto& tender : new_soln.tenderSolns) {
-            printTenderRoutes(tender);  // this does what commented out below does
-            //for (const auto& route : tender->routes) {
-            //    for (const auto& node : route) {
-            //        printf("\t%d ->", node->ID);
-            //    } printf("\n");
-            //} printf("\n");
-        }
+        printf("\nOriginal route:\t%.2f\n", soln.getTotalDist());
+        //for (const auto& tender : new_soln.tenderSolns) {
+        //    printTenderRoutes(tender);
+        //}
     }
     return new_soln;
 }
@@ -206,7 +205,7 @@ FullSoln SA_fn(const FullSoln initialSolution,
     FullSoln best = initialSolution;
     FullSoln incumbent = initialSolution;
     FullSoln proposed = initialSolution;
-    
+    double dist_best_saved = best.getTotalDist();
     double dist_best = best.getTotalDist();
     double dist_incumbent = incumbent.getTotalDist();
     double dist_proposed = proposed.getTotalDist();
@@ -214,7 +213,7 @@ FullSoln SA_fn(const FullSoln initialSolution,
     srand(42);      // set random seed
     for (int iter_num = 1; iter_num < sa_params.num_iterations; ++iter_num) {
         if (best.msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); }
-        printf("\n%d\t%.3f\t%.3f\t\t\t\t\t\t%.3f", iter_num, best.getTotalDist(), dist_incumbent, temp);
+        printf("\n%d\t%.3f\t%.3f\t\t\t\t\t\t%.2e", iter_num, best.getTotalDist(), dist_incumbent, temp);
         proposed = mutator(incumbent, iter_num, randomness, print);
         //printf("\t\tstop here");
         dist_incumbent = incumbent.getTotalDist();
@@ -235,28 +234,31 @@ FullSoln SA_fn(const FullSoln initialSolution,
         temp *= sa_params.cooling_rate;
         log = SAlog(dist_proposed, dist_incumbent, dist_best, temp);        //update log
     }
+    printf("\n\n\tBEST\t\tINITIAL\t\t\tTEMP");
+    printf("\n\t%.3f\t%.3f\t%.2e", dist_best, dist_best_saved, temp);
     return best;
 }
 
 // Shell function setting up SA, and calling SA_fn with specified mutator (IN/OUT)
-FullSoln SwapShell(const FullSoln gd_soln, bool in_out, int num_iterations = 10000, double initial_temperature = 200, double cooling_rate = 0.999,
+FullSoln SwapShell(const FullSoln gd_soln, bool in_out, 
+    //int num_iterations = 10000, double initial_temperature = 200, double cooling_rate = 0.999,
     bool print_stats = false, bool csv_print = false, bool SA_print = true) {   //in_out = 1; // 0 = OUT, 1 = IN
     if (in_out == 0) {      printf("\n\nWithOUT Cluster\n"); }
     else if (in_out == 1) { printf("\n\nWithIN Cluster\n"); }
     else {          throw runtime_error("Error: Invalid in_out argument provided"); }    
     printf("---------- CLUST_OPT_D_TOURS - Simulated Annealing ----------\n");
     
-    SAlog log = SAlog(initial_temperature);
+    SAlog log = SAlog(/*initial_temperature*/);
     FullSoln best(gd_soln);
-
     if (in_out == 0) {      //best = OUT_ClusterSwaps(gd_soln, 0, true);
             //SAparams  (num_iterations, initial_temp, cooling_rate)
-        SAparams sa_params = SAparams(3000, 4000, 0.999);// initial temp ~ 2000 -> 
+        double dist_best = best.getTotalDist();
+        SAparams sa_params = SAparams(5000, dist_best, 0.99/*pow(dist_best*5E-23,1/5000)*//*0.98*/);//(4000, 4000, 0.998);// initial temp ~ 2000 -> 
         best = SA_fn(gd_soln, OUT_ClusterSwaps, sa_params, log); 
     }
     else {                  //best = IN_ClusterSwaps(gd_soln, 0, true);
-        SAparams sa_params = SAparams(400, 100, 0.99);
-        best = SA_fn(gd_soln, IN_ClusterSwaps, sa_params, log);
+        SAparams sa_params = SAparams(10000, 2000, 0.99);
+        best = SA_fn(gd_soln, IN_ClusterSwaps, sa_params, log/*, true*/);
     }
 
     printf("\n------------- ^^ CLUST_OPT_D_TOURS ^^ --------------\n");

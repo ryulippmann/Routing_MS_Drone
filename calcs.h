@@ -3,14 +3,11 @@
 //#include <iostream>
 #include <cmath>
 #include <random>
+
 using namespace std;
 
-//#ifndef class_def_h
-//#define class_def_h
-//
-//struct Pt;
-//
-//#endif // !class_def_h
+random_device rd;       // Seed for the random number generator
+mt19937 gen(rd());      // Mersenne Twister engine
 
 double sum(vector<double>& vec_to_sum) {
     double sum_of_elems = 0.0;
@@ -133,11 +130,12 @@ Pt* getPtByID(int targetID, vector<Pt*> route) {
 //}
 
 // Helper function for random number generation
-int getRandomNumber(int size, int randomSeed) {
-    mt19937 gen(randomSeed);
+int getRandomNumber(int size/*, int randomSeed = -1*/) {
+    //if (randomSeed != -1) { mt19937 gen(randomSeed); }
+    //else { 
+    mt19937 gen(rd()); //}
     //// Seed the random number generator
     //random_device rd;
-    //mt19937 gen(rd());
     uniform_int_distribution<int> dist(0, size - 1);
     return dist(gen);
 }

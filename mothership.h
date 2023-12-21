@@ -24,7 +24,7 @@ vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, con
     return centroidMatrix;
 }
 
-vector<ClusterSoln*> clusterCentroidNearestNeighbour(Problem& inst, vector<ClusterSoln*> clusters,//const ClusterSoln& clustSoln,
+vector<ClusterSoln*> clusterCentroidNearestNeighbour(/*Problem& inst, */vector<ClusterSoln*> clusters,//const ClusterSoln& clustSoln,
     /*const Problem inst, */
     //const vector<Cluster*> clusters, const vector<vector<double>>& centroidMatrix,
     bool csvPrint = false, bool printStops = true) {
@@ -53,7 +53,7 @@ vector<ClusterSoln*> clusterCentroidNearestNeighbour(Problem& inst, vector<Clust
     return nearestCentroids;
 }//nearestNeighbour
 
-void greedyMSCluster(Problem& inst, MSSoln& msSoln,
+void greedyMSCluster(/*Problem& inst, */MSSoln& msSoln,
     //const ClusterSoln& clustSoln, //const vector<Cluster*>& clusters,
     bool csv_print = false, bool print = true) {
     if (print) cout << "\n---- GREEDY M/S CLUSTERS ----\n";
@@ -107,7 +107,7 @@ void greedyMSCluster(Problem& inst, MSSoln& msSoln,
 }
 
 // warning: this needs to be set before msSoln.getDist() is called
-vector<vector<double>> setLaunchPts(Problem& inst, MSSoln& msSoln,
+vector<vector<double>> setLaunchPts(/*Problem& inst, */MSSoln& msSoln,
     bool csv_print = false, bool print = true) {
     const vector<ClusterSoln*> clusters = msSoln.clusters;
     if (print) printf("\n---- SET LAUNCH POINTS ----\n");

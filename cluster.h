@@ -7,8 +7,8 @@
 #include <cmath>
 #include <functional>
 
-void randomSwapClusters(vector<Pt*>& clust_a, vector<Pt*>& clust_b, const pair<double, double> dists, pair<Pt, Pt> centroids, const int randomSeed, bool swap_print = false) {
-    mt19937 gen(randomSeed);        //random_device rd; //mt19937 gen(rd());
+void randomSwapClusters(vector<Pt*>& clust_a, vector<Pt*>& clust_b, const pair<double, double> dists, pair<Pt, Pt> centroids,/* const int randomSeed,*/ bool swap_print = false) {
+    //mt19937 gen(randomSeed);        //random_device rd; //mt19937 gen(rd());
     uniform_int_distribution<int> dist(0, min(clust_a.size(), clust_b.size()) - 1);     //!constrict swaps between launch/retrieve nodes[1,9] (for now)
     int index1 = dist(gen);
     int index2 = dist(gen);
@@ -37,7 +37,7 @@ void randomSwapClusters(vector<Pt*>& clust_a, vector<Pt*>& clust_b, const pair<d
     return;
 }
 
-vector<ClusterSoln*> kMeansConstrained(Problem& inst,
+vector<ClusterSoln*> kMeansConstrained(/*const Problem& inst,*/
     int maxIterations = pow(10, 2),
     bool clusterPrint = false, bool csvPrint = false, int randomSeed = 12345) { //10^6 iter ~ 8-9 sec. 10^7 iter ~ 3 mins
     if (clusterPrint) cout << "\n---- kMEANS CONSTRAINED ----\n";
@@ -62,7 +62,7 @@ vector<ClusterSoln*> kMeansConstrained(Problem& inst,
         centroid_dist[c] = CalcCentroidDist(clusters[c], *centroids[c]);
     }
 
-    mt19937 gen(randomSeed);    //random_device rd; //mt19937 gen(rd());
+    //mt19937 gen(randomSeed);    //random_device rd; //mt19937 gen(rd());
     uniform_int_distribution<int> dist(0, clusters.size() - 1);     //!constrict swaps between launch/retrieve nodes[1,9] (for now)
 
     for (int iteration = 0; iteration < maxIterations; ++iteration) {
@@ -71,7 +71,7 @@ vector<ClusterSoln*> kMeansConstrained(Problem& inst,
         if (idx_clust_a == idx_clust_b) { continue; } 
         if (clusterPrint) printf("\nswap clusters %d -> %d", idx_clust_a, idx_clust_b);
 
-        randomSwapClusters(clusters[idx_clust_a], clusters[idx_clust_b], make_pair(centroid_dist[idx_clust_a], centroid_dist[idx_clust_b]), make_pair(*centroids[idx_clust_a], *centroids[idx_clust_b]), iteration);
+        randomSwapClusters(clusters[idx_clust_a], clusters[idx_clust_b], make_pair(centroid_dist[idx_clust_a], centroid_dist[idx_clust_b]), make_pair(*centroids[idx_clust_a], *centroids[idx_clust_b])/*, iteration*/);
 
         //UPDATE CENTROIDS!!
         centroids[idx_clust_a] = new Pt(calcCentroid(clusters[idx_clust_a]));

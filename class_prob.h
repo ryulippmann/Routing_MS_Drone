@@ -8,7 +8,6 @@ using namespace std;
 //#ifndef calcs_h
 //#define calcs_h
 
-
 //struct Pt {
 //public:
 //	Pt(double x, double y) : ID(count++), x(x), y(y) {}

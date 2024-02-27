@@ -2,9 +2,8 @@
 //#include "class_def.h"
 //#include "calcs.h"
 
-
-#include <vector>
-#include <cmath>
+//#include <vector>
+//#include <cmath>
 #include <functional>
 
 void randomSwapClusters(vector<Pt*>& clust_a, vector<Pt*>& clust_b, const pair<double, double> dists, pair<Pt, Pt> centroids,/* const int randomSeed,*/ bool swap_print = false) {
@@ -28,17 +27,15 @@ void randomSwapClusters(vector<Pt*>& clust_a, vector<Pt*>& clust_b, const pair<d
     if (sum(centroid_dist) > dists.first + dists.second) {
         swap(clust_a[index1], clust_b[index2]);     // if condition met, swap BACK!
     } else if (swap_print) {                        // if condition not met, print new clusters
-        /*if (swap_print) {*/
             printf("\nNow element %d in cluster a", /*list1,*/ index1);
             for (const auto& node : clust_a) { printf("\n\t%d:\t\t(%.1f, %.1f)", node->ID, node->x, node->y); }
             printf("\nis element %d in cluster b\t", /*list2,*/ index2);
             for (const auto& node : clust_b) { printf("\n\t%d:\t\t(%.1f, %.1f)", node->ID, node->x, node->y); }
-    }   //} //cout << "\n";
+    } //cout << "\n";
     return;
 }
 
-vector<ClusterSoln*> kMeansConstrained(/*const Problem& inst,*/
-    int maxIterations = pow(10, 2),
+vector<ClusterSoln*> kMeansConstrained(int maxIterations = pow(10, 2), 
     bool clusterPrint = false, bool csvPrint = false, int randomSeed = 12345) { //10^6 iter ~ 8-9 sec. 10^7 iter ~ 3 mins
     if (clusterPrint) cout << "\n---- kMEANS CONSTRAINED ----\n";
     
@@ -92,6 +89,18 @@ vector<ClusterSoln*> kMeansConstrained(/*const Problem& inst,*/
         clusterss.push_back(new ClusterSoln(inst, cluster));     // initialise clusterss with clusters (vector of ReefPt pointers
 	}
     return clusterss;
+}
+
+void printClusters(vector<ClusterSoln*> clusters) {
+    for (int i = 0; i < clusters.size(); i++) {
+        printf("\tCluster: %d\n", i);					// Print clusters
+        for (int j = 0; j < clusters[i]->reefs.size(); j++) {	// for reefs in cluster
+            printf("%d\t(%.2f, %.2f)\n", clusters[i]->reefs[j]->ID, clusters[i]->reefs[j]->x, clusters[i]->reefs[j]->y);
+        } // print ID (x,y) for each reef in cluster
+        printf("Centroid:\t\t%d\t(%.2f, %.2f)\n", clusters[i]->getCentroid().ID, clusters[i]->getCentroid().x, clusters[i]->getCentroid().y);
+    } // for each cluster
+
+    return;
 }
 
 //ClusterSoln clusterAndCentroid(Problem problem) {

@@ -1,7 +1,7 @@
 #pragma once
-#include <vector>
-#include <cmath>
-using namespace std;
+//#include <vector>
+//#include <cmath>
+//using namespace std;
 
 // RETURN reefs visited
 int reefsVisited(const vector<Pt*>& reefs) { 

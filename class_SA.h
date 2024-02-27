@@ -29,5 +29,4 @@ struct SAlog {
     vector<double> current_dist;
     vector<double> new_dist;
     vector<double> temp;
-
 };

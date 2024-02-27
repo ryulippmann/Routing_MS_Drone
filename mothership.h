@@ -1,6 +1,6 @@
 #pragma once
-#include <iostream>
-#include <vector>
+//#include <iostream>
+//#include <vector>
 #include "TSPheuristics_annotated.h"
 
 vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, const Pt depot) {

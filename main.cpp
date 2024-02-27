@@ -6,13 +6,15 @@ using namespace std;
 #include <utility>
 
 #include "class_prob.h"
-int numClust = 10;//3;//
 Pt depot = Pt(0, 0);		// depot must be first point initialised! ID = 0
+
+int no_pts = 100;
+int numClust = 10;//3;//
+							// validity check later: (numClust * numTenders * tenderCap = no_pts)
 int numTenders = 2;
 int tenderCap = 5;//2;//
-int no_pts = 100;
-//if (numClust * numTenders * tenderCap != no_pts) throw invalid_argument("numClust * numTenders * tenderCap != no_pts");
-// create instance of problem
+
+// create GLOBAL instance of problem
 const Problem inst(initReefs(no_pts), numClust, depot, numTenders, tenderCap);
 ///////////////// Problem Initialised /////////////////
 
@@ -33,33 +35,19 @@ int TenderSoln::count = 0;
 int FullSoln::count = 0;
 
 vector<Pt> reefPts;
-//for (int i = 0; i < 12; i++) {
-//	ReefPt rp(i+1,0);
-//	reefPts.push_back(rp);
-//	cout << rp.getID() << "\t(" << rp.getXY().first << ", " << rp.getXY().second << ")" << endl;
-//}
-
-//uniform_int_distribution<int> distribution(1, 10);		// Define the distribution for integers between 1 and 10 (inclusive)
 
 int main()
 {
-	//cout << "Hello World!\n";
-	
-	////////////   Cluster Soln Construction - function out   ////////////
+	if (numClust * numTenders * tenderCap != no_pts) 
+		throw invalid_argument("numClust * numTenders * tenderCap != no_pts");
+
+	////////////   ClusterSoln Construction   ////////////
 	//\\//\\//\\//\\// Create clusters \\//\\//\\//\\//
 	vector<ClusterSoln*> clusters = kMeansConstrained(1000/*0*/, false);
-	//\\//\\//\\//\\// Clusters created \\//\\//\\//\\//
-	// PRINT clusters //
-	for (int i = 0; i < clusters.size(); i++) {
-		printf("\tCluster: %d\n", i);					// Print clusters
-		for (int j = 0; j < clusters[i]->reefs.size(); j++) {	// for reefs in cluster
-			printf("%d\t(%.2f, %.2f)\n", clusters[i]->reefs[j]->ID, clusters[i]->reefs[j]->x, clusters[i]->reefs[j]->y);
-		} // print ID (x,y) for each reef in cluster
-		printf("Centroid:\t\t%d\t(%.2f, %.2f)\n", clusters[i]->getCentroid().ID, clusters[i]->getCentroid().x, clusters[i]->getCentroid().y);
-	} // for each cluster
-	//\\//\\//\\//\\// Cluster Soln Initialised //\\//\\//\\//\\//
+	printClusters(clusters);		// PRINT clusters //
+	//\\//\\//\\//\\// ClusterSoln Initialised //\\//\\//\\//\\//
 	
-	//\\//\\//\\//\\//   MS Soln Construction   //\\//\\//\\//\\//
+	//\\//\\//\\//\\//   MsSoln Construction   //\\//\\//\\//\\//
 	MSSoln msSoln(clusters);
 	//\\//\\//\\// clustOrder for MS route solution \\//\\//\\//
 	msSoln.clusters = clusterCentroidNearestNeighbour(clusters);		// clusters ordered by NN
@@ -74,7 +62,7 @@ int main()
 	
 	double msDist = msSoln.getDist();
 	vector<Pt*> ms_launch_route = msSoln.getRoute();
-	//\\//\\//\\//\\//   MS Soln Initialised   //\\//\\//\\//\\//
+	//\\//\\//\\//\\//   MsSoln Initialised   //\\//\\//\\//\\//
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 	//\\//\\//\\//\\// TenderSoln Construction //\\//\\//\\//\\//
 	vector<TenderSoln> tenderSolns;
@@ -113,22 +101,23 @@ int main()
 	printf("\nGd Dist: \t%.2f", gd.getTotalDist());
 	// Tendersoln Swaps
 
+	FullSoln best = gd;
+
 	//// Tendersoln Swaps: Out
-	//bool out = 0;
-	//FullSoln best_out = SwapShell(gd/*best_in*/, out);
-	//printf("\nGd Dist: \t%.2f", gd.getTotalDist());
-	////printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
-	//printf("\nOut_Swap distance:\t%.2f\n", best_out.getTotalDist());
+	bool out = 0;
+	FullSoln best_out = SwapShell(gd, out);
+	printf("\nGd Dist: \t%.2f", gd.getTotalDist());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
+	printf("\nOut_Swap distance:\t%.2f\n", best_out.getTotalDist());
+	best = best_out;
 
 	// Tendersoln Swaps: In
-	bool in = 1;
-	/*string filename*/ 
-	FullSoln best_in = SwapShell(gd, in);
+	bool in = 1;	/*string filename*/ 
+	FullSoln best_in = SwapShell(best, in);
 	printf("\nGd Dist: \t%.2f", gd.getTotalDist());
 	printf("\nIn_Swap distance:\t%.2f\n", best_in.getTotalDist());
+	best = best_in;
 
 	////////////////////////////////
-
 
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 	printf("\n\n");

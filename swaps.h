@@ -1,7 +1,5 @@
 #pragma once
-
 #include <fstream>
-
 #include "class_SA.h"
 
 /////////////////////////////////////////////////////////////////////////
@@ -153,15 +151,15 @@ void random_d_in_Swap(TenderSoln& tender, /*int iteration, */bool swap_print = f
     return;
 }
 
-// print tender routes and dists - based on tenderSoln* tender
-void printTenderRoutes(const TenderSoln* tender) {
-	for (const auto& route : tender->routes) {
-        for (auto& node : route) {
-            printf("\t%d ->", node->ID);
-        }
-        printf("\nRoute dist:\t%f\n", tender->getTenderRouteDist(route));
-    }
-}
+//// print tender routes and dists - based on tenderSoln* tender
+//void printTenderRoutes(const TenderSoln* tender) {
+//	for (const auto& route : tender->routes) {
+//        for (auto& node : route) {
+//            printf("\t%d ->", node->ID);
+//        }
+//        printf("\nRoute dist:\t%f\n", tender->getTenderRouteDist(route));
+//    }
+//}
 
 // MODIFY Fullsoln soln (not ref) and return the swapped copy to save as proposed - mutated cluster_index c to swap within
 FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, vector<int> randoms, bool print = false) {
@@ -240,7 +238,7 @@ FullSoln SA_fn(const FullSoln initialSolution,
 }
 
 // Shell function setting up SA, and calling SA_fn with specified mutator (IN/OUT)
-FullSoln SwapShell(const FullSoln gd_soln, bool in_out, 
+FullSoln SwapShell(const FullSoln soln_prev_best, bool in_out, 
     //int num_iterations = 10000, double initial_temperature = 200, double cooling_rate = 0.999,
     bool print_stats = false, bool csv_print = false, bool SA_print = true) {   //in_out = 1; // 0 = OUT, 1 = IN
     if (in_out == 0) {      printf("\n\nWithOUT Cluster\n"); }
@@ -249,16 +247,19 @@ FullSoln SwapShell(const FullSoln gd_soln, bool in_out,
     printf("---------- CLUST_OPT_D_TOURS - Simulated Annealing ----------\n");
     
     SAlog log = SAlog(/*initial_temperature*/);
-    FullSoln best(gd_soln);
-    if (in_out == 0) {      //best = OUT_ClusterSwaps(gd_soln, 0, true);
-            //SAparams  (num_iterations, initial_temp, cooling_rate)
-        double dist_best = best.getTotalDist();
-        SAparams sa_params = SAparams(5000, dist_best, 0.99/*pow(dist_best*5E-23,1/5000)*//*0.98*/);//(4000, 4000, 0.998);// initial temp ~ 2000 -> 
-        best = SA_fn(gd_soln, OUT_ClusterSwaps, sa_params, log); 
+    FullSoln best(soln_prev_best);
+    double dist_best = best.getTotalDist();
+    //SAparams                  (num_iter, init_temp, cooling_rate)
+    SAparams sa_params = SAparams(10000, 0.75 * dist_best, 0.99);
+    if (in_out == 0) {      //best = OUT_ClusterSwaps(soln_prev_best, 0, true);
+        //SAparams sa_params = SAparams(10000, 0.75*dist_best, 0.99/*pow(dist_best*5E-23,1/5000)*//*0.98*/);//(4000, 4000, 0.998);// initial temp ~ 2000 -> 
+        best = SA_fn(soln_prev_best, OUT_ClusterSwaps, sa_params, log); 
+        printf("\n^^ OUT SWAPS ^^\n");
     }
-    else {                  //best = IN_ClusterSwaps(gd_soln, 0, true);
-        SAparams sa_params = SAparams(10000, 2000, 0.99);
-        best = SA_fn(gd_soln, IN_ClusterSwaps, sa_params, log/*, true*/);
+    else {                  //best = IN_ClusterSwaps(soln_prev_best, 0, true);
+        //SAparams sa_params = SAparams(10000, 0.75*dist_best, 0.99);
+        best = SA_fn(soln_prev_best, IN_ClusterSwaps, sa_params, log/*, true*/);
+        printf("\n^^ IN SWAPS ^^\n");
     }
 
     printf("\n------------- ^^ CLUST_OPT_D_TOURS ^^ --------------\n");

@@ -23,9 +23,6 @@
     <ClInclude Include="class_prob.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="new.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cluster.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -35,13 +32,7 @@
     <ClInclude Include="mothership.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TSPheuristics_annotated.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="tenders.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MSSoln.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="class_soln.h">
@@ -51,6 +42,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="class_SA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TSPheuristics_annotated.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

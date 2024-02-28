@@ -68,27 +68,44 @@ int main()
 	FullSoln gd(msSoln, ptr_tenderSolns);
 	printf("\nGd Dist: \t%.2f", gd.getTotalDist());
 	////////////////////////////////
+	vector<FullSoln> fullSolns;
+	//FullSoln best = gd;	// initialise best as gd
+	fullSolns.push_back(gd);
+	vector<double> best_dist{ fullSolns.back().getTotalDist()};			// initialise best_dist as vector with best solution distance
+	////////////////////////////////
 	// Tendersoln Swaps
-	FullSoln best = gd;	
 
-	//// Tendersoln Swaps: Out
-	bool out = 0;
-	FullSoln best_out = SwapShell(gd, out);
-	printf("\nGd Dist: \t%.2f", gd.getTotalDist());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
-	printf("\nOut_Swap distance:\t%.2f\n", best_out.getTotalDist());
-	best = best_out;
+	////// Tendersoln Swaps: Out
+	//bool in_out = 0;
+	//FullSoln best_out = SwapShell(fullSolns.back(), in_out);
+	//printf("\nGd Dist: \t\t%.2f", best_dist.back()/*at(0)*/);		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
+	//best_dist.push_back(best_out.getTotalDist());
+	//printf("\nOut_Swap distance:\t%.2f\n", best_dist.back());
+	//fullSolns.push_back(best_out);
+	////best = best_out;
 
-	// Tendersoln Swaps: In
-	bool in = 1;	/*string filename*/ 
-	FullSoln best_in = SwapShell(best, in);
-	printf("\nGd Dist: \t%.2f", gd.getTotalDist());
-	printf("\nIn_Swap distance:\t%.2f\n", best_in.getTotalDist());
-	best = best_in;
-
+	//// Tendersoln Swaps: In
+	//in_out = 1;
+	//FullSoln best_in = SwapShell(best, in_out);
+	//printf("\nGd Dist: \t%.2f", gd.getTotalDist());
+	//best_dist.push_back(best.getTotalDist());
+	//printf("\nIn_Swap distance:\t%.2f\n", best_dist.back());
+	//best = best_in;
+	bool in_out = 1;
+	while (best_dist.size() < 3 || best_dist.back() != best_dist.at(best_dist.size() - 2))
+	{
+		in_out = !in_out;				// switch in_out flag
+		FullSoln best_new = SwapShell(fullSolns.back(), in_out);
+		printf("\nPrev Dist: \t\t%.2f", best_dist.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
+		best_dist.push_back(best_new.getTotalDist());
+		printf("\n%d\tNEW_Swap distance:\t%.2f\n", in_out, best_dist.back());
+		// vv fullSolns is not creating new fullSoln objects, but rather just pointing to the same object
+		fullSolns.push_back(best_new);
+		//best = best_new;
+	}
 	////////////////////////////////
 
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 	printf("\n\n");
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 }
-

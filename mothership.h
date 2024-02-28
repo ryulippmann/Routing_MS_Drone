@@ -1,6 +1,4 @@
 #pragma once
-//#include <iostream>
-//#include <vector>
 #include "TSPheuristics_annotated.h"
 
 vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, const Pt depot) {
@@ -71,8 +69,7 @@ vector<vector<double>> setLaunchPts(MSSoln& msSoln,
 	return dMatrix_launchpt;
 }
 
-double clusterCentroidNearestNeighbour(MSSoln& msSoln, //vector<ClusterSoln*> clusters,    //const ClusterSoln& clustSoln,
-    //const vector<Cluster*> clusters, const vector<vector<double>>& centroidMatrix,
+double clusterCentroidNearestNeighbour(MSSoln& msSoln, 
     bool csvPrint = false, bool printStops = true) {
     const vector<ClusterSoln*> clusters = msSoln.clusters;
     vector<ClusterSoln*> nearestCentroids(clusters.size(), nullptr);// Initialize the result vector
@@ -154,6 +151,8 @@ double greedyMSCluster(MSSoln& msSoln,    //const ClusterSoln& clustSoln, //cons
     printf("\n%.2f\n", msDist);
     return msDist;
 }
+
+///////////////////////////////////////////////////////////////////
 
 //vector<Pt*> setLaunchPts(const vector<Cluster*>& clusters) {
 //	vector<Pt*> launchPts;

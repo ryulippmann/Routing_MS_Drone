@@ -1,10 +1,6 @@
 #pragma once
-//#include "class_def.h"
-//#include "calcs.h"
-
-//#include <vector>
-//#include <cmath>
 #include <functional>
+// all of these funcitons called once only, but clean up main.cpp
 
 void randomSwapClusters(vector<Pt*>& clust_a, vector<Pt*>& clust_b, const pair<double, double> dists, pair<Pt, Pt> centroids,/* const int randomSeed,*/ bool swap_print = false) {
     //mt19937 gen(randomSeed);        //random_device rd; //mt19937 gen(rd());

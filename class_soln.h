@@ -324,15 +324,16 @@ private:
 struct FullSoln {
 public:
 	FullSoln(const MSSoln msSoln, vector<TenderSoln*>& tenderSolns) :
-		ID(count++), msSoln(msSoln), tenderSolns(tenderSolns),
-		greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
+		ID(count++), msSoln(msSoln), tenderSolns(tenderSolns) //, greedy(true), without_clust(false), within_clust(false), greedy_again(false) 
+		{}
 	FullSoln(const MSSoln msSoln) :
-		ID(count++), msSoln(msSoln),
-		greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
+		ID(count++), msSoln(msSoln) //, greedy(true), without_clust(false), within_clust(false), greedy_again(false) 
+	{}
 	// Copy constructor for deep copy
 	FullSoln(const FullSoln& other) :
 		ID(count++), msSoln(other.msSoln), // Deep copy
-		tenderSolns(), greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again) {
+		tenderSolns()/*, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again)*/ 
+		{
 		for (auto& tendersoln : other.tenderSolns) {
 			this->tenderSolns.push_back(new TenderSoln(*tendersoln));
 		}
@@ -340,9 +341,9 @@ public:
 	// IN_SWAPS: Copy constructor with additional routes parameter
 	FullSoln(const FullSoln& other, const vector<vector<Pt*>>& routes, int c) :
 		ID(count++), msSoln(other.msSoln), // Deep copy
-		tenderSolns(), greedy(other.greedy), without_clust(other.without_clust),
-		within_clust(other.within_clust), greedy_again(other.greedy_again) {
-
+		tenderSolns()
+		//, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again) 
+		{
 		// Copy new TenderSoln objects with updated routes
 		for (int i = 0; i < other.tenderSolns.size(); ++i) {
 			// Ensure the routes vector is not out of bounds
@@ -361,8 +362,9 @@ public:
 	// OUT_SWAPS: Copy constructor with additional routes parameters
 	FullSoln(const FullSoln& other, const pair <vector<vector<Pt*>>, vector<vector<Pt*>>>& routes, pair<ClusterSoln, ClusterSoln> clusters, pair<int, int> c) :
 		ID(count++), msSoln(other.msSoln), // Deep copy - UPDATE based on TenderSoln!
-		tenderSolns(), greedy(other.greedy), without_clust(other.without_clust),
-		within_clust(other.within_clust), greedy_again(other.greedy_again) {
+		tenderSolns()
+		//, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again) 
+		{
 
 		// Copy new TenderSoln objects with updated routes
 		for (int i = 0; i < other.tenderSolns.size(); ++i) {
@@ -392,10 +394,10 @@ public:
 	const int ID;
 	/*const*/ MSSoln msSoln;
 	vector<TenderSoln*> tenderSolns;
-	bool greedy;
-	bool without_clust;
-	bool within_clust;
-	bool greedy_again;
+	//bool greedy;
+	//bool without_clust;
+	//bool within_clust;
+	//bool greedy_again;
 
 	// Total dist = ms + sum(tender)
 	double getTotalDist() const {
@@ -409,25 +411,24 @@ public:
 	}
 
 	// Copy assignment operator for deep copy
-	FullSoln& operator=(const FullSoln other) {
+	FullSoln& operator=(const FullSoln& other) {
 		if (this != &other) {
 			// Release existing TenderSoln objects
-			//for (auto& ptr : tenderSolns) {
-			//	delete ptr;
-			//}
+			for (auto& ptr : tenderSolns) {
+				delete ptr;
+			}
 			tenderSolns.clear();
 
 			// Copy new TenderSoln objects
 			for (auto& tendersoln : other.tenderSolns) {
 				tenderSolns.push_back(new TenderSoln(*tendersoln/*, true*/)); // Pass 'true' to avoid copying launchPts
 			}
-
-			// Update other members accordingly
-			msSoln = other.msSoln;		// Deep copy MSSoln
-			greedy = other.greedy;
-			without_clust = other.without_clust;
-			within_clust = other.within_clust;
-			greedy_again = other.greedy_again;
+			//// Update other members accordingly
+			//msSoln = other.msSoln;		// Deep copy MSSoln
+			//greedy = other.greedy;
+			//without_clust = other.without_clust;
+			//within_clust = other.within_clust;
+			//greedy_again = other.greedy_again;
 		}
 		return *this;
 	}

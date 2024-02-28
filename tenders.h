@@ -1,7 +1,4 @@
 #pragma once
-//#include <vector>
-//#include <cmath>
-//using namespace std;
 
 //// RETURN reefs visited
 //int reefsVisited(const vector<Pt*>& reefs) { 
@@ -117,7 +114,6 @@ vector<TenderSoln> initTenderSoln(vector<ClusterSoln*> clusters, MSSoln msSoln) 
     }// for each cluster
     return tenderSolns;
 }
-
 
 vector<vector<Pt*>> greedyTenderCluster(const TenderSoln& clustTendersoln, const vector<vector<double>> dMatrix, //const MSSoln* ms, /*vector<vector<Pt*>>& routes, */const int c,
     bool csv_print = false, bool print = false) {

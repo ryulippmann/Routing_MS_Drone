@@ -1,9 +1,5 @@
 #pragma once
-using namespace std;
-//#include "MSSoln.h"
-//class MSSoln;
-// 
-//#include "calcs.h"
+//using namespace std;
 
 //#ifndef calcs_h
 //#define calcs_h
@@ -46,7 +42,7 @@ private:
 	static int count;
 };
 
-vector<Pt> initReefs(int no_pts=100, int sol_space = 100) {
+vector<Pt> initReefs(int no_pts = 100, int sol_space = 100) {
 	vector<Pt> reefs;
 	for (int i = 0; i < no_pts; i++) {
 		Pt pt = Pt(rand() % sol_space, rand() % sol_space);

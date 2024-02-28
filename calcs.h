@@ -1,7 +1,7 @@
 #pragma once
 #include <random>
 
-using namespace std;
+//using namespace std;
 
 random_device rd;       // Seed for the random number generator
 mt19937 gen(rd());      // Mersenne Twister engine
@@ -47,27 +47,6 @@ double calculatePtDistance(const Pt* a, const Pt* b) {
     return sqrt(pow(a->x - b->x, 2) + pow(a->y - b->y, 2));
 }//calculatePtDistance
 
-vector<vector<double>> centroidMatrix(Problem& inst, vector<Pt*> reefs) {
-    vector<vector<double>> centroidMatrix;
-    //centroids.insert(centroids.begin(), ClusterPoint(depot.first, depot.second));
-    vector<double> depot_row;
-    depot_row.push_back(0);
-    for (int i = 0; i < reefs.size(); i++) {		// for each cluster
-        depot_row.push_back(calculatePtDistance(inst.ms.depot, reefs[i]));
-    }
-    centroidMatrix.push_back(depot_row);
-
-    for (int i = 0; i < reefs.size(); i++) {		// for each cluster
-        vector<double> row(reefs.size() + 1);
-        row[0] = depot_row[i + 1];
-        for (int j = 0; j < reefs.size(); j++) {	// for each cluster
-            row[j + 1] = calculatePtDistance(reefs[i], reefs[j]);
-        }
-        centroidMatrix.push_back(row);
-    }
-    return centroidMatrix;
-}
-
 double CalcCentroidDist(const vector<Pt> cluster, const Pt centroid) {
     double summing_centroid_dist = 0;
     for (int i = 0; i < cluster.size(); ++i) {  // i = node id in cluster
@@ -83,17 +62,6 @@ double CalcCentroidDist(const vector<Pt*> cluster, const Pt& centroid) {
     return summing_centroid_dist;
 }
 
-double calcRouteDist(vector<vector<Pt*>> routes) {
-    // this doesn't account for free link from last node in route to launchpt
-	double summing_route_dist = 0;
-    for (const auto& route : routes) {
-        for (int i = 0; i < route.size() - 1; ++i) {
-			summing_route_dist += calculatePtDistance(*route[i], *route[i + 1]);
-		}
-	}
-	return summing_route_dist;
-}
-
 // Function to find index of Pt in vector by Pt ID
 int findIndexByID(int targetID, const vector<Pt*>& myList, pair<Pt*, Pt*> launchPts = make_pair(nullptr, nullptr)) {
     for (int index = 0; index < myList.size(); index++) {
@@ -106,18 +74,51 @@ int findIndexByID(int targetID, const vector<Pt*>& myList, pair<Pt*, Pt*> launch
 	return -1;  // Return a special value (e.g., -1) to indicate that the ID was not found
 }
 
-// Function to get a reference to Pt based on ID
-Pt* getPtByID(int targetID, vector<Pt*> route) {
-    for (auto& Pt : route) {
-        if (Pt->ID == targetID) {
-            return Pt;
-        }
-    }
-    if (targetID == 0)  return route[0];
-	else if (targetID == route.size() - 1) return route.back();
-	else throw invalid_argument("Pt ID not found");
-    //return nullptr; // ID not found
-}
+//vector<vector<double>> centroidMatrix(Problem& inst, vector<Pt*> reefs) {
+//    vector<vector<double>> centroidMatrix;
+//    //centroids.insert(centroids.begin(), ClusterPoint(depot.first, depot.second));
+//    vector<double> depot_row;
+//    depot_row.push_back(0);
+//    for (int i = 0; i < reefs.size(); i++) {		// for each cluster
+//        depot_row.push_back(calculatePtDistance(inst.ms.depot, reefs[i]));
+//    }
+//    centroidMatrix.push_back(depot_row);
+//
+//    for (int i = 0; i < reefs.size(); i++) {		// for each cluster
+//        vector<double> row(reefs.size() + 1);
+//        row[0] = depot_row[i + 1];
+//        for (int j = 0; j < reefs.size(); j++) {	// for each cluster
+//            row[j + 1] = calculatePtDistance(reefs[i], reefs[j]);
+//        }
+//        centroidMatrix.push_back(row);
+//    }
+//    return centroidMatrix;
+//}
+
+//double calcRouteDist(vector<vector<Pt*>> routes) {
+//    // this doesn't account for free link from last node in route to launchpt
+//	double summing_route_dist = 0;
+//    for (const auto& route : routes) {
+//        for (int i = 0; i < route.size() - 1; ++i) {
+//			summing_route_dist += calculatePtDistance(*route[i], *route[i + 1]);
+//		}
+//	}
+//	return summing_route_dist;
+//}
+
+//// Function to get a reference to Pt based on ID
+//Pt* getPtByID(int targetID, vector<Pt*> route) {
+//    for (auto& Pt : route) {
+//        if (Pt->ID == targetID) {
+//            return Pt;
+//        }
+//    }
+//    if (targetID == 0)  return route[0];
+//	else if (targetID == route.size() - 1) return route.back();
+//	else throw invalid_argument("Pt ID not found");
+//    //return nullptr; // ID not found
+//}
+
 //double getRouteDist(vector<Pt*> route, vector<vector<double>> dMatrix, Cluster* cluster) {
 //    double summing_route_dist = 0;
 //    for (int i = 0; i < route.size() - 1; ++i) {

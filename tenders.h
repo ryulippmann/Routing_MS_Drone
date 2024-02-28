@@ -3,15 +3,15 @@
 //#include <cmath>
 //using namespace std;
 
-// RETURN reefs visited
-int reefsVisited(const vector<Pt*>& reefs) { 
-    int visit_count = 0;
-    vector<bool> visited(reefs.size(), false);
-    for (int i = 0; i < reefs.size(); i++) {
-        if (visited[i] == true) { visit_count++; }
-    }
-    return visit_count;
-}//reefsVisited
+//// RETURN reefs visited
+//int reefsVisited(const vector<Pt*>& reefs) { 
+//    int visit_count = 0;
+//    vector<bool> visited(reefs.size(), false);
+//    for (int i = 0; i < reefs.size(); i++) {
+//        if (visited[i] == true) { visit_count++; }
+//    }
+//    return visit_count;
+//}//reefsVisited
 
 //vehicles argument not referenced, so are not updated...
 vector<vector<Pt*>> TenderWithinClusterNearestNeighbour(const MSSoln& ms, const int c,
@@ -78,6 +78,46 @@ vector<vector<Pt*>> TenderWithinClusterNearestNeighbour(const MSSoln& ms, const 
     if (printStops) { cout << "\nTotal vehicle route dist: " << sum(route_dists) << "\n"; }
     return routes;
 }//nearestNeighbour
+
+vector<TenderSoln> initTenderSoln(vector<ClusterSoln*> clusters, MSSoln msSoln) {
+    vector<TenderSoln> tenderSolns;
+    cout << string(30, '-') << "\n";
+    for (int c = 0; c < clusters.size(); c++) {		// for each cluster
+        pair<Pt*, Pt*> launchPts = make_pair(msSoln.launchPts[c], msSoln.launchPts[c + 1]);		// launchPts for cluster
+
+        Pt centroid = msSoln.clusters[c]->getCentroid();										// centroid for cluster	
+        printf("\nCluster %d\tcentroid: (%.2f, %.2f)\n", msSoln.clusters[c]->ID, centroid.x, centroid.y);
+
+        // print distance matrix
+        vector<vector<double>> clusterMatrix = msSoln.clusters[c]->getdMatrix(launchPts);	// distance matrix for cluster
+        for (int i = 0; i < clusterMatrix.size(); i++) { for (int j = 0; j < clusterMatrix[i].size(); j++) { printf("%.2f\t", clusterMatrix[i][j]); } printf("\n"); } printf("\n");
+
+        //\\//\\//\\//\\// Initialise TenderSoln  //\\//\\//\\//\\//
+        // Tendersoln Nearest Neighbour
+        //vector<vector<Pt*>> tenderRoutes = TenderWithinClusterNearestNeighbour(msSoln, c);
+        TenderSoln tenderSoln(*msSoln.clusters[c],
+            TenderWithinClusterNearestNeighbour(msSoln, c)/*tenderRoutes*/,
+            launchPts);
+        //\\//\\//\\//\\// TenderSoln Initialised //\\//\\//\\//\\//
+
+        //// Tendersoln Greedy 2-Opt update
+        //tenderSoln.routes = greedyTenderCluster(tenderSoln, clusterMatrix);
+
+        // FIXED - deep copy operator: printf("\nERROR HERE - main L97 - ADDING tenderSoln to tenderSolns...\nIs this line necessary/doing anything?\n");
+        tenderSolns.emplace_back(tenderSoln);
+        // print routes
+        printf("CLUSTER %d:\tID:%d\n", c, tenderSoln.cluster.ID);
+        for (int i = 0; i < tenderSoln.routes.size(); i++) {
+            printf("\t\tRoute %d:\n", i);
+            for (int j = 0; j < tenderSoln.routes[i].size(); j++) {
+                printf("\t\t\t%d\t(%.2f, %.2f)\n", tenderSoln.routes[i][j]->ID, tenderSoln.routes[i][j]->x, tenderSoln.routes[i][j]->y);
+            }// for each node in route
+        }// for each route
+        cout << string(30, '-') << "\n";
+    }// for each cluster
+    return tenderSolns;
+}
+
 
 vector<vector<Pt*>> greedyTenderCluster(const TenderSoln& clustTendersoln, const vector<vector<double>> dMatrix, //const MSSoln* ms, /*vector<vector<Pt*>>& routes, */const int c,
     bool csv_print = false, bool print = false) {

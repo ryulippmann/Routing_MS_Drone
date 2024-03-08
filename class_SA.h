@@ -5,6 +5,8 @@
 struct SAparams {
     SAparams(int num_iterations, double initial_temp, double cooling_rate) :
         num_iterations(num_iterations), initial_temp(initial_temp), cooling_rate(cooling_rate) {};
+    // Default constructor with empty attribute values
+    SAparams() : num_iterations(0), initial_temp(0.0), cooling_rate(0.0), file_name("") {}
 
     int num_iterations;
     double initial_temp;

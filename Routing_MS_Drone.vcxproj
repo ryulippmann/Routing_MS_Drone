@@ -186,6 +186,7 @@
     <ClInclude Include="class_soln.h" />
     <ClInclude Include="cluster.h" />
     <ClInclude Include="mothership.h" />
+    <ClInclude Include="prints.h" />
     <ClInclude Include="swaps.h" />
     <ClInclude Include="tenders.h" />
     <ClInclude Include="TSPheuristics_annotated.h" />

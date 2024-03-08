@@ -195,12 +195,12 @@ void csvPrintSA_Time(string file_name, chrono::seconds elapsed_time) {
 }
 
 //Co-pilot function - update as needed
-string csvPrintSA(SAlog log, SAparams sa_params, string file_name, string c) {
+string csvPrintSA(SAlog log, /*SAparams sa_params, */string file_name, string c) {
     string filename = file_name + "-" + c + ".csv";
     ofstream file(filename);
     if (file.is_open()) {
         file << "temp,current_dist,new_dist,best_dist\n";
-        for (int i = 0; i < sa_params.num_iterations; i++) {
+        for (int i = 0; i < log.temp.size()/*sa_params.num_iterations*/; i++) {
             file << log.temp[i] << "," << log.current_dist[i] << "," << log.new_dist[i] << "," << log.best_dist[i] << "\n";
         }
         file.close();
@@ -216,7 +216,7 @@ void csvPrints(FullSoln best_new, bool in_out) {
 	}
     //csvPrintRoutes(best_new.tenderSolns, "drone_routes", "best");)
     csvPrintMSRoutes(best_new.msSoln.launchPts, "ms_launch_route");
-    csvPrintSA(best_new.sa_log, best_new.sa_params, "sa_log", "best");
+    csvPrintSA(best_new.sa_log, "sa_log", "best");
     //csvPrintSA_Time(filename_SA, fn_elapsed_time);
     return;
 }

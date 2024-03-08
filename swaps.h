@@ -1,24 +1,9 @@
 #pragma once
 #include <fstream>
-#include "class_SA.h"
 
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 
-//Co-pilot function - update as needed
-string csvPrintSA(SAlog log, SAparams sa_params, string file_name, string c) {
-    string filename = file_name + "-" + c + ".csv";
-    ofstream file(filename);
-    if (file.is_open()) {
-        file << "temp,current_dist,new_dist,best_dist\n";
-        for (int i = 0; i < sa_params.num_iterations; i++) {
-            file << log.temp[i] << "," << log.current_dist[i] << "," << log.new_dist[i] << "," << log.best_dist[i] << "\n";
-        }
-        file.close();
-    }
-    else printf("Unable to open file");
-    return filename;
-}
 
 bool accept_new_solution(double current_dist, double proposed_dist, double temperature) {
     /*if (proposed_dist < current_dist) return true;
@@ -196,7 +181,7 @@ FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, vector<int> randoms, bool
 // Simulated Annealing based on in/out mutator
 FullSoln SA_fn(const FullSoln initialSolution,
     function<FullSoln(const FullSoln currentSolution, const int, const vector<int>, const bool)> mutator,
-    const SAparams sa_params, SAlog& log, bool print = false) {
+    const SAparams sa_params,/* SAlog& log, */bool print = false) {
     double temp = sa_params.initial_temp;           // is this redundant? - temp is updated in SAlog
     vector<int> randomness;
     for (int i = 0; i < sa_params.num_iterations; i++) { randomness.push_back(i); }
@@ -209,6 +194,8 @@ FullSoln SA_fn(const FullSoln initialSolution,
     double dist_proposed = proposed.getTotalDist();
     printf("\n\tBEST\t\tINCUMBENT\tPROPOSED\t\t\t\tTEMP");
     srand(42);      // set random seed
+    vector<double> sa_new, sa_current, sa_best, sa_temp;
+    //log = SAlog(temp);
     for (int iter_num = 1; iter_num < sa_params.num_iterations; ++iter_num) {
         if (best.msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); }
         printf("\n%d\t%.3f\t%.3f\t\t\t\t\t\t%.2e", iter_num, best.getTotalDist(), dist_incumbent, temp);
@@ -230,11 +217,22 @@ FullSoln SA_fn(const FullSoln initialSolution,
             }
         }
         temp *= sa_params.cooling_rate;
-        log = SAlog(dist_proposed, dist_incumbent, dist_best, temp);        //update log
+        sa_new.push_back(dist_proposed);
+        sa_current.push_back(dist_incumbent);
+        sa_best.push_back(dist_best);
+        sa_temp.push_back(temp);       
     }
+    best.sa_log = SAlog(sa_new, sa_current, sa_best, sa_temp);
+    // log is not used correctly! - need to update log with new values iteratively
+    //log = SAlog(dist_proposed, dist_incumbent, dist_best, temp);        //update log
+    //best.sa_log = log;
     printf("\n\n\tBEST\t\tINITIAL\t\t\tTEMP");
     printf("\n\t%.3f\t%.3f\t%.2e", dist_best, dist_best_saved, temp);
     return best;
+}
+
+string boolToString(bool value) {
+    return value ? "in" : "out";
 }
 
 // Shell function setting up SA, and calling SA_fn with specified mutator (IN/OUT)
@@ -246,19 +244,20 @@ FullSoln SwapShell(const FullSoln soln_prev_best, bool in_out,
     else {          throw runtime_error("Error: Invalid in_out argument provided"); }    
     printf("---------- CLUST_OPT_D_TOURS - Simulated Annealing ----------\n");
     
-    SAlog log = SAlog(/*initial_temperature*/);
+    //SAlog log = SAlog(/*initial_temperature*/);
     FullSoln best(soln_prev_best);
     double dist_best = best.getTotalDist();
     //SAparams                  (num_iter, init_temp, cooling_rate)
-    SAparams sa_params = SAparams(10000, 0.75 * dist_best, 0.99);
+    SAparams sa_params = //SAparams(10000, 0.75 * dist_best, 0.99);
+        SAparams(5000, 0.5 * dist_best, 0.98);
     if (in_out == 0) {      //best = OUT_ClusterSwaps(soln_prev_best, 0, true);
         //SAparams sa_params = SAparams(10000, 0.75*dist_best, 0.99/*pow(dist_best*5E-23,1/5000)*//*0.98*/);//(4000, 4000, 0.998);// initial temp ~ 2000 -> 
-        best = SA_fn(soln_prev_best, OUT_ClusterSwaps, sa_params, log); 
+        best = SA_fn(soln_prev_best, OUT_ClusterSwaps, sa_params/*, log*/); 
         printf("\n^^ OUT SWAPS ^^\n");
     }
     else {                  //best = IN_ClusterSwaps(soln_prev_best, 0, true);
         //SAparams sa_params = SAparams(10000, 0.75*dist_best, 0.99);
-        best = SA_fn(soln_prev_best, IN_ClusterSwaps, sa_params, log/*, true*/);
+        best = SA_fn(soln_prev_best, IN_ClusterSwaps, sa_params/*, log*//*, true*/);
         printf("\n^^ IN SWAPS ^^\n");
     }
 

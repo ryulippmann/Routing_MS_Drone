@@ -5,6 +5,8 @@
 struct SAparams {
     SAparams(int num_iterations, double initial_temp, double cooling_rate) :
         num_iterations(num_iterations), initial_temp(initial_temp), cooling_rate(cooling_rate) {};
+    // Default constructor with empty attribute values
+    SAparams() : num_iterations(0), initial_temp(0.0), cooling_rate(0.0), file_name("") {}
 
     int num_iterations;
     double initial_temp;
@@ -15,6 +17,12 @@ struct SAparams {
 
 struct SAlog {
     SAlog() {}
+    SAlog(vector<double> new_dist_val, vector<double> current_dist_val, vector<double> best_dist_val, vector<double> temp_val) {
+		new_dist = new_dist_val;
+		current_dist = current_dist_val;
+		best_dist = best_dist_val;
+		temp = temp_val;
+	}
     SAlog(double new_dist_val, double current_dist_val, double best_dist_val, double temp_val) {
         new_dist.push_back(new_dist_val);
         current_dist.push_back(current_dist_val);

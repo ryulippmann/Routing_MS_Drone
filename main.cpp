@@ -24,6 +24,7 @@ const Problem inst(initReefs(no_pts), numClust, depot, numTenders, tenderCap);
 #include "mothership.h"
 #include "tenders.h"
 #include "swaps.h"
+#include "prints.h"
 
 int Pt::count = 0;
 int MS::count = 0;
@@ -101,6 +102,7 @@ int main()
 		printf("\n%d\tNEW_Swap distance:\t%.2f\n", in_out, best_dist.back());
 		// vv fullSolns is not creating new fullSoln objects, but rather just pointing to the same object
 		fullSolns.push_back(best_new);
+		csvPrints(best_new, in_out);
 		//best = best_new;
 	}
 	////////////////////////////////

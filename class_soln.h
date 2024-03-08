@@ -1,6 +1,4 @@
 #pragma once
-#include "class_SA.h"
-
 
 struct ClusterSoln {
 public:
@@ -326,8 +324,7 @@ private:
 struct FullSoln {
 public:
 	FullSoln(const MSSoln msSoln, vector<TenderSoln*>& tenderSolns) :
-		ID(count++), msSoln(msSoln), tenderSolns(tenderSolns) 
-		//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) 
+		ID(count++), msSoln(msSoln), tenderSolns(tenderSolns) //, greedy(true), without_clust(false), within_clust(false), greedy_again(false) 
 		{}
 	FullSoln(const MSSoln msSoln) :
 		ID(count++), msSoln(msSoln) //, greedy(true), without_clust(false), within_clust(false), greedy_again(false) 
@@ -397,8 +394,6 @@ public:
 	const int ID;
 	/*const*/ MSSoln msSoln;
 	vector<TenderSoln*> tenderSolns;
-	SAparams sa_params;
-	SAlog sa_log;
 	//bool greedy;
 	//bool without_clust;
 	//bool within_clust;

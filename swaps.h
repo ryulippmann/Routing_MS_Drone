@@ -1,9 +1,24 @@
 #pragma once
 #include <fstream>
+#include "class_SA.h"
 
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 
+//Co-pilot function - update as needed
+string csvPrintSA(SAlog log, SAparams sa_params, string file_name, string c) {
+    string filename = file_name + "-" + c + ".csv";
+    ofstream file(filename);
+    if (file.is_open()) {
+        file << "temp,current_dist,new_dist,best_dist\n";
+        for (int i = 0; i < sa_params.num_iterations; i++) {
+            file << log.temp[i] << "," << log.current_dist[i] << "," << log.new_dist[i] << "," << log.best_dist[i] << "\n";
+        }
+        file.close();
+    }
+    else printf("Unable to open file");
+    return filename;
+}
 
 bool accept_new_solution(double current_dist, double proposed_dist, double temperature) {
     /*if (proposed_dist < current_dist) return true;
@@ -217,15 +232,9 @@ FullSoln SA_fn(const FullSoln initialSolution,
         temp *= sa_params.cooling_rate;
         log = SAlog(dist_proposed, dist_incumbent, dist_best, temp);        //update log
     }
-    best.sa_log = log;
-    best.sa_params = sa_params;
     printf("\n\n\tBEST\t\tINITIAL\t\t\tTEMP");
     printf("\n\t%.3f\t%.3f\t%.2e", dist_best, dist_best_saved, temp);
     return best;
-}
-
-string boolToString(bool value) {
-    return value ? "in" : "out";
 }
 
 // Shell function setting up SA, and calling SA_fn with specified mutator (IN/OUT)

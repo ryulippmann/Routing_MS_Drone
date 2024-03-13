@@ -137,3 +137,8 @@ int getRandomNumber(int size/*, int randomSeed = -1*/) {
     uniform_int_distribution<int> dist(0, size - 1);
     return dist(gen);
 }
+
+// return string "in" or "out" based on bool value
+string boolToString(bool value) {
+    return value ? "in" : "out";
+}

@@ -77,16 +77,18 @@ vector<vector<Pt*>> TenderWithinClusterNearestNeighbour(//const MSSoln& ms, cons
     return routes;
 }//nearestNeighbour
 
-vector<vector<Pt*>> greedyTenderCluster(const TenderSoln& clustTendersoln, const vector<vector<double>>& dMatrix, //const MSSoln* ms, /*vector<vector<Pt*>>& routes, */const int c,
+vector<vector<Pt*>> greedyTenderCluster(const TenderSoln& clustTendersoln, const vector<vector<double>> dMatrix, //const MSSoln* ms, /*vector<vector<Pt*>>& routes, */const int c,
     bool csv_print = false, bool print = false) {
+    //const Problem* inst = ms->inst;
     // dMatrix includes launch/retrieve pts and free link back to launchpt
+    //const vector<vector<double>> dMatrix = ms->clustSoln->clusters[c]->getdMatrix(c, make_pair(ms->launchPts[c], ms->launchPts[c + 1]));//[u];                        // for u vector in dMatrix
     vector<vector<Pt*>> routes = clustTendersoln.routes;
     //vector<vector<Pt*>> routes_new;
     //int n = ms->clustSoln->clusters.size();//centroids.size();  // number of clusters accounted for in main file...
     double gd_2opt_dists;
     int tenderCap = inst.tenderCap;
     if (print) cout << "\n---- GREEDY TENDER CLUSTERS ----\n";
-    for (int v = 0; v < routes.size(); v++) {      // iterate for each tender in cluster
+    for (int v = 0; v < clustTendersoln.routes.size(); v++) {      // iterate for each tender in cluster
         vector<int> i_tour;                 //(tenderCap/*init_solution.mothership.centroidMatrix.size()*/, 0);                         // ai_tour = city_index for each tour -> nearest neighbour
         //printf("%d\t", v);
         for (auto& pt : routes[v]) {        //(int i = 0; i < tenderCap/*init_solution.mothership.centroidMatrix.size()*/; i++) {

@@ -154,6 +154,29 @@ double greedyMSCluster(MSSoln& msSoln,    //const ClusterSoln& clustSoln, //cons
 
 ///////////////////////////////////////////////////////////////////
 
+vector<pair<double, MSSoln>> initMsSoln(const vector<ClusterSoln*>& clusters, MSSoln& msSoln, bool csv_print=0) {
+	vector<pair<double, MSSoln>> msSolns;
+    double msDist=DBL_MAX;                      // No launchPts initialised yet
+    msSolns.push_back(make_pair(msDist, msSoln));
+
+    msDist = clusterCentroidNearestNeighbour(msSoln);		// clusters ordered by NN
+    msSolns.push_back(make_pair(msDist, msSoln));
+    if (csv_print) csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_NN", msDist);
+    msDist = greedyMSCluster(msSoln);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
+    msSolns.push_back(make_pair(msDist, msSoln));
+    if (csv_print) csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_Gd", msDist);
+    //if (csv_print) csvPrintClusters(msSoln.clusters, "clusters_ordered", kMeansIters);		// CSV PRINT clusters //
+
+	//for (const auto& cluster : clusters) {
+	//	MSSoln msSoln(cluster);
+	//	msSoln.setLaunchPts();
+	//	msSolns.push_back(make_pair(msSoln.getDist(), msSoln));
+	//}
+	return msSolns;
+}
+
+///////////////////////////////////////////////////////////////////
+
 //vector<Pt*> setLaunchPts(const vector<Cluster*>& clusters) {
 //	vector<Pt*> launchPts;
 //	for (const auto& cluster : clusters) {

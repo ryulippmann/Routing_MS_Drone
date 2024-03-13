@@ -21,10 +21,10 @@ const Problem inst(initReefs(no_pts), numClust, depot, numTenders, tenderCap);
 #include "calcs.h"
 #include "class_soln.h"
 #include "cluster.h"
+#include "prints.h"
 #include "mothership.h"
 #include "tenders.h"
 #include "swaps.h"
-#include "prints.h"
 
 int Pt::count = 0;
 int MS::count = 0;
@@ -37,6 +37,8 @@ int FullSoln::count = 0;
 
 vector<Pt> reefPts;
 
+bool csv_print = 0;
+
 int main()
 {
 	if (numClust * numTenders * tenderCap != no_pts) 
@@ -44,30 +46,39 @@ int main()
 
 	////////////   ClusterSoln Construction   ////////////
 	//\\//\\//\\//\\// Create clusters \\//\\//\\//\\//
-	vector<ClusterSoln*> clusters = kMeansConstrained(1000/*0*/, false);
+	int kMeansIters = 1000;
+	vector<ClusterSoln*> clusters = kMeansConstrained(kMeansIters, false);
 	printClusters(clusters);		// PRINT clusters //
+	if (csv_print) csvPrintClusters(clusters, "clusters_init", kMeansIters);		// CSV PRINT clusters //
+	// vector<ClusterSoln*> clusters
 	//\\//\\//\\//\\  ClusterSoln Initialised \\//\\//\\//\\//
 	
 	//\\//\\//\\//\\//  MsSoln Construction //\\//\\//\\//\\//
-	MSSoln msSoln(clusters);
-	//\\//\\//\\// clustOrder for MS route solution \\//\\//\\//
-	double msDist;// = msSoln.getDist();
-	msDist = clusterCentroidNearestNeighbour(msSoln);		// clusters ordered by NN
-	msDist = greedyMSCluster(msSoln);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
+	MSSoln msSoln(clusters);				// No launchPts initialised yet
+	vector<pair<double,MSSoln>> msSolns = initMsSoln(clusters, msSoln, csv_print);
 	//vector<Pt*> ms_launch_route = msSoln.getRoute();
-
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+	//\\//\\//\\// clustOrder for MS route solution \\//\\//\\//
+	// MSSoln msSoln
+	// vector<pair<double, MSSoln>> msSolns;
 	//\\//\\//\\//\\/   MsSoln Initialised   /\\//\\//\\//\\//
+
 	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
 	//\\//\\//\\//\\  TenderSoln Construction  \\//\\//\\//\\/
-	vector<TenderSoln> tenderSolns = initTenderSoln(clusters, msSoln);
+	vector<TenderSoln> tenderSolns = initTenderSoln(msSoln, true);
 	vector<TenderSoln*> ptr_tenderSolns;
 	for (const auto& soln : tenderSolns) { ptr_tenderSolns.push_back(new TenderSoln(soln)); } // Assuming TenderSoln has a copy constructor
 	//\\//\\//\\//\   TenderSoln Initialised   \//\\//\\//\\//
+	// vector<TenderSoln> tenderSolns
+	// vector<TenderSoln*> ptr_tenderSolns
+
+	
 	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
 	//\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
 	FullSoln gd(msSoln, ptr_tenderSolns);
 	printf("\nGd Dist: \t%.2f", gd.getTotalDist());
+	csvPrints(gd);
+
 	////////////////////////////////
 	vector<FullSoln> fullSolns;
 	//FullSoln best = gd;	// initialise best as gd
@@ -106,6 +117,8 @@ int main()
 		//best = best_new;
 	}
 	////////////////////////////////
+
+
 
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 	printf("\n\n");

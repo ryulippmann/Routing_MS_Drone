@@ -93,8 +93,8 @@ FullSoln OUT_ClusterSwaps(const FullSoln& soln, int iteration, vector<int> rando
                             tenders.second.cluster.getdMatrix(launchPts.second));
     
     pair <vector<vector<Pt*>>, vector<vector<Pt*>>> routes;
-    routes.first = greedyTenderCluster(tenders.first, dMatrix.first);
-    routes.second = greedyTenderCluster(tenders.second, dMatrix.second);
+    routes.first = greedyTenderCluster(tenders.first, dMatrix.first);   		                // Run greedy 2-Opt on routes      
+    routes.second = greedyTenderCluster(tenders.second, dMatrix.second);		                // Run greedy 2-Opt on routes 
 
     pair<vector<Pt*>, vector<Pt*>> reefs = make_pair(tenders.first.cluster.reefs, tenders.second.cluster.reefs);
     //create new clusterSoln* with updated reefs
@@ -163,7 +163,7 @@ FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, vector<int> randoms, bool
     ClusterSoln* cluster = soln.msSoln.clusters[c];
     pair<Pt*, Pt*> launchPts = make_pair(soln.msSoln.launchPts[c], soln.msSoln.launchPts[c + 1]);
     vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
-    vector<vector<Pt*>> routes = greedyTenderCluster(*soln.tenderSolns[c], dMatrix);
+    vector<vector<Pt*>> routes = greedyTenderCluster(*soln.tenderSolns[c], dMatrix);                // Run greedy 2-Opt on routes
     FullSoln new_soln = FullSoln(soln, routes, c);
     /* PRINT ROUTES AND DISTS FOR EACH SUB - TOUR!! */
     if (print) {
@@ -184,7 +184,7 @@ FullSoln SA_fn(const FullSoln initialSolution,
     const SAparams sa_params,/* SAlog& log, */bool print = false) {
     double temp = sa_params.initial_temp;           // is this redundant? - temp is updated in SAlog
     vector<int> randomness;
-    for (int i = 0; i < sa_params.num_iterations; i++) { randomness.push_back(i); }
+    for (int i = 1; i < sa_params.num_iterations; i++) { randomness.push_back(i); }
     FullSoln best = initialSolution;
     FullSoln incumbent = initialSolution;
     FullSoln proposed = initialSolution;
@@ -222,17 +222,14 @@ FullSoln SA_fn(const FullSoln initialSolution,
         sa_best.push_back(dist_best);
         sa_temp.push_back(temp);       
     }
-    best.sa_log = SAlog(sa_new, sa_current, sa_best, sa_temp);
+    best.setSAlog(sa_new, sa_current, sa_best, sa_temp);        //.sa_log = new SAlog(sa_new, sa_current, sa_best, sa_temp);
     // log is not used correctly! - need to update log with new values iteratively
     //log = SAlog(dist_proposed, dist_incumbent, dist_best, temp);        //update log
     //best.sa_log = log;
     printf("\n\n\tBEST\t\tINITIAL\t\t\tTEMP");
     printf("\n\t%.3f\t%.3f\t%.2e", dist_best, dist_best_saved, temp);
-    return best;
-}
-
-string boolToString(bool value) {
-    return value ? "in" : "out";
+    FullSoln best_new = best;           // WHY is this line necessary?!
+    return best_new;
 }
 
 // Shell function setting up SA, and calling SA_fn with specified mutator (IN/OUT)
@@ -248,8 +245,9 @@ FullSoln SwapShell(const FullSoln soln_prev_best, bool in_out,
     FullSoln best(soln_prev_best);
     double dist_best = best.getTotalDist();
     //SAparams                  (num_iter, init_temp, cooling_rate)
-    SAparams sa_params = //SAparams(10000, 0.75 * dist_best, 0.99);
-        SAparams(5000, 0.5 * dist_best, 0.98);
+    SAparams sa_params = SAparams(10000, 0.5 * dist_best, 0.99);
+        //SAparams(5000, 0.5 * dist_best, 0.98);
+        //SAparams(1000, 0.5 * dist_best, 0.9);
     if (in_out == 0) {      //best = OUT_ClusterSwaps(soln_prev_best, 0, true);
         //SAparams sa_params = SAparams(10000, 0.75*dist_best, 0.99/*pow(dist_best*5E-23,1/5000)*//*0.98*/);//(4000, 4000, 0.998);// initial temp ~ 2000 -> 
         best = SA_fn(soln_prev_best, OUT_ClusterSwaps, sa_params/*, log*/); 

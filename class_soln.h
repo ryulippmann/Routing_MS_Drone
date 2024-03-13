@@ -253,7 +253,7 @@ public:
 	}
 
 	const int ID;
-	ClusterSoln/***/ cluster;
+	ClusterSoln cluster;
 	vector<vector<Pt*>> routes;
 	pair<Pt*, Pt*> launchPts;
 
@@ -335,7 +335,7 @@ public:
 	// Copy constructor for deep copy
 	FullSoln(const FullSoln& other) :
 		ID(count++), msSoln(other.msSoln), // Deep copy
-		tenderSolns()/*, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again)*/ 
+		tenderSolns(), sa_log(other.sa_log)/*, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again)*/ 
 		{
 		for (auto& tendersoln : other.tenderSolns) {
 			this->tenderSolns.push_back(new TenderSoln(*tendersoln));
@@ -430,12 +430,20 @@ public:
 			}
 			//// Update other members accordingly
 			//msSoln = other.msSoln;		// Deep copy MSSoln
-			//greedy = other.greedy;
-			//without_clust = other.without_clust;
-			//within_clust = other.within_clust;
-			//greedy_again = other.greedy_again;
+			sa_log = other.sa_log;
 		}
 		return *this;
+	}
+
+	// Method to set SAlog attributes
+	void setSAlog(const vector<double>& sa_new,
+		const vector<double>& sa_current,
+		const vector<double>& sa_best,
+		const vector<double>& sa_temp) {
+		this->sa_log.best_dist = sa_best;
+		this->sa_log.current_dist = sa_current;
+		this->sa_log.new_dist = sa_new;
+		this->sa_log.temp = sa_temp;
 	}
 
 private:

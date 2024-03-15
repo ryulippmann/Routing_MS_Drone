@@ -168,17 +168,15 @@ public:
 	}
 
 	// warning: launchPts need to be updated before this is called
+	// dist returned is the total return dist from depot to launchPts, not centroids!
 	double getDist() const {
 		if (launchPts.size() == 0) {
 			throw runtime_error("Launch points not set!");
 			return -1;
 		}
 		double dist = sqrt(pow(inst.ms.depot.x - launchPts[0]->x, 2) + pow(inst.ms.depot.y - launchPts[0]->y, 2));
-		for (int c = 0; c < clusters.size(); c++) {
-			dist += sqrt(pow(launchPts[c]->x - launchPts[c + 1]->x, 2) + pow(launchPts[c]->y - launchPts[c + 1]->y, 2));
-		}
+		for (int c = 0; c < clusters.size(); c++) { dist += sqrt(pow(launchPts[c]->x - launchPts[c + 1]->x, 2) + pow(launchPts[c]->y - launchPts[c + 1]->y, 2)); }
 		dist += sqrt(pow(inst.ms.depot.x - launchPts[clusters.size()]->x, 2) + pow(inst.ms.depot.y - launchPts[clusters.size()]->y, 2));
-		//sqrt(pow(inst.ms.depot.x - launchPts[clustOrder.size() - 1]->x, 2) + pow(inst.ms.depot.y - launchPts[clustOrder.size() - 1]->y, 2));
 		return dist;
 	}
 
@@ -265,9 +263,18 @@ public:
 		//route.push_back(launchPts.second);				// Push launchPts.second at end of route vector
 		//printf("%d\t(%.2f, %.2f)\n", route[c]->ID, route[c]->x, route[c]->y);
 		double route_dist = 0;
+		vector<Pt*> reefs;
+		for (auto& pt : cluster.reefs) {
+			reefs.push_back(pt);
+		}
+		reefs.insert(reefs.begin(), launchPts.first);
+		reefs.push_back(launchPts.second);
+
 		vector<vector<double>> dMatrix = cluster.getdMatrix(launchPts);
 		for (int i = 0; i < route.size() - 1; ++i) {
-			route_dist += dMatrix[findIndexByID(route[i]->ID, route)][findIndexByID(route[i + 1]->ID, route)];
+			int u = findIndexByID(route[i]->ID,		reefs) - 1;
+			int v = findIndexByID(route[i + 1]->ID, reefs) - 1;
+			route_dist += dMatrix[u][v];//findIndexByID(route[i]->ID, route)][findIndexByID(route[i + 1]->ID, route)];
 		}
 		return route_dist;
 	}

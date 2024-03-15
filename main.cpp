@@ -37,7 +37,7 @@ int FullSoln::count = 0;
 
 vector<Pt> reefPts;
 
-bool csv_print = 0;
+bool csv_print = 1;
 
 int main()
 {
@@ -46,7 +46,7 @@ int main()
 
 	////////////   ClusterSoln Construction   ////////////
 	//\\//\\//\\//\\// Create clusters \\//\\//\\//\\//
-	int kMeansIters = 1000;
+	int kMeansIters = 1000000;//1000
 	vector<ClusterSoln*> clusters = kMeansConstrained(kMeansIters, false);
 	printClusters(clusters);		// PRINT clusters //
 	if (csv_print) csvPrintClusters(clusters, "clusters_init", kMeansIters);		// CSV PRINT clusters //
@@ -71,13 +71,12 @@ int main()
 	//\\//\\//\\//\   TenderSoln Initialised   \//\\//\\//\\//
 	// vector<TenderSoln> tenderSolns
 	// vector<TenderSoln*> ptr_tenderSolns
-
-	
+		
 	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
 	//\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
 	FullSoln gd(msSoln, ptr_tenderSolns);
 	printf("\nGd Dist: \t%.2f", gd.getTotalDist());
-	csvPrints(gd);
+	if (csv_print) csvPrints(gd);
 
 	////////////////////////////////
 	vector<FullSoln> fullSolns;
@@ -113,7 +112,7 @@ int main()
 		printf("\n%d\tNEW_Swap distance:\t%.2f\n", in_out, best_dist.back());
 		// vv fullSolns is not creating new fullSoln objects, but rather just pointing to the same object
 		fullSolns.push_back(best_new);
-		csvPrints(best_new, in_out);
+		if (csv_print) csvPrints(best_new, in_out);
 		//best = best_new;
 	}
 	////////////////////////////////

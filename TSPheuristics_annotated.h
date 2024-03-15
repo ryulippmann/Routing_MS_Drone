@@ -24,11 +24,12 @@ public:
 // Evaluate objective function: sum up the distances.
 // total_distance(node_count, distance_matrix, tour)
 double gd_calc_z(int ai_n, const vector<vector<double>>& ad_dist, const vector<int>& ai_tour) {
-	double z = ad_dist[ai_tour[ai_n - 1]][ai_tour[0]];
-
-	for (int k = 1; k < ai_n; ++k)
-		z += ad_dist[ai_tour[k]][ai_tour[k - 1]];
-
+	double z = 0;//ad_dist[ai_tour[ai_n - 1]][ai_tour[0]];
+	//for (int k = 0; k < ai_n - 2; ++k)
+	for (int k = 0; k < ai_n - 1; ++k)
+			z += ad_dist[ai_tour[k]][ai_tour[k + 1]];
+			//ad_dist[ai_tour[k]][ai_tour[k - 1]];
+	z += ad_dist[ai_tour[ai_n - 1]][ai_tour[0]];
 	return z;
 }//gd_calc_z
 
@@ -91,7 +92,7 @@ double gd_two_opt(int ai_n, const vector<vector<double>>& ad_dist, double ad_z, 
 // Full neighbourhood search is useful when many crossed links are expected.
 // local_2opt_search(node_count, distance_matrix, tour, use_full_neighbourhood)
 // out = pair(obj, route)
-pair<double, vector<int>> gd_local_2opt_search(const int& ai_n, const vector<vector<double>>& ad_dist, vector<int>& ai_tour, bool ab_full_nbrhd/*, bool drones=false*/) {
+pair<double, vector<int>> gd_local_2opt_search(const int& ai_n, const vector<vector<double>>& ad_dist, vector<int> ai_tour, bool ab_full_nbrhd/*, bool drones=false*/) {
 	double z, d_znbr, d_znbr_best;
 	vector<int> i_nbr(ai_n);
 	int i_hd1, i_hd2, i_hd1_best, i_hd2_best;

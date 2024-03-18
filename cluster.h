@@ -32,7 +32,7 @@ void randomSwapClusters(vector<Pt*>& clust_a, vector<Pt*>& clust_b, const pair<d
 }
 
 vector<ClusterSoln*> kMeansConstrained(int maxIterations = pow(10, 2), 
-    bool clusterPrint = false, bool csvPrint = false, int randomSeed = 12345) { //10^6 iter ~ 8-9 sec. 10^7 iter ~ 3 mins
+    bool clusterPrint = false, int randomSeed = 12345) { //10^6 iter ~ 8-9 sec. 10^7 iter ~ 3 mins
     if (clusterPrint) cout << "\n---- kMEANS CONSTRAINED ----\n";
     
     vector<Pt*> points = inst.getReefPointers();

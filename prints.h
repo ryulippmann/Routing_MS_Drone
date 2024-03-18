@@ -188,66 +188,67 @@ void csvPrintMSRoutes(vector<Pt*> launch_route, string file_name, double msDist=
 //    return;
 //}
 
-string csvPrintSA(vector<double> solution_best_dist, vector<double> solution_current_dist, vector<double> solution_new_dist, 
-    vector<double> solution_temp, int initial_temperature, double cooling_rate, 
-    int num_iterations, string file_name, string c = NULL) {
-    auto now = chrono::system_clock::now();
-    time_t time = chrono::system_clock::to_time_t(now);
-    tm localTime;                                   // Convert time to local time
+//string csvPrintSA(vector<double> solution_best_dist, vector<double> solution_current_dist, vector<double> solution_new_dist, 
+//    vector<double> solution_temp, int initial_temperature, double cooling_rate, 
+//    int num_iterations, string file_name, string c = NULL) {
+//    auto now = chrono::system_clock::now();
+//    time_t time = chrono::system_clock::to_time_t(now);
+//    tm localTime;                                   // Convert time to local time
+//
+//    localtime_s(&localTime, &time);
+//    stringstream ss;                                    // Create a string stream to format the date and time
+//    char buffer[80];
+//    strftime(buffer, sizeof(buffer), "%y-%m-%d_%H-%M-%S ", &localTime);
+//    file_name = buffer + file_name + '-' + c;
+//    file_name = "sa_plots/" + file_name;
+//    cout << "\n" << string(30, '*') << "\nSaving points to: " << file_name << ".csv\n" << string(30, '.') << "\n";
+//
+//    ofstream outputFile(file_name + ".csv");   // create .csv file from string name
+//    outputFile << "Best_dist,Current_dist,New_dist,Temp,,initial_temperature," << initial_temperature
+//        << ",,cooling_rate," << cooling_rate << ",,best_soln," << solution_best_dist.back()
+//        << ",,iter," << num_iterations << "\n";                                 // skip header row
+//    if (outputFile.is_open()) {
+//        for (int i = 0; i < solution_best_dist.size() - 1;i++) {
+//            outputFile << solution_best_dist[i] << ","          // output each solution
+//                << solution_current_dist[i] << ","
+//                << solution_new_dist[i] << ","
+//                << solution_temp[i] << "\n";
+//        }
+//        outputFile << "\n";                             // go to next row after all stops in route have been output
+//        outputFile.close();
+//        cout << "SA Points saved to: " << file_name << ".csv\n" << string(30, '*') << "\n";
+//    }
+//    else { cerr << "!! PRINT SA SOLNS: Failed to open the output file.\n"; }
+//    return file_name;
+//}
 
-    localtime_s(&localTime, &time);
-    stringstream ss;                                    // Create a string stream to format the date and time
-    char buffer[80];
-    strftime(buffer, sizeof(buffer), "%y-%m-%d_%H-%M-%S ", &localTime);
-    file_name = buffer + file_name + '-' + c;
-    file_name = "sa_plots/" + file_name;
-    cout << "\n" << string(30, '*') << "\nSaving points to: " << file_name << ".csv\n" << string(30, '.') << "\n";
-
-    ofstream outputFile(file_name + ".csv");   // create .csv file from string name
-    outputFile << "Best_dist,Current_dist,New_dist,Temp,,initial_temperature," << initial_temperature
-        << ",,cooling_rate," << cooling_rate << ",,best_soln," << solution_best_dist.back()
-        << ",,iter," << num_iterations << "\n";                                 // skip header row
-    if (outputFile.is_open()) {
-        for (int i = 0; i < solution_best_dist.size() - 1;i++) {
-            outputFile << solution_best_dist[i] << ","          // output each solution
-                << solution_current_dist[i] << ","
-                << solution_new_dist[i] << ","
-                << solution_temp[i] << "\n";
-        }
-        outputFile << "\n";                             // go to next row after all stops in route have been output
-        outputFile.close();
-        cout << "SA Points saved to: " << file_name << ".csv\n" << string(30, '*') << "\n";
-    }
-    else { cerr << "!! PRINT SA SOLNS: Failed to open the output file.\n"; }
-    return file_name;
-}
-
-void csvPrintSA_Time(string file_name, chrono::seconds elapsed_time) {
-    int minutes = elapsed_time.count() / 60;
-    int seconds = elapsed_time.count() % 60;
-    //file_name = "sa_plots/" + file_name;
-    ofstream outputFile(file_name + ".csv", ios::app);   // create .csv file from string name
-    if (outputFile.is_open()) {
-		outputFile << ",,,,Time," << minutes << ",m, " << seconds << ",s\n";                                 // skip header row
-		outputFile.close();
-		cout << "Time saved to: " << file_name << ".csv\n" << string(30, '*') << "\n";
-	} else { cerr << "!! PRINT SA SOLNS: Failed to open the output file.\n"; }
-    return;
-}
+//void csvPrintSA_Time(string file_name, chrono::seconds elapsed_time) {
+//    int minutes = elapsed_time.count() / 60;
+//    int seconds = elapsed_time.count() % 60;
+//    //file_name = "sa_plots/" + file_name;
+//    ofstream outputFile(file_name + ".csv", ios::app);   // create .csv file from string name
+//    if (outputFile.is_open()) {
+//		outputFile << ",,,,Time," << minutes << ",m, " << seconds << ",s\n";                                 // skip header row
+//		outputFile.close();
+//		cout << "Time saved to: " << file_name << ".csv\n" << string(30, '*') << "\n";
+//	} else { cerr << "!! PRINT SA SOLNS: Failed to open the output file.\n"; }
+//    return;
+//}
 
 //Co-pilot function - update as needed
-string csvPrintSA(SAlog log, /*SAparams sa_params, */string file_name, string c) {
-    string filename = file_name + "-" + c + ".csv";
-    ofstream file(filename);
-    if (file.is_open()) {
-        file << "temp,current_dist,new_dist,best_dist\n";
+string csvPrintSA(SAlog log, string file_name) {
+    file_name = addTimeToFilename(file_name);
+    ofstream outputFile("sa_output/" + file_name + ".csv");   // create .csv file from string name
+
+    if (outputFile.is_open()) {
+        outputFile << "temp,current_dist,new_dist,best_dist\n";
         for (int i = 0; i < log.temp.size()/*sa_params.num_iterations*/; i++) {
-            file << log.temp[i] << "," << log.current_dist[i] << "," << log.new_dist[i] << "," << log.best_dist[i] << "\n";
+            outputFile << log.temp[i] << "," << log.current_dist[i] << "," << log.new_dist[i] << "," << log.best_dist[i] << "\n";
         }
-        file.close();
+        outputFile.close();
     }
     else printf("Unable to open file");
-    return filename;
+    return file_name;
 }
 
 void csvPrints(FullSoln best_new, bool in_out=NULL) {
@@ -262,8 +263,8 @@ void csvPrints(FullSoln best_new, bool in_out=NULL) {
     csvPrintTenderRoutes(total_routes, "drone_route_list", boolToString(in_out));
     csvPrintLaunchPts(best_new.msSoln.launchPts, "launchPts_fullSoln");//"launchPts_fullSoln_" + boolToString(in_out));
     //csvPrintRoutes(best_new.tenderSolns, "drone_routes", "best");)
-    csvPrintMSRoutes(best_new.msSoln.launchPts, "ms_launch_route_fullSoln");//_"+boolToString(in_out));
-    csvPrintSA(best_new.sa_log, "sa_log", "best");
+    csvPrintMSRoutes(best_new.msSoln.launchPts, "ms_launch_route_fullSoln", best_new.msSoln.getDist());//_"+boolToString(in_out));
+    csvPrintSA(best_new.sa_log, "sa_log");
     //csvPrintSA_Time(filename_SA, fn_elapsed_time);
     return;
 }

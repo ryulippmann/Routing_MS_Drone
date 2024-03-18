@@ -160,6 +160,8 @@ FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, vector<int> randoms, bool
     //if (print) {
     //    printTenderRoutes(soln.tenderSolns[c]);
     //}
+    
+    // these are only created to feed into greedyTenderCluster
     ClusterSoln* cluster = soln.msSoln.clusters[c];
     pair<Pt*, Pt*> launchPts = make_pair(soln.msSoln.launchPts[c], soln.msSoln.launchPts[c + 1]);
     vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
@@ -198,13 +200,13 @@ FullSoln SA_fn(const FullSoln initialSolution,
     //log = SAlog(temp);
     for (int iter_num = 1; iter_num < sa_params.num_iterations; ++iter_num) {
         if (best.msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); }
-        printf("\n%d\t%.3f\t%.3f\t\t\t\t\t\t%.2e", iter_num, best.getTotalDist(), dist_incumbent, temp);
+        printf("\n%d\t%5.3f\t%5.3f\t\t\t\t\t\t%.2e", iter_num, best.getTotalDist(), dist_incumbent, temp);
         proposed = mutator(incumbent, iter_num, randomness, print);
         //printf("\t\tstop here");
         dist_incumbent = incumbent.getTotalDist();
         dist_best = best.getTotalDist();
         dist_proposed = proposed.getTotalDist();
-        printf("\n%d\t%.3f\t%.3f\t%.3f", iter_num, dist_best, dist_incumbent, dist_proposed);
+        printf("\n%d\t%5.3f\t%5.3f\t%5.3f", iter_num, dist_best, dist_incumbent, dist_proposed);
 
         if (accept_new_solution(dist_incumbent, dist_proposed, temp)) {
             incumbent = proposed;       // overwrite old solution, but have been set as const...

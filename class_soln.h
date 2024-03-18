@@ -169,14 +169,23 @@ public:
 
 	// warning: launchPts need to be updated before this is called
 	// dist returned is the total return dist from depot to launchPts, not centroids!
-	double getDist() const {
+	double getDist(bool print=false) const {
 		if (launchPts.size() == 0) {
 			throw runtime_error("Launch points not set!");
 			return -1;
 		}
-		double dist = sqrt(pow(inst.ms.depot.x - launchPts[0]->x, 2) + pow(inst.ms.depot.y - launchPts[0]->y, 2));
-		for (int c = 0; c < clusters.size(); c++) { dist += sqrt(pow(launchPts[c]->x - launchPts[c + 1]->x, 2) + pow(launchPts[c]->y - launchPts[c + 1]->y, 2)); }
-		dist += sqrt(pow(inst.ms.depot.x - launchPts[clusters.size()]->x, 2) + pow(inst.ms.depot.y - launchPts[clusters.size()]->y, 2));
+		double dist = 0;
+		double leg = sqrt(pow(inst.ms.depot.x - launchPts[0]->x, 2) + pow(inst.ms.depot.y - launchPts[0]->y, 2));
+		dist += leg;
+		if (print) printf("\nMS Dist: \t\t%.2f\t", leg);
+		for (int c = 0; c < clusters.size(); c++) { 
+			leg = sqrt(pow(launchPts[c]->x - launchPts[c + 1]->x, 2) + pow(launchPts[c]->y - launchPts[c + 1]->y, 2)); 
+			dist += leg;
+			if (print) printf("+  %.2f\t", leg);
+		}
+		leg = sqrt(pow(inst.ms.depot.x - launchPts[clusters.size()]->x, 2) + pow(inst.ms.depot.y - launchPts[clusters.size()]->y, 2));
+		dist += leg;
+		if (print) printf("+ %.2f\t\nTotal Dist: \t%.2f", leg, dist);
 		return dist;
 	}
 
@@ -406,19 +415,23 @@ public:
 	vector<TenderSoln*> tenderSolns;
 	//SAparams sa_params;
 	SAlog sa_log;
-	//bool greedy;
-	//bool without_clust;
-	//bool within_clust;
-	//bool greedy_again;
 
 	// Total dist = ms + sum(tender)
-	double getTotalDist() const {
-		double dist = msSoln.getDist();
+	double getTotalDist(bool print=false) const {
+		double dist = msSoln.getDist(print);
+		//if (print) printf("\nMS Dist: \t%.2f", dist);
 		for (auto& tenderSoln : tenderSolns) {
+			double dist_tender = 0;
+			if (print) printf("\nTenderSoln ID: \t%d\t\tDist:", tenderSoln->ID);
 			for (auto& route : tenderSoln->routes) {
-				dist += tenderSoln->getTenderRouteDist(route);
+				double leg = tenderSoln->getTenderRouteDist(route);
+				if (print) printf("\t+%.2f", leg);
+				dist_tender += leg;
 			}
+			if (print) printf("\t = %.2f", dist_tender);
+			dist += dist_tender;
 		}
+		if (print) printf("\nTotal Dist: \t%.2f", dist);
 		return dist;
 	}
 

@@ -259,10 +259,13 @@ vector<pair<double, MSSoln>> initMsSoln(const vector<ClusterSoln*>& clusters, MS
 
     msDist = clusterCentroidNearestNeighbour(msSoln);		// clusters ordered by NN
     msSolns.push_back(make_pair(msDist, msSoln));
-    if (csv_print) csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_NN", msDist);
+    if (csv_print) {
+        csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_NN", msDist);
+        csvPrintLaunchPts(msSoln.launchPts, "launchPts_route_NN");//"launchPts_fullSoln_" + boolToString(in_out));
+    }
     msDist = greedyMSCluster(msSoln);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
     msSolns.push_back(make_pair(msDist, msSoln));
-    if (csv_print) csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_Gd", msDist);
+    //if (csv_print) csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_Gd", msDist);
     //if (csv_print) csvPrintClusters(msSoln.clusters, "clusters_ordered", kMeansIters);		// CSV PRINT clusters //
 
 	//for (const auto& cluster : clusters) {

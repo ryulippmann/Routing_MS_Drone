@@ -136,7 +136,7 @@ vector<TenderSoln> initTenderSoln(const MSSoln& msSoln, bool print=false) {   /*
             launchPts);
         //\\//\\//\\//\\// TenderSoln Initialised //\\//\\//\\//\\//
 
-        //// Tendersoln Greedy 2-Opt update
+        // Tendersoln Greedy 2-Opt update
         tenderSoln.routes = greedyTenderCluster(tenderSoln, clusterMatrix, true);
 
         // FIXED - deep copy operator: printf("\nERROR HERE - main L97 - ADDING tenderSoln to tenderSolns...\nIs this line necessary/doing anything?\n");

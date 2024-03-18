@@ -8,11 +8,11 @@ using namespace std;
 #include "class_prob.h"
 Pt depot = Pt(0, 0);		// depot must be first point initialised! ID = 0
 
-int no_pts = 100;
-int numClust = 10;//3;//
-							// validity check later: (numClust * numTenders * tenderCap = no_pts)
-int numTenders = 2;
-int tenderCap = 5;//2;//
+int no_pts = 24;//100;
+	// validity check later: (numClust * numTenders * tenderCap = no_pts)
+int numClust = 2;//10;
+int numTenders = 3;
+int tenderCap = 4;//5;
 
 // create GLOBAL instance of problem
 const Problem inst(initReefs(no_pts), numClust, depot, numTenders, tenderCap);
@@ -38,6 +38,7 @@ int FullSoln::count = 0;
 vector<Pt> reefPts;
 
 bool csv_print = 1;
+bool print_detail = 1;
 
 int main()
 {
@@ -46,11 +47,12 @@ int main()
 
 	////////////   ClusterSoln Construction   ////////////
 	//\\//\\//\\//\\// Create clusters \\//\\//\\//\\//
-	int kMeansIters = 1000000;//1000
+	int kMeansIters = 100000;//1000
 	vector<ClusterSoln*> clusters = kMeansConstrained(kMeansIters, false);
 	printClusters(clusters);		// PRINT clusters //
+	
 	if (csv_print) csvPrintClusters(clusters, "clusters_init", kMeansIters);		// CSV PRINT clusters //
-	// vector<ClusterSoln*> clusters
+	
 	//\\//\\//\\//\\  ClusterSoln Initialised \\//\\//\\//\\//
 	
 	//\\//\\//\\//\\//  MsSoln Construction //\\//\\//\\//\\//
@@ -65,7 +67,7 @@ int main()
 
 	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
 	//\\//\\//\\//\\  TenderSoln Construction  \\//\\//\\//\\/
-	vector<TenderSoln> tenderSolns = initTenderSoln(msSoln, true);
+	vector<TenderSoln> tenderSolns = initTenderSoln(msSoln, print_detail);
 	vector<TenderSoln*> ptr_tenderSolns;
 	for (const auto& soln : tenderSolns) { ptr_tenderSolns.push_back(new TenderSoln(soln)); } // Assuming TenderSoln has a copy constructor
 	//\\//\\//\\//\   TenderSoln Initialised   \//\\//\\//\\//
@@ -74,14 +76,14 @@ int main()
 		
 	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
 	//\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
-	FullSoln gd(msSoln, ptr_tenderSolns);
-	printf("\nGd Dist: \t%.2f", gd.getTotalDist());
-	if (csv_print) csvPrints(gd);
+	FullSoln full_init(msSoln, ptr_tenderSolns);
+	printf("\n\nFull Soln Dist:\t%.2f", full_init.getTotalDist(print_detail));
+	if (csv_print) csvPrints(full_init);
 
 	////////////////////////////////
 	vector<FullSoln> fullSolns;
-	//FullSoln best = gd;	// initialise best as gd
-	fullSolns.push_back(gd);
+	//FullSoln best = full_init;	// initialise best as full_init
+	fullSolns.push_back(full_init);
 	vector<double> best_dist{ fullSolns.back().getTotalDist()};			// initialise best_dist as vector with best solution distance
 	////////////////////////////////
 	// Tendersoln Swaps
@@ -94,18 +96,17 @@ int main()
 	//printf("\nOut_Swap distance:\t%.2f\n", best_dist.back());
 	//fullSolns.push_back(best_out);
 	////best = best_out;
-
 	//// Tendersoln Swaps: In
 	//in_out = 1;
 	//FullSoln best_in = SwapShell(best, in_out);
-	//printf("\nGd Dist: \t%.2f", gd.getTotalDist());
+	//printf("\nGd Dist: \t%.2f", full_init.getTotalDist());
 	//best_dist.push_back(best.getTotalDist());
 	//printf("\nIn_Swap distance:\t%.2f\n", best_dist.back());
 	//best = best_in;
+	
 	bool in_out = 1;
 	while (best_dist.size() < 3 || best_dist.back() != best_dist.at(best_dist.size() - 2))
 	{
-		in_out = !in_out;				// switch in_out flag
 		FullSoln best_new = SwapShell(fullSolns.back(), in_out);
 		printf("\nPrev Dist: \t\t%.2f", best_dist.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
 		best_dist.push_back(best_new.getTotalDist());
@@ -113,6 +114,7 @@ int main()
 		// vv fullSolns is not creating new fullSoln objects, but rather just pointing to the same object
 		fullSolns.push_back(best_new);
 		if (csv_print) csvPrints(best_new, in_out);
+		in_out = !in_out;				// switch in_out flag
 		//best = best_new;
 	}
 	////////////////////////////////

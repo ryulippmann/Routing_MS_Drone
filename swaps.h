@@ -38,6 +38,50 @@ int randChoice(int size/*, int randomSeed = 12345*/, bool clust_choice = false) 
 //    return dist(gen_stop);
 //}
 
+vector<Pt*> UpdateLaunchPts(const MSSoln& msSoln, bool print = false) {
+    const vector<ClusterSoln*> clusters = msSoln.clusters;
+    if (print) printf("\n---- SET LAUNCH POINTS ----\n");
+    vector<Pt*> launchPts;
+    // add depot as first launch point
+    launchPts.push_back(new Pt(
+        (inst.ms.depot.x + clusters[0]->getCentroid().x) / 2,
+        (inst.ms.depot.y + clusters[0]->getCentroid().y) / 2));
+    for (int c = 0; c < clusters.size() - 1; c++) {
+        launchPts.push_back(new Pt(        // sum adjacent clusters x,y's to calc launchpts and 
+            (clusters[c]->getCentroid().x + clusters[c + 1]->getCentroid().x) / 2,
+            (clusters[c]->getCentroid().y + clusters[c + 1]->getCentroid().y) / 2));
+    }
+    launchPts.push_back(new Pt(
+        (inst.ms.depot.x + clusters.back()->getCentroid().x) / 2,
+        (inst.ms.depot.y + clusters.back()->getCentroid().y) / 2));
+    //launchPts.push_back(new Pt(inst.ms.depot));       // add depot as first launch point
+    //msSoln.launchPts = launchPts;
+    //vector<vector<double>> dMatrix_launchpt = msSoln.launchPt_dMatrix();
+    //if (print) {
+    //    printf("\tID\t(  x  ,  y  )\n");
+    //    cout << string(30, '-') << "\n";
+    //    printf("\t%d\t( %2.2f, %2.2f)\n", inst.ms.depot.ID, inst.ms.depot.x, inst.ms.depot.y);
+    //    for (const auto& stop : msSoln.launchPts) {
+    //        printf("\t%d\t( %.2f, %.2f)\n", stop->ID, stop->x, stop->y);
+    //    } printf("\n");
+    //    for (int i = 0; i < dMatrix_launchpt.size(); i++) {
+    //        for (int j = 0; j < dMatrix_launchpt[i].size(); j++) {
+    //            printf("\t%.2f", dMatrix_launchpt[i][j]);
+    //        }
+    //        printf("\n");
+    //    } printf("\n");
+    //    cout << string(30, '-') << "\n";
+    //    double total_dist = dMatrix_launchpt.back()[0];
+    //    printf("\t%.2f ", total_dist);
+    //    for (int i = 0; i < dMatrix_launchpt.size() - 1; i++) {
+    //        printf("+\t%.2f ", dMatrix_launchpt[i][i + 1]);
+    //        total_dist += dMatrix_launchpt[i][i + 1];
+    //    }
+    //    printf("\n\t\t= %.2f", total_dist);
+    //}
+    return launchPts;
+}
+
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 
@@ -86,22 +130,31 @@ FullSoln OUT_ClusterSwaps(const FullSoln& soln, int iteration, vector<int> rando
     pair<TenderSoln, TenderSoln>
         tenders = random_d_out_Swap(make_pair(*soln.tenderSolns[c.first], *soln.tenderSolns[c.second]), iteration);
     
-    pair <pair<Pt*, Pt*>, pair<Pt*, Pt*>>
-        launchPts = make_pair(make_pair(soln.msSoln.launchPts[c.first], soln.msSoln.launchPts[c.first + 1]), make_pair(soln.msSoln.launchPts[c.second], soln.msSoln.launchPts[c.second + 1]));
-    pair <vector<vector<double>>, vector<vector<double>>> 
-        dMatrix = make_pair(tenders.first.cluster.getdMatrix(launchPts.first),
-                            tenders.second.cluster.getdMatrix(launchPts.second));
+    //pair <pair<Pt*, Pt*>, pair<Pt*, Pt*>>
+    //    launchPts = make_pair(make_pair(soln.msSoln.launchPts[c.first], soln.msSoln.launchPts[c.first + 1]), make_pair(soln.msSoln.launchPts[c.second], soln.msSoln.launchPts[c.second + 1]));
+    //pair <vector<vector<double>>, vector<vector<double>>> 
+    //    dMatrix = make_pair(tenders.first.cluster.getdMatrix(launchPts.first),
+    //                        tenders.second.cluster.getdMatrix(launchPts.second));
+    //routes.first = greedyTenderCluster(tenders.first, dMatrix.first);   		                // Run greedy 2-Opt on routes      
+    //routes.second = greedyTenderCluster(tenders.second, dMatrix.second);		                // Run greedy 2-Opt on routes 
+    //pair<vector<Pt*>, vector<Pt*>> 
+    //    reefs = make_pair(  tenders.first.cluster.reefs, 
+    //                        tenders.second.cluster.reefs);
     
-    pair <vector<vector<Pt*>>, vector<vector<Pt*>>> routes;
-    routes.first = greedyTenderCluster(tenders.first, dMatrix.first);   		                // Run greedy 2-Opt on routes      
-    routes.second = greedyTenderCluster(tenders.second, dMatrix.second);		                // Run greedy 2-Opt on routes 
-
-    pair<vector<Pt*>, vector<Pt*>> reefs = make_pair(tenders.first.cluster.reefs, tenders.second.cluster.reefs);
-    //create new clusterSoln* with updated reefs
-    pair< ClusterSoln, ClusterSoln> clusters = make_pair(ClusterSoln(inst, reefs.first),
-															ClusterSoln(inst, reefs.second));
-    FullSoln new_soln = FullSoln(soln, routes, clusters, c);              // create new FullSoln copy incl new routes for updated clusters
-
+    vector<Pt*> 
+        launchPts = UpdateLaunchPts(soln.msSoln);
+    pair <vector<vector<double>>, vector<vector<double>>>
+        dMatrix = make_pair(tenders.first.cluster.getdMatrix(make_pair( launchPts[c.first] , launchPts[c.first + 1])),
+                            tenders.second.cluster.getdMatrix(make_pair(launchPts[c.second], launchPts[c.second+1])));
+    pair <vector<vector<Pt*>>, vector<vector<Pt*>>> 
+        routes = make_pair( greedyTenderCluster(tenders.first, dMatrix.first),
+                            greedyTenderCluster(tenders.second, dMatrix.second));
+    pair<ClusterSoln, ClusterSoln> 
+        clusters = make_pair(   ClusterSoln(inst, tenders.first.cluster.reefs),     /*reefs.first*/
+						        ClusterSoln(inst, tenders.second.cluster.reefs));   /*reefs.second*/
+    FullSoln 
+        new_soln =  FullSoln(soln, routes, clusters, c);              // create new FullSoln copy incl new routes for updated clusters
+    
     if (print) printf("-- ^^ OUT_Swap ^^ --");
     return new_soln;
 }
@@ -247,12 +300,25 @@ FullSoln SwapShell(const FullSoln soln_prev_best, bool in_out,
     FullSoln best(soln_prev_best);
     double dist_best = best.getTotalDist();
     //SAparams                  (num_iter, init_temp, cooling_rate)
-    SAparams sa_params = SAparams(10000, 0.5 * dist_best, 0.99);
+    int num_iter = 10000;               // fixed at 10000
+    int final_temp = pow(10, -5);
+    double init_temp = 0.2 * dist_best; 
+    //double cooling_rate = pow((final_temp / init_temp), 1 / num_iter);  //0.995;
+    double cooling_rate = 0.998;
+    SAparams sa_params = //SAparams(10000, 0.2 * dist_best, 0.995);
+        SAparams(num_iter, init_temp, cooling_rate);
         //SAparams(5000, 0.5 * dist_best, 0.98);
         //SAparams(1000, 0.5 * dist_best, 0.9);
     if (in_out == 0) {      //best = OUT_ClusterSwaps(soln_prev_best, 0, true);
         //SAparams sa_params = SAparams(10000, 0.75*dist_best, 0.99/*pow(dist_best*5E-23,1/5000)*//*0.98*/);//(4000, 4000, 0.998);// initial temp ~ 2000 -> 
         best = SA_fn(soln_prev_best, OUT_ClusterSwaps, sa_params/*, log*/); 
+        // update clusters in best.msSoln
+        // populate clusters in best.msSoln with unique nodes from route in best.tenderSolns[i].routes[j] EXCLUDING launchPts
+
+        // update launchPts in best.msSoln by recalculating based on updated clusters in best.msSoln
+
+        
+        //best.msSoln
         printf("\n^^ OUT SWAPS ^^\n");
     }
     else {                  //best = IN_ClusterSwaps(soln_prev_best, 0, true);

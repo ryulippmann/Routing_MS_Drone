@@ -4,8 +4,8 @@
 
 struct ClusterSoln {
 public:
-	ClusterSoln(const Problem& inst) : ID(count++)/*, inst(inst)*/ {}
-	ClusterSoln(const Problem& inst, /*const*/ vector<Pt*> reefs) : ID(count++),/* inst(inst),*/ reefs(reefs) {}
+	ClusterSoln(const Problem& inst) : ID(count++) {}
+	ClusterSoln(const Problem& inst, const vector<Pt*> reefs) : ID(count++), reefs(reefs) {}
 	// Copy constructor for deep copy
 	ClusterSoln(const ClusterSoln& other) :
 		ID(other.ID), /*inst(other.inst), */reefs() {
@@ -16,7 +16,6 @@ public:
 	}
 
 	const int ID;
-	//const Problem& inst;
 	/*const*/ vector<Pt*> reefs;
 
 	vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, const Pt depot) {
@@ -231,16 +230,6 @@ public:
 		ID(count++), cluster(cluster), routes(routes), launchPts(launchPts) {}//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
 
 	// Copy constructor for deep copy
-	/* Could include switch for deep or shallow copy
-	// User-defined copy constructor with option for deep or shallow copy
-	MyClass(const MyClass& other, bool deepCopy = true) {
-		if (deepCopy) {
-			data = new int(*other.data);
-		}
-		else {
-			data = other.data;  // Shallow copy
-		}
-	}*/
 	TenderSoln(const TenderSoln& other, bool reef_copy = false) :
 		ID(other.ID), cluster(other.cluster), routes(), launchPts(other.launchPts) {
 		//if (!reef_copy) { 
@@ -264,49 +253,40 @@ public:
 	vector<vector<Pt*>> routes;
 	pair<Pt*, Pt*> launchPts;
 
-	// does this include launchPts in route?! - check!
-	// route dist for cluster c
+	// route dist for cluster c		// this is ONLY called in greedyTenderCluster()
 	double getTenderRouteDist(int c = -1) const {
+		if (c == -1) {
+			double dist = 0;
+			for (int c = 0; c < routes.size(); c++) { dist += getTenderRouteDist(c); }
+			return dist;
+		}
 		vector<Pt*> route = routes[c];
-		//route.insert(route.begin(), launchPts.first);	// Insert launchPts.first at beginning of route vector
-		//route.push_back(launchPts.second);				// Push launchPts.second at end of route vector
-		//printf("%d\t(%.2f, %.2f)\n", route[c]->ID, route[c]->x, route[c]->y);
 		double route_dist = 0;
 		vector<Pt*> reefs;
-		for (auto& pt : cluster.reefs) {
-			reefs.push_back(pt);
-		}
+		for (auto& pt : cluster.reefs) { reefs.push_back(pt); }
 		reefs.insert(reefs.begin(), launchPts.first);
 		reefs.push_back(launchPts.second);
 
 		vector<vector<double>> dMatrix = cluster.getdMatrix(launchPts);
-		for (int i = 0; i < route.size() - 1; ++i) {
+		for (int i = 0; i < route.size() - 2; ++i) {			// -2 to exclude return trip to launchPt
 			int u = findIndexByID(route[i]->ID,		reefs) - 1;
 			int v = findIndexByID(route[i + 1]->ID, reefs) - 1;
 			route_dist += dMatrix[u][v];//findIndexByID(route[i]->ID, route)][findIndexByID(route[i + 1]->ID, route)];
 		}
 		return route_dist;
 	}
-	// route dist for given route
+	// route dist for given route	// this is called by FullSoln.getTotalDist()
 	double getTenderRouteDist(vector<Pt*> route) const {
 		//vector<Pt*> route = routes[c];
 		double route_dist = 0;
 		//vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
-		for (int i = 0; i < route.size() - 1; ++i) {
+		for (int i = 0; i < route.size() - 2; ++i) {			// -2 to exclude return trip to launchPt	
 			route_dist += calculatePtDistance(route[i], route[i + 1]);
 			//route_dist += dMatrix[findIndexByID(route[i]->ID, cluster->reefs, launchPts)][findIndexByID(route[i + 1]->ID, cluster->reefs, launchPts)];
 		}
 		return route_dist;
 	}
-	// total dist for ALL tenders
-	double getTotalDist() {
-		double dist = 0;
-		for (int c = 0; c < routes.size(); c++) {
-			dist += getTenderRouteDist(c);
-		}
-		return dist;
-	}
-
+	
 	// Copy assignment operator for deep copy
 	TenderSoln& operator=(const TenderSoln& other) {
 		if (this != &other) {

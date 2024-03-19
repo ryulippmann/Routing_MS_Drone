@@ -1,17 +1,15 @@
 using namespace std;
-
 #include <iostream>
 #include <vector>
 #include <cmath>
 #include <utility>
-
 #include "class_prob.h"
 Pt depot = Pt(0, 0);		// depot must be first point initialised! ID = 0
 
-int no_pts = 24;//100;
+int no_pts = 48;//100;
 	// validity check later: (numClust * numTenders * tenderCap = no_pts)
-int numClust = 2;//10;
-int numTenders = 3;
+int numClust = 3;//10;
+int numTenders = 4;
 int tenderCap = 4;//5;
 
 // create GLOBAL instance of problem
@@ -42,13 +40,12 @@ bool print_detail = 1;
 
 int main()
 {
-	if (numClust * numTenders * tenderCap != no_pts) 
-		throw invalid_argument("numClust * numTenders * tenderCap != no_pts");
+	if (checkParameters() == false) return 0;		// check if parameters are valid
 
 	////////////   ClusterSoln Construction   ////////////
 	//\\//\\//\\//\\// Create clusters \\//\\//\\//\\//
-	int kMeansIters = 100000;//1000
-	vector<ClusterSoln*> clusters = kMeansConstrained(kMeansIters, false);
+	int kMeansIters = pow(10,2);//1000
+	vector<ClusterSoln*> clusters = kMeansConstrained(kMeansIters);
 	printClusters(clusters);		// PRINT clusters //
 	
 	if (csv_print) csvPrintClusters(clusters, "clusters_init", kMeansIters);		// CSV PRINT clusters //
@@ -85,27 +82,11 @@ int main()
 	//FullSoln best = full_init;	// initialise best as full_init
 	fullSolns.push_back(full_init);
 	vector<double> best_dist{ fullSolns.back().getTotalDist()};			// initialise best_dist as vector with best solution distance
+	
 	////////////////////////////////
 	// Tendersoln Swaps
-
-	////// Tendersoln Swaps: Out
-	//bool in_out = 0;
-	//FullSoln best_out = SwapShell(fullSolns.back(), in_out);
-	//printf("\nGd Dist: \t\t%.2f", best_dist.back()/*at(0)*/);		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
-	//best_dist.push_back(best_out.getTotalDist());
-	//printf("\nOut_Swap distance:\t%.2f\n", best_dist.back());
-	//fullSolns.push_back(best_out);
-	////best = best_out;
-	//// Tendersoln Swaps: In
-	//in_out = 1;
-	//FullSoln best_in = SwapShell(best, in_out);
-	//printf("\nGd Dist: \t%.2f", full_init.getTotalDist());
-	//best_dist.push_back(best.getTotalDist());
-	//printf("\nIn_Swap distance:\t%.2f\n", best_dist.back());
-	//best = best_in;
-	
 	bool in_out = 1;
-	while (best_dist.size() < 3 || best_dist.back() != best_dist.at(best_dist.size() - 2))
+	while (best_dist.size() < 3 || best_dist.back() != best_dist.at(best_dist.size() - 3))
 	{
 		FullSoln best_new = SwapShell(fullSolns.back(), in_out);
 		printf("\nPrev Dist: \t\t%.2f", best_dist.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());

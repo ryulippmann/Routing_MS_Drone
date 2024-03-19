@@ -6,6 +6,13 @@
 random_device rd;       // Seed for the random number generator
 mt19937 gen(rd());      // Mersenne Twister engine
 
+// Check if the parameters are valid: return true=valid, false=not
+bool checkParameters() {
+    try { if (numClust * numTenders * tenderCap != no_pts) throw invalid_argument("numClust * numTenders * tenderCap != no_pts"); }
+    catch (const invalid_argument& e) { cout << endl << e.what() << endl; return false; }
+    return true;
+}
+
 double sum(vector<double>& vec_to_sum) {
     double sum_of_elems = 0.0;
     for (const auto& n : vec_to_sum) {

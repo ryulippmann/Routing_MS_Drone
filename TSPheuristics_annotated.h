@@ -2,7 +2,7 @@
 //called in mothership.h
 #include <cstdio>
 #include <string>
-#include <cmath>
+//#include <cmath>
 #include <ctime>
 #include <cstdlib>
 #include <cassert>

@@ -112,7 +112,7 @@ def plot_MS_route(csv_file, print_plt, save_plt, color):
         # dist = round(sum([((x[i]-x[i-1])**2 + (y[i]-y[i-1])**2)**0.5 for i in range(1,len(x))]),2)
     
     # Annotate the plot with the coordinates of the first point as "depot"
-    plt.annotate(f'DEPOT: ({x[0]}, {y[0]})', xy=(x[0], y[0]), xycoords='data', ha='left', va='top', fontsize=14, color='black')
+    plt.annotate(f'Depot: ({x[0]}, {y[0]})', xy=(x[0], y[0]), xycoords='data', ha='left', va='top', fontsize=10, color='black')
     if (csv_file.find('NN')):   plt.annotate(f'MS_NN = {dist:.2f}',     xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
     elif (csv_file.find('Gd')): plt.annotate(f'MS_Gd = {dist:.2f}',     xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
     else:                       plt.annotate(f'MS_dist = {dist:.2f}',   xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')

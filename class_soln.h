@@ -4,8 +4,8 @@
 
 struct ClusterSoln {
 public:
-	ClusterSoln(const Problem& inst) : ID(count++) {}
-	ClusterSoln(const Problem& inst, const vector<Pt*> reefs) : ID(count++), reefs(reefs) {}
+	ClusterSoln() : ID(count++) {}
+	ClusterSoln(const vector<Pt*> reefs) : ID(count++), reefs(reefs) {}
 	// Copy constructor for deep copy
 	ClusterSoln(const ClusterSoln& other) :
 		ID(other.ID), /*inst(other.inst), */reefs() {
@@ -107,16 +107,18 @@ private:
 struct MSSoln {
 public:
 	MSSoln(vector<ClusterSoln*> clustSolns) :
-		ID(count++), /*inst(inst),*/ clusters(clustSolns), launchPts(clustSolns.size() + 1, nullptr) {}
+		ID(count++), clusters(clustSolns), launchPts(clustSolns.size() + 1, nullptr) {}
 	// Copy constructor for deep copy
 	MSSoln(const MSSoln& other) :
-		ID(count++), /*inst(other.inst),*/ clusters(), launchPts(other.launchPts) {
+		ID(count++), clusters(), launchPts(other.launchPts) {
 		// Copy new ClusterSoln objects
 		for (auto& cluster : other.clusters) {
 			this->clusters.push_back(new ClusterSoln(*cluster)); 
 		}
 	}
-	
+	MSSoln(vector<ClusterSoln*> clustSolns, vector<Pt*> launchPts) :
+		ID(count++), clusters(clustSolns), launchPts(launchPts) {}
+
 	const int ID;
 	vector<ClusterSoln*> clusters;
 	vector<Pt*> launchPts;

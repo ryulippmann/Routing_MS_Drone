@@ -82,7 +82,7 @@ vector<ClusterSoln*> kMeansConstrained(int maxIterations = 1000,
     if (clusterPrint) cout << "\n-------- ^^kMEANS^^  --------\n";
     vector<ClusterSoln*> clusterss;// = vector<Cluster*>(numClusters);
     for (auto& cluster : clusters) {
-        clusterss.push_back(new ClusterSoln(inst, cluster));     // initialise clusterss with clusters (vector of ReefPt pointers
+        clusterss.push_back(new ClusterSoln(cluster));     // initialise clusterss with clusters (vector of ReefPt pointers
 	}
     return clusterss;
 }

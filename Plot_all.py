@@ -225,4 +225,3 @@ if drone_soln:
     dist_total += plot_drones(d_path, nodes, launchpts, print_plt, save_plt, c_d_gd)
 
 print("End of Plot_clusters.py")
-

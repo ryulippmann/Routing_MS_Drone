@@ -198,12 +198,12 @@ save_plt = True
 dist_total = 0
 
 cluster_soln = True
-cluster_path =      'clusters/'+    '24-03-19_13-59-46 clusters_init'               +'.csv'
+cluster_path =      'clusters/'+    '24-03-20_14-15-43 clusters_init'               +'.csv'
 ms_soln = True
-ms_path =           'ms_route/'+    '24-03-19_14-30-04 ms_launch_route_fullSoln'    +'.csv'
-launchpts_path =    'launchPts/'+   '24-03-19_14-30-04 launchPts_fullSoln'          +'.csv'
+ms_path =           'ms_route/'+    '24-03-20_14-17-08 ms_launch_route_fullSoln'    +'.csv'
+launchpts_path =    'launchPts/'+   '24-03-20_14-17-08 launchPts_fullSoln'          +'.csv'
 drone_soln = True
-d_path =            'd_route/'+     '24-03-19_14-30-04 drone_route_list'            +'.csv'
+d_path =            'd_route/'+     '24-03-20_14-17-08 drone_routes_in'            +'.csv'
 
 if cluster_soln: 
     nodes = plot_clusters(      cluster_path, print_plt, save_plt)

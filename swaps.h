@@ -114,22 +114,20 @@ pair<TenderSoln, TenderSoln> random_d_out_Swap(pair<TenderSoln, TenderSoln> tend
 }
 
 // arg FullSoln incumbent
-FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, vector<int> randoms, bool print = false) {
+FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, */bool print = false) {
     if (print) printf("---- OUT_Swap ----");
     pair<int, int> c = randSwapChoice(soln.msSoln.clusters.size()/*, iteration*/);    // generate swap pair of clusters
     if (print) printf("\nSwap clusters:\t\t%d\tand\t%d", c.first, c.second);
 
-    //pair<ClusterSoln*, ClusterSoln*> clusters = make_pair(soln.msSoln->clusters[c.first], soln.msSoln->clusters[c.second]);
-    
     pair<TenderSoln, TenderSoln>
         tenders = random_d_out_Swap(make_pair(*soln.tenderSolns[c.first], *soln.tenderSolns[c.second]), 
-            iteration, true);
+            iteration, false);
 
     vector<TenderSoln*> tenderSolns;
     for (int i = 0; i < soln.tenderSolns.size(); i++) {
-		if      (i == c.first)  { tenderSolns.push_back(&tenders.first); }
-		else if (i == c.second) { tenderSolns.push_back(&tenders.second); }
-		else                    { tenderSolns.push_back(soln.tenderSolns[i]); }
+		if      (i == c.first)  { tenderSolns.push_back(&tenders.first); }      // ****
+		else if (i == c.second) { tenderSolns.push_back(&tenders.second); }     // ****
+		else                    { tenderSolns.push_back(soln.tenderSolns[i]); } 
 	}
     vector<ClusterSoln*> clusters;
     for (int i = 0; i < tenderSolns.size(); i++) {
@@ -148,9 +146,9 @@ FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, vector<int> randoms, boo
     //pair<vector<Pt*>, vector<Pt*>> 
     //    reefs = make_pair(  tenders.first.cluster.reefs, 
     //                        tenders.second.cluster.reefs);
-    
+
     vector<Pt*>
-        launchPts = UpdateLaunchPts(clusters/*soln.msSoln*/, true);
+        launchPts = UpdateLaunchPts(clusters/*, true*/);
     for (int d = 0; d < tenderSolns.size(); d++) {
         tenderSolns[d]->launchPts = make_pair(launchPts[d], launchPts[d + 1]);
         for (auto& route : tenderSolns[d]->routes) {
@@ -230,7 +228,7 @@ void random_d_in_Swap(TenderSoln& tender, /*int iteration, */bool swap_print = f
 //}
 
 // MODIFY Fullsoln soln (not ref) and return the swapped copy to save as proposed - mutated cluster_index c to swap within
-FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, vector<int> randoms, bool print = false) {
+FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, */bool print = false) {
     int c = randChoice(soln.msSoln.clusters.size()/*, iteration*/, true);    // generate random CLUSTER to swap within
     //throw runtime_error("Not all clusters swappable! randChoice limits choice [1,clusters.size()-3]");
     if (print) {
@@ -265,11 +263,11 @@ FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, vector<int> randoms, bool
 
 // Simulated Annealing based on in/out mutator
 FullSoln SA_fn(const FullSoln initialSolution,
-    function<FullSoln(const FullSoln currentSolution, const int, const vector<int>, const bool)> mutator,
+    function<FullSoln(const FullSoln currentSolution, const int, /*const vector<int>, */const bool)> mutator,
     const SAparams sa_params,/* SAlog& log, */bool print = false) {
     double temp = sa_params.initial_temp;           // is this redundant? - temp is updated in SAlog
-    vector<int> randomness;
-    for (int i = 1; i < sa_params.num_iterations; i++) { randomness.push_back(i); }
+    //vector<int> randomness;
+    //for (int i = 1; i < sa_params.num_iterations; i++) { randomness.push_back(i); }
     FullSoln best = initialSolution;
     FullSoln incumbent = initialSolution;
     FullSoln proposed = initialSolution;
@@ -284,7 +282,7 @@ FullSoln SA_fn(const FullSoln initialSolution,
     for (int iter_num = 1; iter_num < sa_params.num_iterations; ++iter_num) {
         if (best.msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); }
         printf("\n%d\t%5.3f\t%5.3f\t\t\t\t\t\t%.2e", iter_num, best.getTotalDist(), dist_incumbent, temp);
-        proposed = mutator(incumbent, iter_num, randomness, print);
+        proposed = mutator(incumbent, iter_num, /*randomness, */print);
         //printf("\t\tstop here");
         dist_incumbent = incumbent.getTotalDist();
         dist_best = best.getTotalDist();

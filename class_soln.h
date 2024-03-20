@@ -323,10 +323,18 @@ private:
 
 struct FullSoln {
 public:
-	FullSoln(const MSSoln msSoln, vector<TenderSoln*>& tenderSolns) :
-		ID(count++), msSoln(msSoln), tenderSolns(tenderSolns) 
-		//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) 
-		{}
+	//FullSoln(const MSSoln msSoln, const vector<TenderSoln*>& tenderSolns) :
+	//	ID(count++), msSoln(msSoln), tenderSolns(tenderSolns) 
+	//	//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) 
+	//	{}
+	FullSoln(const MSSoln& msSoln, const vector<TenderSoln*>& tenderSolns) :
+		ID(count++), msSoln(msSoln), tenderSolns() {
+		// Create new TenderSoln objects with new memory locations for pointers
+		for (auto* tender : tenderSolns) {
+			this->tenderSolns.push_back(new TenderSoln(*tender));
+		}
+	}
+
 	FullSoln(const MSSoln msSoln) :
 		ID(count++), msSoln(msSoln) //, greedy(true), without_clust(false), within_clust(false), greedy_again(false) 
 	{}
@@ -360,37 +368,41 @@ public:
 			}
 		}
 	}
-	// OUT_SWAPS: Copy constructor with additional routes parameters
-	FullSoln(const FullSoln& other, const pair <vector<vector<Pt*>>, vector<vector<Pt*>>>& routes, pair<ClusterSoln, ClusterSoln> clusters, pair<int, int> c) :
-		ID(count++), msSoln(other.msSoln), // Deep copy - UPDATE based on TenderSoln!
-		tenderSolns()
-		//, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again) 
-		{
+	
+	//// NEW -- OUT_SWAPS: Copy constructor with additional routes parameters
+	//FullSoln(const MSSoln& msSoln, const vector<TenderSoln*>& tenderSolns) :
+	//	ID(count++), msSoln(msSoln), tenderSolns(tenderSolns) {}
 
-		// Copy new TenderSoln objects with updated routes
-		for (int i = 0; i < other.tenderSolns.size(); ++i) {
-			if (i == c.first) {
-				// Modify the route for the specified index (c)
-				TenderSoln modifiedTenderSoln = TenderSoln(*other.tenderSolns[i], true);
-				modifiedTenderSoln.routes = routes.first;
-				//create new clusterSoln* with updated reefs
-				modifiedTenderSoln.cluster = clusters.first;
-				this->tenderSolns.push_back(new TenderSoln(modifiedTenderSoln));
-			}
-			else if (i == c.second) {
-				// Modify the route for the specified index (c)
-				TenderSoln* modifiedTenderSoln = new TenderSoln(*other.tenderSolns[i]);
-				modifiedTenderSoln->routes = routes.second;
-				//create new clusterSoln* with updated reefs
-				modifiedTenderSoln->cluster = clusters.second;
-				this->tenderSolns.push_back(modifiedTenderSoln);
-			}
-			else {
-				// Use the original route if no replacement is provided
-				this->tenderSolns.push_back(new TenderSoln(*other.tenderSolns[i]));
-			}
-		}
-	}
+	//// OUT_SWAPS: Copy constructor with additional routes parameters
+	//FullSoln(const FullSoln& other, const pair <vector<vector<Pt*>>, vector<vector<Pt*>>>& routes, pair<ClusterSoln, ClusterSoln> clusters, pair<int, int> c) :
+	//	ID(count++), msSoln(other.msSoln), // Deep copy - UPDATE based on TenderSoln!
+	//	tenderSolns()
+	//	//, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again) 
+	//	{
+	//	// Copy new TenderSoln objects with updated routes
+	//	for (int i = 0; i < other.tenderSolns.size(); ++i) {
+	//		if (i == c.first) {
+	//			// Modify the route for the specified index (c)
+	//			TenderSoln modifiedTenderSoln = TenderSoln(*other.tenderSolns[i], true);
+	//			modifiedTenderSoln.routes = routes.first;
+	//			//create new clusterSoln* with updated reefs
+	//			modifiedTenderSoln.cluster = clusters.first;
+	//			this->tenderSolns.push_back(new TenderSoln(modifiedTenderSoln));
+	//		}
+	//		else if (i == c.second) {
+	//			// Modify the route for the specified index (c)
+	//			TenderSoln* modifiedTenderSoln = new TenderSoln(*other.tenderSolns[i]);
+	//			modifiedTenderSoln->routes = routes.second;
+	//			//create new clusterSoln* with updated reefs
+	//			modifiedTenderSoln->cluster = clusters.second;
+	//			this->tenderSolns.push_back(modifiedTenderSoln);
+	//		}
+	//		else {
+	//			// Use the original route if no replacement is provided
+	//			this->tenderSolns.push_back(new TenderSoln(*other.tenderSolns[i]));
+	//		}
+	//	}
+	//}
 
 	const int ID;
 	/*const*/ MSSoln msSoln;

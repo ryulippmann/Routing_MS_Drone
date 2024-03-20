@@ -50,13 +50,8 @@ void csvPrintStops(/*const vector<ClusterSoln*>& clusters, */const string& file_
     if (outputFile.is_open()) {
         outputFile << "ClusterID" << "," << "PtID" << "," << "X" << "," << "Y" << "\n";
         for (const auto& reef : inst.reefs) {
-			outputFile /*<< clusterID*/ << "," << reef.ID << "," << reef.x << "," << reef.y << "\n";
+			outputFile << "," << reef.ID << "," << reef.x << "," << reef.y << "\n";
 		}
-        //for (const auto& cluster : clusters) {
-        //    for (const auto& point : cluster->reefs) {
-        //        outputFile << cluster->ID << "," << point->ID << "," << point->x << "," << point->y << "\n";
-        //    }
-        //}
         outputFile.close();
         cout << "\nReef stop points saved to: " << file_name << ".csv\n";
     }
@@ -77,20 +72,18 @@ void csvPrintStops(/*const vector<ClusterSoln*>& clusters, */const string& file_
 //}
 
 // Print the routes to a CSV file
-void csvPrintTenderRoutes(vector<vector<Pt*>> routes, string file_name, string extension = "") {     // Print the routes to a CSV file
+void csvPrintTenderRoutes(vector<vector<Pt*>> routes, string file_name, bool in_out) {     // Print the routes to a CSV file
     file_name = addTimeToFilename(file_name);
+    if (in_out != NULL) { file_name += string(in_out == 1 ? "_in" : "_out"); }///*boolToString(in_out)*/; }
     ofstream outputFile("d_route/" + file_name + ".csv");   // create .csv file from string name
     if (outputFile.is_open()) {
         outputFile << "\n";                                 // skip header row
-        //for (const auto& tender : routes) {               // for each route in routes)
         for (const auto& route : routes) {                  // for each route in routes
             for (const auto& stop : route) {                // for each stop in route
                 outputFile << stop->ID << ","/* << stop->x << "," << stop->y << ","*/;                  // output each stop across each row
             }
             outputFile << "\n";                             // go to next row after all stops in route have been output
         }
-        //    outputFile << "\n";
-        //}
         outputFile.close();
         cout << "\nRoute points saved to: " << file_name << ".csv\n";
     }
@@ -236,15 +229,14 @@ void csvPrintMSRoutes(vector<Pt*> launch_route, string file_name, double msDist=
 //}
 
 //Co-pilot function - update as needed
-string csvPrintSA(SAlog log, string file_name) {
+string csvPrintSA(SAlog log, string file_name, bool in_out) {
     file_name = addTimeToFilename(file_name);
+    if (in_out != NULL) { file_name += string(in_out == 1 ? "_in" : "_out"); }  // add in/out to filename
     ofstream outputFile("sa_output/" + file_name + ".csv");   // create .csv file from string name
 
     if (outputFile.is_open()) {
         outputFile << "temp,current_dist,new_dist,best_dist\n";
-        for (int i = 0; i < log.temp.size()/*sa_params.num_iterations*/; i++) {
-            outputFile << log.temp[i] << "," << log.current_dist[i] << "," << log.new_dist[i] << "," << log.best_dist[i] << "\n";
-        }
+        for (int i = 0; i < log.temp.size(); i++) { outputFile << log.temp[i] << "," << log.current_dist[i] << "," << log.new_dist[i] << "," << log.best_dist[i] << "\n"; }
         outputFile.close();
     }
     else printf("Unable to open file");
@@ -255,16 +247,12 @@ void csvPrints(FullSoln best_new, bool in_out=NULL) {
     csvPrintStops(/*best_new.msSoln.clusters, */"reef_set");
     vector<vector<Pt*>> total_routes;// = in_out ? best_new.tenderSolns : best_new.tenderSolns_out;
     for (const auto& vehicle : best_new.tenderSolns) {
-        for (const auto& route : vehicle->routes) {
-			total_routes.push_back(route);
-		}
-        //csvPrintTenderRoutes(vehicle->routes, "drone_route_list", boolToString(in_out));
+        for (const auto& route : vehicle->routes) { total_routes.push_back(route); }
 	}
-    csvPrintTenderRoutes(total_routes, "drone_route_list", boolToString(in_out));
+    csvPrintTenderRoutes(total_routes, "drone_routes", in_out);
     csvPrintLaunchPts(best_new.msSoln.launchPts, "launchPts_fullSoln");//"launchPts_fullSoln_" + boolToString(in_out));
-    //csvPrintRoutes(best_new.tenderSolns, "drone_routes", "best");)
     csvPrintMSRoutes(best_new.msSoln.launchPts, "ms_launch_route_fullSoln", best_new.msSoln.getDist());//_"+boolToString(in_out));
-    csvPrintSA(best_new.sa_log, "sa_log");
+    csvPrintSA(best_new.sa_log, "sa_log", in_out);
     //csvPrintSA_Time(filename_SA, fn_elapsed_time);
     return;
 }

@@ -38,9 +38,8 @@ int randChoice(int size/*, int randomSeed = 12345*/, bool clust_choice = false) 
 //    return dist(gen_stop);
 //}
 
-vector<Pt*> UpdateLaunchPts(const MSSoln& msSoln, bool print = false) {
-    const vector<ClusterSoln*> clusters = msSoln.clusters;
-    if (print) printf("\n---- SET LAUNCH POINTS ----\n");
+vector<Pt*> UpdateLaunchPts(const vector<ClusterSoln*> clusters, bool print = false) {
+    if (print) printf("\n---- SET LAUNCH POINTS ----\n\tID\t(  x  ,  y  )\n");
     vector<Pt*> launchPts;
     // add depot as first launch point
     launchPts.push_back(new Pt(
@@ -54,31 +53,25 @@ vector<Pt*> UpdateLaunchPts(const MSSoln& msSoln, bool print = false) {
     launchPts.push_back(new Pt(
         (inst.ms.depot.x + clusters.back()->getCentroid().x) / 2,
         (inst.ms.depot.y + clusters.back()->getCentroid().y) / 2));
-    //launchPts.push_back(new Pt(inst.ms.depot));       // add depot as first launch point
-    //msSoln.launchPts = launchPts;
-    //vector<vector<double>> dMatrix_launchpt = msSoln.launchPt_dMatrix();
-    //if (print) {
-    //    printf("\tID\t(  x  ,  y  )\n");
-    //    cout << string(30, '-') << "\n";
-    //    printf("\t%d\t( %2.2f, %2.2f)\n", inst.ms.depot.ID, inst.ms.depot.x, inst.ms.depot.y);
-    //    for (const auto& stop : msSoln.launchPts) {
-    //        printf("\t%d\t( %.2f, %.2f)\n", stop->ID, stop->x, stop->y);
-    //    } printf("\n");
-    //    for (int i = 0; i < dMatrix_launchpt.size(); i++) {
-    //        for (int j = 0; j < dMatrix_launchpt[i].size(); j++) {
-    //            printf("\t%.2f", dMatrix_launchpt[i][j]);
-    //        }
-    //        printf("\n");
-    //    } printf("\n");
-    //    cout << string(30, '-') << "\n";
-    //    double total_dist = dMatrix_launchpt.back()[0];
-    //    printf("\t%.2f ", total_dist);
-    //    for (int i = 0; i < dMatrix_launchpt.size() - 1; i++) {
-    //        printf("+\t%.2f ", dMatrix_launchpt[i][i + 1]);
-    //        total_dist += dMatrix_launchpt[i][i + 1];
-    //    }
-    //    printf("\n\t\t= %.2f", total_dist);
-    //}
+    if (print) {
+        printf("\tID\t(  x  ,  y  )\n");
+        cout << string(30, '-') << "\n";
+        printf("\t%d\t( %2.2f, %2.2f)\n", inst.ms.depot.ID, inst.ms.depot.x, inst.ms.depot.y);
+        for (const auto& stop : launchPts) {
+            printf("\t%d\t( %.2f, %.2f)\n", stop->ID, stop->x, stop->y);
+        } printf("\n");
+        cout << string(30, '-') << "\n";
+        double total_dist = calculatePtDistance(inst.ms.depot, launchPts[0]);
+        printf("\t%.2f ", total_dist);
+        for (int i = 0; i < launchPts.size() - 1; i++) {
+            double leg_dist = calculatePtDistance(launchPts[i], launchPts[i + 1]);
+            printf("+\t%.2f ", leg_dist);
+            total_dist += leg_dist;
+        }
+        printf("+\t%.2f ", calculatePtDistance(inst.ms.depot, launchPts.back()));
+        total_dist += calculatePtDistance(inst.ms.depot, launchPts.back());
+        printf("\n\t\t= %.2f", total_dist);
+    }
     return launchPts;
 }
 
@@ -121,15 +114,28 @@ pair<TenderSoln, TenderSoln> random_d_out_Swap(pair<TenderSoln, TenderSoln> tend
 }
 
 // arg FullSoln incumbent
-FullSoln OUT_ClusterSwaps(const FullSoln& soln, int iteration, vector<int> randoms, bool print = false) {
+FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, */bool print = false) {
     if (print) printf("---- OUT_Swap ----");
     pair<int, int> c = randSwapChoice(soln.msSoln.clusters.size()/*, iteration*/);    // generate swap pair of clusters
     if (print) printf("\nSwap clusters:\t\t%d\tand\t%d", c.first, c.second);
 
-    //pair<ClusterSoln*, ClusterSoln*> clusters = make_pair(soln.msSoln->clusters[c.first], soln.msSoln->clusters[c.second]);
     pair<TenderSoln, TenderSoln>
-        tenders = random_d_out_Swap(make_pair(*soln.tenderSolns[c.first], *soln.tenderSolns[c.second]), iteration);
-    
+        tenders = random_d_out_Swap(make_pair(*soln.tenderSolns[c.first], *soln.tenderSolns[c.second]), 
+            iteration, false);
+
+    vector<TenderSoln*> tenderSolns;
+    for (int i = 0; i < soln.tenderSolns.size(); i++) {
+		if      (i == c.first)  { tenderSolns.push_back(&tenders.first); }      // ****
+		else if (i == c.second) { tenderSolns.push_back(&tenders.second); }     // ****
+		else                    { tenderSolns.push_back(soln.tenderSolns[i]); } 
+	}
+    vector<ClusterSoln*> clusters;
+    for (int i = 0; i < tenderSolns.size(); i++) {
+        clusters.push_back(&(tenderSolns[i]->cluster));
+        //if (i == c.first) { clusters.push_back(&tenders.first.cluster); }
+        //else if (i == c.second) { clusters.push_back(&tenders.second.cluster); }
+		//else { clusters.push_back(soln.msSoln.clusters[i]); 
+        }
     //pair <pair<Pt*, Pt*>, pair<Pt*, Pt*>>
     //    launchPts = make_pair(make_pair(soln.msSoln.launchPts[c.first], soln.msSoln.launchPts[c.first + 1]), make_pair(soln.msSoln.launchPts[c.second], soln.msSoln.launchPts[c.second + 1]));
     //pair <vector<vector<double>>, vector<vector<double>>> 
@@ -140,20 +146,42 @@ FullSoln OUT_ClusterSwaps(const FullSoln& soln, int iteration, vector<int> rando
     //pair<vector<Pt*>, vector<Pt*>> 
     //    reefs = make_pair(  tenders.first.cluster.reefs, 
     //                        tenders.second.cluster.reefs);
+
+    vector<Pt*>
+        launchPts = UpdateLaunchPts(clusters/*, true*/);
+    for (int d = 0; d < tenderSolns.size(); d++) {
+        tenderSolns[d]->launchPts = make_pair(launchPts[d], launchPts[d + 1]);
+        for (auto& route : tenderSolns[d]->routes) {
+            route[0] = launchPts[d];
+            route[route.size() - 2] = launchPts[d + 1];
+            route[route.size() - 1] = launchPts[d];
+		}
+    }
     
-    vector<Pt*> 
-        launchPts = UpdateLaunchPts(soln.msSoln);
+    //// UPDATE tenderSolns with new routes ////
+    // dMatrix feeds into routes
     pair <vector<vector<double>>, vector<vector<double>>>
-        dMatrix = make_pair(tenders.first.cluster.getdMatrix(make_pair( launchPts[c.first] , launchPts[c.first + 1])),
-                            tenders.second.cluster.getdMatrix(make_pair(launchPts[c.second], launchPts[c.second+1])));
-    pair <vector<vector<Pt*>>, vector<vector<Pt*>>> 
+        dMatrix = make_pair(tenderSolns[c.first]->cluster.getdMatrix(make_pair(launchPts[c.first], launchPts[c.first + 1])),
+                            tenderSolns[c.second]->cluster.getdMatrix(make_pair(launchPts[c.second], launchPts[c.second + 1])));
+    // update tenders with new launchPts
+    //tenders
+
+    // update routes with Gd before assessing solution
+    pair <vector<vector<Pt*>>, vector<vector<Pt*>>>
         routes = make_pair( greedyTenderCluster(tenders.first, dMatrix.first),
                             greedyTenderCluster(tenders.second, dMatrix.second));
-    pair<ClusterSoln, ClusterSoln> 
-        clusters = make_pair(   ClusterSoln(inst, tenders.first.cluster.reefs),     /*reefs.first*/
-						        ClusterSoln(inst, tenders.second.cluster.reefs));   /*reefs.second*/
+    // update clusters with new routes
+    tenderSolns[c.first]->routes =  routes.first;
+    tenderSolns[c.second]->routes = routes.second;
+
+    //pair<ClusterSoln, ClusterSoln> 
+    //    clusters = make_pair(   ClusterSoln(tenders.first.cluster.reefs),     /*reefs.first*/
+				//		        ClusterSoln(tenders.second.cluster.reefs));   /*reefs.second*/
+    
+    MSSoln msSoln = MSSoln(clusters, launchPts);
+    
     FullSoln 
-        new_soln =  FullSoln(soln, routes, clusters, c);              // create new FullSoln copy incl new routes for updated clusters
+        new_soln =  FullSoln(msSoln, tenderSolns);          // create new FullSoln with updated clusters and launchPts
     
     if (print) printf("-- ^^ OUT_Swap ^^ --");
     return new_soln;
@@ -200,7 +228,7 @@ void random_d_in_Swap(TenderSoln& tender, /*int iteration, */bool swap_print = f
 //}
 
 // MODIFY Fullsoln soln (not ref) and return the swapped copy to save as proposed - mutated cluster_index c to swap within
-FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, vector<int> randoms, bool print = false) {
+FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, */bool print = false) {
     int c = randChoice(soln.msSoln.clusters.size()/*, iteration*/, true);    // generate random CLUSTER to swap within
     //throw runtime_error("Not all clusters swappable! randChoice limits choice [1,clusters.size()-3]");
     if (print) {
@@ -235,11 +263,11 @@ FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, vector<int> randoms, bool
 
 // Simulated Annealing based on in/out mutator
 FullSoln SA_fn(const FullSoln initialSolution,
-    function<FullSoln(const FullSoln currentSolution, const int, const vector<int>, const bool)> mutator,
+    function<FullSoln(const FullSoln currentSolution, const int, /*const vector<int>, */const bool)> mutator,
     const SAparams sa_params,/* SAlog& log, */bool print = false) {
     double temp = sa_params.initial_temp;           // is this redundant? - temp is updated in SAlog
-    vector<int> randomness;
-    for (int i = 1; i < sa_params.num_iterations; i++) { randomness.push_back(i); }
+    //vector<int> randomness;
+    //for (int i = 1; i < sa_params.num_iterations; i++) { randomness.push_back(i); }
     FullSoln best = initialSolution;
     FullSoln incumbent = initialSolution;
     FullSoln proposed = initialSolution;
@@ -254,7 +282,7 @@ FullSoln SA_fn(const FullSoln initialSolution,
     for (int iter_num = 1; iter_num < sa_params.num_iterations; ++iter_num) {
         if (best.msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); }
         printf("\n%d\t%5.3f\t%5.3f\t\t\t\t\t\t%.2e", iter_num, best.getTotalDist(), dist_incumbent, temp);
-        proposed = mutator(incumbent, iter_num, randomness, print);
+        proposed = mutator(incumbent, iter_num, /*randomness, */print);
         //printf("\t\tstop here");
         dist_incumbent = incumbent.getTotalDist();
         dist_best = best.getTotalDist();

@@ -112,7 +112,7 @@ def plot_MS_route(csv_file, print_plt, save_plt, color):
         # dist = round(sum([((x[i]-x[i-1])**2 + (y[i]-y[i-1])**2)**0.5 for i in range(1,len(x))]),2)
     
     # Annotate the plot with the coordinates of the first point as "depot"
-    plt.annotate(f'DEPOT: ({x[0]}, {y[0]})', xy=(x[0], y[0]), xycoords='data', ha='left', va='top', fontsize=14, color='black')
+    plt.annotate(f'Depot: ({x[0]}, {y[0]})', xy=(x[0], y[0]), xycoords='data', ha='left', va='top', fontsize=10, color='black')
     if (csv_file.find('NN')):   plt.annotate(f'MS_NN = {dist:.2f}',     xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
     elif (csv_file.find('Gd')): plt.annotate(f'MS_Gd = {dist:.2f}',     xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
     else:                       plt.annotate(f'MS_dist = {dist:.2f}',   xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
@@ -198,12 +198,12 @@ save_plt = True
 dist_total = 0
 
 cluster_soln = True
-cluster_path =      'clusters/'+    '24-03-19_13-59-46 clusters_init'               +'.csv'
+cluster_path =      'clusters/'+    '24-03-20_14-15-43 clusters_init'               +'.csv'
 ms_soln = True
-ms_path =           'ms_route/'+    '24-03-19_14-30-04 ms_launch_route_fullSoln'    +'.csv'
-launchpts_path =    'launchPts/'+   '24-03-19_14-30-04 launchPts_fullSoln'          +'.csv'
+ms_path =           'ms_route/'+    '24-03-20_14-17-08 ms_launch_route_fullSoln'    +'.csv'
+launchpts_path =    'launchPts/'+   '24-03-20_14-17-08 launchPts_fullSoln'          +'.csv'
 drone_soln = True
-d_path =            'd_route/'+     '24-03-19_14-30-04 drone_route_list'            +'.csv'
+d_path =            'd_route/'+     '24-03-20_14-17-08 drone_routes_in'            +'.csv'
 
 if cluster_soln: 
     nodes = plot_clusters(      cluster_path, print_plt, save_plt)
@@ -225,4 +225,3 @@ if drone_soln:
     dist_total += plot_drones(d_path, nodes, launchpts, print_plt, save_plt, c_d_gd)
 
 print("End of Plot_clusters.py")
-

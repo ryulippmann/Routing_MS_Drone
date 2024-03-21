@@ -147,8 +147,12 @@ FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, *
     //    reefs = make_pair(  tenders.first.cluster.reefs, 
     //                        tenders.second.cluster.reefs);
 
+    //MSSoln msSoln = MSSoln(clusters);   // create new MSSoln with updated clusters and launchPts
     vector<Pt*>
-        launchPts = UpdateLaunchPts(clusters/*, true*/);
+        launchPts = UpdateLaunchPts(clusters/*, true*/);        // update launchPts with new clusters
+
+    MSSoln msSoln = MSSoln(clusters);//, launchPts);                               // update msSoln with new launchPts
+    // update tenderSolns with new launchPts (->launchPts AND ->routes)
     for (int d = 0; d < tenderSolns.size(); d++) {
         tenderSolns[d]->launchPts = make_pair(launchPts[d], launchPts[d + 1]);
         for (auto& route : tenderSolns[d]->routes) {
@@ -157,20 +161,40 @@ FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, *
             route[route.size() - 1] = launchPts[d];
 		}
     }
+    // update msSoln with new launchPts
+    for (int l = 0; l < launchPts.size(); l++) { msSoln.launchPts[l] = launchPts[l]; }
     
     //// UPDATE tenderSolns with new routes ////
     // dMatrix feeds into routes
     pair <vector<vector<double>>, vector<vector<double>>>
         dMatrix = make_pair(tenderSolns[c.first]->cluster.getdMatrix(make_pair(launchPts[c.first], launchPts[c.first + 1])),
                             tenderSolns[c.second]->cluster.getdMatrix(make_pair(launchPts[c.second], launchPts[c.second + 1])));
-    // update tenders with new launchPts
-    //tenders
-
     // update routes with Gd before assessing solution
     pair <vector<vector<Pt*>>, vector<vector<Pt*>>>
-        routes = make_pair( greedyTenderCluster(tenders.first, dMatrix.first),
-                            greedyTenderCluster(tenders.second, dMatrix.second));
+
+    // update routes with Gd before assessing solution
     // update clusters with new routes
+    tenderSolns[c.first]->routes =  routes.first;
+    tenderSolns[c.second]->routes = routes.second;
+    
+    tenderSolns[c.first]->routes =  routes.first;
+        new_soln =  FullSoln(msSoln, tenderSolns);          // create new FullSoln with updated clusters and launchPts
+
+    //pair<ClusterSoln, ClusterSoln> 
+    //    clusters = make_pair(   ClusterSoln(tenders.first.cluster.reefs),     /*reefs.first*/
+				//		        ClusterSoln(tenders.second.cluster.reefs));   /*reefs.second*/
+    
+    MSSoln msSoln = MSSoln(clusters, launchPts);
+    
+    tenderSolns[c.first]->routes =  routes.first;
+    tenderSolns[c.second]->routes = routes.second;
+
+    //pair<ClusterSoln, ClusterSoln> 
+    //    clusters = make_pair(   ClusterSoln(tenders.first.cluster.reefs),     /*reefs.first*/
+				//		        ClusterSoln(tenders.second.cluster.reefs));   /*reefs.second*/
+    
+    MSSoln msSoln = MSSoln(clusters, launchPts);
+    
     tenderSolns[c.first]->routes =  routes.first;
     tenderSolns[c.second]->routes = routes.second;
 
@@ -254,8 +278,8 @@ FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, */
         //for (const auto& tender : new_soln.tenderSolns) {
         //    printTenderRoutes(tender);
         //}
-    }
-    return new_soln;
+        //printf("\n%d\t%5.3f\t\t%5.3f\t\t\t\t\t%.2e", iter_num, best.getTotalDist(), dist_incumbent, temp);
+        FullSoln proposed = mutator(incumbent, iter_num, /*randomness, */print);
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -270,12 +294,12 @@ FullSoln SA_fn(const FullSoln initialSolution,
     //for (int i = 1; i < sa_params.num_iterations; i++) { randomness.push_back(i); }
     FullSoln best = initialSolution;
     FullSoln incumbent = initialSolution;
-    FullSoln proposed = initialSolution;
+    //FullSoln proposed = initialSolution;
     double dist_best_saved = best.getTotalDist();
-    double dist_best = best.getTotalDist();
-    double dist_incumbent = incumbent.getTotalDist();
-    double dist_proposed = proposed.getTotalDist();
-    printf("\n\tBEST\t\tINCUMBENT\tPROPOSED\t\t\t\tTEMP");
+        printf("\n%d\t%5.3f\t%5.3f\t\t\t\t\t\t%.2e", iter_num, best.getTotalDist(), dist_incumbent, temp);
+        proposed = mutator(incumbent, iter_num, /*randomness, */print);
+    double dist_proposed = dist_incumbent; //proposed.getTotalDist();
+    printf("\n\tBEST\t\tINCUMBENT\tPROPOSED\tTEMP");
     srand(42);      // set random seed
     vector<double> sa_new, sa_current, sa_best, sa_temp;
     //log = SAlog(temp);
@@ -287,16 +311,16 @@ FullSoln SA_fn(const FullSoln initialSolution,
         dist_incumbent = incumbent.getTotalDist();
         dist_best = best.getTotalDist();
         dist_proposed = proposed.getTotalDist();
-        printf("\n%d\t%5.3f\t%5.3f\t%5.3f", iter_num, dist_best, dist_incumbent, dist_proposed);
+        printf("\n%d\t%5.3f\t\t%5.3f\t\t%5.3f\t\t%.2e", iter_num, dist_best, dist_incumbent, dist_proposed, temp);
 
         if (accept_new_solution(dist_incumbent, dist_proposed, temp)) {
             incumbent = proposed;       // overwrite old solution, but have been set as const...
             dist_incumbent = incumbent.getTotalDist();
-            printf("\tACCEPTED Proposed soln\n\t%.3f\t%.3f\t%.3f", dist_best, dist_incumbent, dist_proposed);
+            printf("\tACCEPTED Proposed soln");
             if (dist_proposed < dist_best) {
                 best = proposed; 
                 dist_best = best.getTotalDist();
-                printf("\n\t!!IMPROVED!! Proposed soln\n\t%.3f\t%.3f\t%.3f", dist_best, dist_incumbent, dist_proposed);
+                printf("\n\t!!IMPROVED!! Proposed soln\n\t%.3f\t\t%.3f\t\t%.3f", dist_best, dist_incumbent, dist_proposed);
             }
         }
         temp *= sa_params.cooling_rate;
@@ -310,7 +334,7 @@ FullSoln SA_fn(const FullSoln initialSolution,
     //log = SAlog(dist_proposed, dist_incumbent, dist_best, temp);        //update log
     //best.sa_log = log;
     printf("\n\n\tBEST\t\tINITIAL\t\t\tTEMP");
-    printf("\n\t%.3f\t%.3f\t%.2e", dist_best, dist_best_saved, temp);
+    printf("\n\t%.3f\t\t%.3f\t\t%.2e", dist_best, dist_best_saved, temp);
     FullSoln best_new = best;           // WHY is this line necessary?!
     return best_new;
 }
@@ -329,10 +353,12 @@ FullSoln SwapShell(const FullSoln soln_prev_best, bool in_out,
     double dist_best = best.getTotalDist();
     //SAparams                  (num_iter, init_temp, cooling_rate)
     int num_iter = 10000;               // fixed at 10000
-    int final_temp = pow(10, -5);
     double init_temp = 0.2 * dist_best; 
-    //double cooling_rate = pow((final_temp / init_temp), 1 / num_iter);  //0.995;
-    double cooling_rate = 0.998;
+    //double temp_diff = pow(10, -4);
+    //double final_temp = init_temp * temp_diff;//pow(10, -5);
+    //double cooling_rate = pow((temp_diff), 1 / num_iter);  //0.995;
+    double cooling_rate = 0.9995;
+    
     SAparams sa_params = //SAparams(10000, 0.2 * dist_best, 0.995);
         SAparams(num_iter, init_temp, cooling_rate);
         //SAparams(5000, 0.5 * dist_best, 0.98);

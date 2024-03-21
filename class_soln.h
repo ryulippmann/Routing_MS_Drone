@@ -110,14 +110,23 @@ public:
 		ID(count++), clusters(clustSolns), launchPts(clustSolns.size() + 1, nullptr) {}
 	// Copy constructor for deep copy
 	MSSoln(const MSSoln& other) :
-		ID(count++), clusters(), launchPts(other.launchPts) {
+		ID(count++), clusters(), launchPts() {
 		// Copy new ClusterSoln objects
 		for (auto& cluster : other.clusters) {
 			this->clusters.push_back(new ClusterSoln(*cluster)); 
 		}
+		for (auto* pt : other.launchPts) {
+			this->launchPts.push_back(pt);
+		}
+
 	}
 	MSSoln(vector<ClusterSoln*> clustSolns, vector<Pt*> launchPts) :
-		ID(count++), clusters(clustSolns), launchPts(launchPts) {}
+		ID(count++), clusters(clustSolns), launchPts() {
+		// Create new TenderSoln objects with new memory locations for pointers
+		for (auto* pt : launchPts) {
+			this->launchPts.push_back(new Pt(*pt));
+		}
+	}
 
 	const int ID;
 	vector<ClusterSoln*> clusters;
@@ -432,6 +441,9 @@ public:
 	// Copy assignment operator for deep copy
 	FullSoln& operator=(const FullSoln& other) {
 		if (this != &other) {
+			// update msSoln
+			msSoln = other.msSoln;
+
 			// Release existing TenderSoln objects
 			for (auto& ptr : tenderSolns) {
 				delete ptr;

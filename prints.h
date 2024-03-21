@@ -43,6 +43,8 @@ void csvPrintClusters(const std::vector<ClusterSoln*>& clusters, string file_nam
             });
     }
     outfile.close();
+    cout << "\nClusters saved to: " << file_name << ".csv\n";
+
 }
 
 void csvPrintStops(/*const vector<ClusterSoln*>& clusters, */const string& file_name) {
@@ -249,9 +251,9 @@ void csvPrints(FullSoln best_new, bool in_out=NULL) {
     for (const auto& vehicle : best_new.tenderSolns) {
         for (const auto& route : vehicle->routes) { total_routes.push_back(route); }
 	}
-    csvPrintTenderRoutes(total_routes, "drone_routes", in_out);
     csvPrintLaunchPts(best_new.msSoln.launchPts, "launchPts_fullSoln");//"launchPts_fullSoln_" + boolToString(in_out));
     csvPrintMSRoutes(best_new.msSoln.launchPts, "ms_launch_route_fullSoln", best_new.msSoln.getDist());//_"+boolToString(in_out));
+    csvPrintTenderRoutes(total_routes, "drone_routes", in_out);
     csvPrintSA(best_new.sa_log, "sa_log", in_out);
     //csvPrintSA_Time(filename_SA, fn_elapsed_time);
     return;

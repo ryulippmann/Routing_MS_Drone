@@ -44,7 +44,7 @@ int main()
 
 	////////////   ClusterSoln Construction   ////////////
 	//\\//\\//\\//\\// Create clusters \\//\\//\\//\\//
-	int kMeansIters = pow(10,2);//1000
+	int kMeansIters = pow(10,1);//1000
 	vector<ClusterSoln*> clusters = kMeansConstrained(kMeansIters);
 	printClusters(clusters);		// PRINT clusters //
 	

@@ -5,6 +5,21 @@ import datetime
 import os
 import re
 
+cluster_soln = True
+cluster_path =      'clusters/'+    '24-03-21_15-02-31 clusters_init'               +'.csv'
+ms_soln = True
+ms_path =           'ms_route/'+    '24-03-21_15-05-33 ms_launch_route_fullSoln'    +'.csv'
+launchpts_path =    'launchPts/'+   '24-03-21_15-05-33 launchPts_fullSoln'          +'.csv'
+drone_soln = True
+d_path =            'd_route/'+     '24-03-21_15-05-33 drone_routes_in'            +'.csv'
+
+w_ms = 9
+w_d = 1
+
+print_plt = True
+save_plt = True
+
+
 def plot_clusters(csv_file, print_plt, save_plt):
     # Read CSV file and extract data
     with open(csv_file, 'r') as file:
@@ -17,9 +32,6 @@ def plot_clusters(csv_file, print_plt, save_plt):
     y = [float(row['Y']) for row in data]
     cluster_ids = [int(row['ClusterID']) for row in data]
     node_id = [int(row['ReefID']) for row in data]
-
-    # zip the x, y coordinates and cluster IDs together
-    # nodes = list(zip(cluster_ids, x, y))
 
     # Initialize nodes list with empty lists
     nodes = [[] for _ in range(len(node_id))]    
@@ -64,7 +76,7 @@ def plot_clusters(csv_file, print_plt, save_plt):
     launchpts_path = f'launchPts/{date_time.group(1)} launchPts_init.csv'
     if not ms_soln: 
         if (max([sublist[-1] for sublist in nodes])>0):
-            launchpts = get_launchpts(launchpts_path)     # launchpts returns a dictionary of launch points by ID = (x, y)
+            get_launchpts(launchpts_path)     # launchpts returns a dictionary of launch points by ID = (x, y)
 
     if (save_plt):        # Save the plot in folder "plots" with the current date as the filename
         if not os.path.exists("plots"): # Create the "plots" folder if it doesn't exist
@@ -91,12 +103,12 @@ def get_launchpts(csv_file):
     # Plot launch points on the existing plot
     x_values, y_values = zip(*launchpts.values())
     plt.scatter(x_values, y_values, color='black', marker='x', label='Launch Points')
-    # # annotate plot with cluster path
+    # annotate plot with cluster path
     # plt.annotate(f'LaunchPath = {cluster_path}', xy=(0.01, -0.1), xycoords='axes fraction', ha='left', va='top')##, fontsize=12, fontweight='bold')
 
     return launchpts
 
-def plot_MS_route(csv_file, print_plt, save_plt, color):
+def plot_MS_route(csv_file, print_plt, save_plt, w_ms, color = 'k'):
     # Read CSV file and extract data
     with open(csv_file, 'r') as file:
         reader = csv.DictReader(file)
@@ -108,14 +120,15 @@ def plot_MS_route(csv_file, print_plt, save_plt, color):
     y = [float(row['Y']) for row in data]
     if (dist==0): 
         for i in range(len(x)-1): 
-            dist += Dist([x[i], y[i]], [x[i+1], y[i+1]])  # ((x[i]-x[i+1])**2 + (y[i]-y[i+1])**2)**0.5
+            dist += w_ms * Dist([x[i], y[i]], [x[i+1], y[i+1]])  # ((x[i]-x[i+1])**2 + (y[i]-y[i+1])**2)**0.5
         # dist = round(sum([((x[i]-x[i-1])**2 + (y[i]-y[i-1])**2)**0.5 for i in range(1,len(x))]),2)
     
     # Annotate the plot with the coordinates of the first point as "depot"
     plt.annotate(f'Depot: ({x[0]}, {y[0]})', xy=(x[0], y[0]), xycoords='data', ha='left', va='top', fontsize=10, color='black')
-    if (csv_file.find('NN')):   plt.annotate(f'MS_NN = {dist:.2f}',     xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
-    elif (csv_file.find('Gd')): plt.annotate(f'MS_Gd = {dist:.2f}',     xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
-    else:                       plt.annotate(f'MS_dist = {dist:.2f}',   xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
+    # if (csv_file.find('NN')):   plt.annotate(f'MS_NN = {dist:.2f}\n@w_ms = {w_ms}',     xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
+    # elif (csv_file.find('Gd')): plt.annotate(f'MS_Gd = {dist:.2f}\n@w_ms = {w_ms}',     xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
+    # else:                       
+    plt.annotate(f'MS_dist = {dist:.2f}\n@w_ms = {w_ms}',   xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
     # Plot MS route on the existing plot
     plt.plot(x, y, color, linestyle='-', linewidth=2)  # You can adjust color, linestyle, and linewidth as needed
 
@@ -132,7 +145,7 @@ def plot_MS_route(csv_file, print_plt, save_plt, color):
     if (print_plt and not drone_soln) : plt.show()
     return dist
 
-def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, color = 'k'):
+def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, w_d, color = 'r'):
     routes_node = []
     # Read CSV file and extract data
     with open(csv_file, 'r') as file:
@@ -153,12 +166,12 @@ def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, color = 'k'):
         for pt in range(1,len(route)-2):
             x, y = nodes[route[pt]-1][0], nodes[route[pt]-1][1]
             route_coords.append([route[pt], x, y])
-            dist_leg = Dist(route_coords[-1][1:], route_coords[-2][1:])
+            dist_leg = w_d * Dist(route_coords[-1][1:], route_coords[-2][1:])
             print(dist_leg)
             dist_route += dist_leg
         x, y = launchpts[route[-2]]
         route_coords.append([route[-2], x, y])
-        dist_leg = Dist(route_coords[-1][1:], route_coords[-2][1:])
+        dist_leg = w_d * Dist(route_coords[-1][1:], route_coords[-2][1:])
         print(dist_leg)
         dist_route += dist_leg
         print(f"Drone dist: {dist_route:.2f}\n")
@@ -166,17 +179,17 @@ def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, color = 'k'):
         # # # # ignore return to launch point # x, y = launchpts[route[-1]] # route_coords.append([route[-1], x, y])
         routes_pt.append(route_coords)
         plt.plot([x[1] for x in route_coords], [y[2] for y in route_coords], color, linestyle='-', linewidth=1)
-    print(f"\nTotal distance travelled: {dist_total:.2f}\n")
-    plt.annotate(f'D_dist = {dist_d_total:.2f}', xy=(0.3, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
+    print(f"\nTotal drone distance travelled: {dist_d_total:.2f}\n")
+    print(f"\nTotal MS distance travelled: {dist_total:.2f}\n")
+    plt.annotate(f'D_dist = {dist_d_total:.2f}\n@w_d = {w_d}', xy=(0.3, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
     plt.annotate(f'TOTAL =\n{(dist_d_total+dist_total):.2f}', xy=(0.65, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = 'b', fontweight='bold')
+    print(f"\nTotal ms+d distance travelled: {(dist_d_total+dist_total):.2f}\n")
 
     for i,I in enumerate(routes_pt):
         print("Vehicle: ",i)
         for j,J in enumerate(I):
             print(j,'\t\t',routes_pt[i][j])
 
-    # plt.annotate(f'Drones_dist_gd = {dist_drones_gd}', xy=(0.01, 0.85), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = c_d_gd, fontweight='bold')
-    
     # if (csv_file.find('NN')): plt.annotate(f'NN = {dist}', xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
     # elif (csv_file.find('Gd')): plt.annotate(f'Gd = {dist}', xy=(0.01, 0.95), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
 
@@ -193,35 +206,23 @@ def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, color = 'k'):
     if print_plt : plt.show()
     return dist_total
 
-print_plt = True
-save_plt = True
 dist_total = 0
 
-cluster_soln = True
-cluster_path =      'clusters/'+    '24-03-19_13-59-46 clusters_init'               +'.csv'
-ms_soln = True
-ms_path =           'ms_route/'+    '24-03-19_14-30-04 ms_launch_route_fullSoln'    +'.csv'
-launchpts_path =    'launchPts/'+   '24-03-19_14-30-04 launchPts_fullSoln'          +'.csv'
-drone_soln = True
-d_path =            'd_route/'+     '24-03-19_14-30-04 drone_route_list'            +'.csv'
+if cluster_soln: nodes = plot_clusters(      cluster_path, print_plt, save_plt)
 
-if cluster_soln: 
-    nodes = plot_clusters(      cluster_path, print_plt, save_plt)
-
-# for node in nodes: print(node[-1])
 print("\nNo clusters: "+str(max([sublist[-1] for sublist in nodes])+1))
 
 if ms_soln: 
     if (max([sublist[-1] for sublist in nodes])>0):
         launchpts = get_launchpts(launchpts_path)     # launchpts returns a dictionary of launch points by ID = (x, y)
-    c_gd = 'k'
-    dist_total +=       plot_MS_route(ms_path, print_plt, save_plt, c_gd)
+    # c_gd = 'k'
+    dist_total +=       w_ms *  plot_MS_route(ms_path, print_plt, save_plt, w_ms)
     # c_nn = 'k'
     # dist_drones_nn = plot_MS_route('ms_route/24-03-14_15-32-32 ms_launch_route_NN.csv', c_nn)
     # plt.annotate(f'Drones_dist_NN = {dist_drones_nn}', xy=(0.01, 0.85), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = c_gd, fontweight='bold')
 
 if drone_soln: 
-    c_d_gd = 'r'
-    dist_total += plot_drones(d_path, nodes, launchpts, print_plt, save_plt, c_d_gd)
+    # c_d_gd = 'r'
+    dist_total +=       w_d *   plot_drones(d_path, nodes, launchpts, print_plt, save_plt, w_d)
 
 print("End of Plot_clusters.py")

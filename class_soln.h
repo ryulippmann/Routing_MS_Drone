@@ -195,7 +195,7 @@ public:
 		}
 		leg = sqrt(pow(inst.ms.depot.x - launchPts[clusters.size()]->x, 2) + pow(inst.ms.depot.y - launchPts[clusters.size()]->y, 2));
 		dist += leg;
-		if (print) printf("+ %.2f\t\nTotal Dist: \t%.2f", leg, dist);
+		if (print) printf("+ %.2f\t\nTotal Dist: \t%.2f\n", leg, dist);
 		return dist;
 	}
 
@@ -420,23 +420,48 @@ public:
 	SAlog sa_log;
 
 	// Total dist = ms + sum(tender)
-	double getTotalDist(bool print=false) const {
-		double dist = msSoln.getDist(print);
-		//if (print) printf("\nMS Dist: \t%.2f", dist);
+	// dist = w_ms * ms + w_d * sum(tender)
+	double getTotalDist(bool print = false) const {
+		double dist_ms = w_ms * msSoln.getDist(print);
+		double dist_tenders = 0;
+		if (print) printf("\nWEIGHTED MS Dist: \t%.2f", dist_ms);
 		for (auto& tenderSoln : tenderSolns) {
 			double dist_tender = 0;
 			if (print) printf("\nTenderSoln ID: \t%d\t\tDist:", tenderSoln->ID);
 			for (auto& route : tenderSoln->routes) {
-				double leg = tenderSoln->getTenderRouteDist(route);
+				double leg = w_d * tenderSoln->getTenderRouteDist(route);
 				if (print) printf("\t+%.2f", leg);
 				dist_tender += leg;
 			}
 			if (print) printf("\t = %.2f", dist_tender);
-			dist += dist_tender;
+			dist_tenders += dist_tender;
 		}
-		if (print) printf("\nTotal Dist: \t%.2f", dist);
-		return dist;
+		double dist_total = dist_ms + dist_tenders;
+		if (print) {
+			printf("\nTender Dist: \t\t%.2f\n\nTotal Dist: \t%.2f\n", dist_tenders, dist_total);
+		}
+		return dist_total;
 	}
+
+	//double getTotalWeightedDist(double w_ms, double w_d, bool print = false) const {
+	//	double dist = w_ms * msSoln.getDist(print);
+	//	if (print) {
+	//		printf("\nWeighted MS Dist: \t%.2f", dist);
+	//	}
+	//	for (auto& tenderSoln : tenderSolns) {
+	//		double dist_tender = 0;
+	//		if (print) printf("\nTenderSoln ID: \t%d\t\tWEIGHTED Dist:", tenderSoln->ID);
+	//		for (auto& route : tenderSoln->routes) {
+	//			double leg = w_d * tenderSoln->getTenderRouteDist(route);
+	//			if (print) printf("\t+%.2f", leg);
+	//			dist_tender += leg;
+	//		}
+	//		if (print) printf("\t = %.2f", dist_tender);
+	//		dist += dist_tender;
+	//	}
+	//	if (print) printf("\nTotal Dist: \t%.2f\n", dist);
+	//	return dist;
+	//}
 
 	// Copy assignment operator for deep copy
 	FullSoln& operator=(const FullSoln& other) {

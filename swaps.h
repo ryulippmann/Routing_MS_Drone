@@ -119,98 +119,78 @@ FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, *
     pair<int, int> c = randSwapChoice(soln.msSoln.clusters.size()/*, iteration*/);    // generate swap pair of clusters
     if (print) printf("\nSwap clusters:\t\t%d\tand\t%d", c.first, c.second);
 
+
     pair<TenderSoln, TenderSoln>
-        tenders = random_d_out_Swap(make_pair(*soln.tenderSolns[c.first], *soln.tenderSolns[c.second]), 
+        tenders = random_d_out_Swap(make_pair(*soln.tenderSolns[c.first], *soln.tenderSolns[c.second]),
             iteration, false);
+
 
     vector<TenderSoln*> tenderSolns;
     for (int i = 0; i < soln.tenderSolns.size(); i++) {
-		if      (i == c.first)  { tenderSolns.push_back(&tenders.first); }      // ****
-		else if (i == c.second) { tenderSolns.push_back(&tenders.second); }     // ****
-		else                    { tenderSolns.push_back(soln.tenderSolns[i]); } 
-	}
+        if (i == c.first) { tenderSolns.push_back(&tenders.first); }      // ****
+        else if (i == c.second) { tenderSolns.push_back(&tenders.second); }     // ****
+        else { tenderSolns.push_back(soln.tenderSolns[i]); }
+    }
     vector<ClusterSoln*> clusters;
     for (int i = 0; i < tenderSolns.size(); i++) {
         clusters.push_back(&(tenderSolns[i]->cluster));
         //if (i == c.first) { clusters.push_back(&tenders.first.cluster); }
         //else if (i == c.second) { clusters.push_back(&tenders.second.cluster); }
-		//else { clusters.push_back(soln.msSoln.clusters[i]); 
-        }
+                //else { clusters.push_back(soln.msSoln.clusters[i]); 
+    }
     //pair <pair<Pt*, Pt*>, pair<Pt*, Pt*>>
     //    launchPts = make_pair(make_pair(soln.msSoln.launchPts[c.first], soln.msSoln.launchPts[c.first + 1]), make_pair(soln.msSoln.launchPts[c.second], soln.msSoln.launchPts[c.second + 1]));
     //pair <vector<vector<double>>, vector<vector<double>>> 
     //    dMatrix = make_pair(tenders.first.cluster.getdMatrix(launchPts.first),
     //                        tenders.second.cluster.getdMatrix(launchPts.second));
-    //routes.first = greedyTenderCluster(tenders.first, dMatrix.first);   		                // Run greedy 2-Opt on routes      
-    //routes.second = greedyTenderCluster(tenders.second, dMatrix.second);		                // Run greedy 2-Opt on routes 
+    //routes.first = greedyTenderCluster(tenders.first, dMatrix.first);                                 // Run greedy 2-Opt on routes      
+    //routes.second = greedyTenderCluster(tenders.second, dMatrix.second);                              // Run greedy 2-Opt on routes 
     //pair<vector<Pt*>, vector<Pt*>> 
     //    reefs = make_pair(  tenders.first.cluster.reefs, 
     //                        tenders.second.cluster.reefs);
 
-    //MSSoln msSoln = MSSoln(clusters);   // create new MSSoln with updated clusters and launchPts
-    vector<Pt*>
-        launchPts = UpdateLaunchPts(clusters/*, true*/);        // update launchPts with new clusters
 
-    MSSoln msSoln = MSSoln(clusters);//, launchPts);                               // update msSoln with new launchPts
-    // update tenderSolns with new launchPts (->launchPts AND ->routes)
+    vector<Pt*>
+        launchPts = UpdateLaunchPts(clusters/*, true*/);
     for (int d = 0; d < tenderSolns.size(); d++) {
         tenderSolns[d]->launchPts = make_pair(launchPts[d], launchPts[d + 1]);
         for (auto& route : tenderSolns[d]->routes) {
             route[0] = launchPts[d];
             route[route.size() - 2] = launchPts[d + 1];
             route[route.size() - 1] = launchPts[d];
-		}
+        }
     }
-    // update msSoln with new launchPts
-    for (int l = 0; l < launchPts.size(); l++) { msSoln.launchPts[l] = launchPts[l]; }
-    
+
     //// UPDATE tenderSolns with new routes ////
     // dMatrix feeds into routes
     pair <vector<vector<double>>, vector<vector<double>>>
         dMatrix = make_pair(tenderSolns[c.first]->cluster.getdMatrix(make_pair(launchPts[c.first], launchPts[c.first + 1])),
-                            tenderSolns[c.second]->cluster.getdMatrix(make_pair(launchPts[c.second], launchPts[c.second + 1])));
+            tenderSolns[c.second]->cluster.getdMatrix(make_pair(launchPts[c.second], launchPts[c.second + 1])));
+    // update tenders with new launchPts
+    //tenders
+
+
     // update routes with Gd before assessing solution
     pair <vector<vector<Pt*>>, vector<vector<Pt*>>>
-
-    // update routes with Gd before assessing solution
+        routes = make_pair(greedyTenderCluster(tenders.first, dMatrix.first),
+            greedyTenderCluster(tenders.second, dMatrix.second));
     // update clusters with new routes
-    tenderSolns[c.first]->routes =  routes.first;
+    tenderSolns[c.first]->routes = routes.first;
     tenderSolns[c.second]->routes = routes.second;
-    
-    tenderSolns[c.first]->routes =  routes.first;
-        new_soln =  FullSoln(msSoln, tenderSolns);          // create new FullSoln with updated clusters and launchPts
+
 
     //pair<ClusterSoln, ClusterSoln> 
     //    clusters = make_pair(   ClusterSoln(tenders.first.cluster.reefs),     /*reefs.first*/
-				//		        ClusterSoln(tenders.second.cluster.reefs));   /*reefs.second*/
-    
-    MSSoln msSoln = MSSoln(clusters, launchPts);
-    
-    tenderSolns[c.first]->routes =  routes.first;
-    tenderSolns[c.second]->routes = routes.second;
+                                //                      ClusterSoln(tenders.second.cluster.reefs));   /*reefs.second*/
 
-    //pair<ClusterSoln, ClusterSoln> 
-    //    clusters = make_pair(   ClusterSoln(tenders.first.cluster.reefs),     /*reefs.first*/
-				//		        ClusterSoln(tenders.second.cluster.reefs));   /*reefs.second*/
-    
     MSSoln msSoln = MSSoln(clusters, launchPts);
-    
-    tenderSolns[c.first]->routes =  routes.first;
-    tenderSolns[c.second]->routes = routes.second;
 
-    //pair<ClusterSoln, ClusterSoln> 
-    //    clusters = make_pair(   ClusterSoln(tenders.first.cluster.reefs),     /*reefs.first*/
-				//		        ClusterSoln(tenders.second.cluster.reefs));   /*reefs.second*/
-    
-    MSSoln msSoln = MSSoln(clusters, launchPts);
-    
-    FullSoln 
-        new_soln =  FullSoln(msSoln, tenderSolns);          // create new FullSoln with updated clusters and launchPts
-    
+    FullSoln
+        new_soln = FullSoln(msSoln, tenderSolns);          // create new FullSoln with updated clusters and launchPts
+
     if (print) printf("-- ^^ OUT_Swap ^^ --");
     return new_soln;
 }
-
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
@@ -279,7 +259,8 @@ FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, */
         //    printTenderRoutes(tender);
         //}
         //printf("\n%d\t%5.3f\t\t%5.3f\t\t\t\t\t%.2e", iter_num, best.getTotalDist(), dist_incumbent, temp);
-        FullSoln proposed = mutator(incumbent, iter_num, /*randomness, */print);
+    }
+	return new_soln;
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -295,21 +276,21 @@ FullSoln SA_fn(const FullSoln initialSolution,
     FullSoln best = initialSolution;
     FullSoln incumbent = initialSolution;
     //FullSoln proposed = initialSolution;
-    double dist_best_saved = best.getTotalDist();
-        printf("\n%d\t%5.3f\t%5.3f\t\t\t\t\t\t%.2e", iter_num, best.getTotalDist(), dist_incumbent, temp);
-        proposed = mutator(incumbent, iter_num, /*randomness, */print);
-    double dist_proposed = dist_incumbent; //proposed.getTotalDist();
+    double dist_best = best.getTotalDist();
+    double dist_initial = dist_best;
+    double dist_incumbent = dist_best; //proposed.getTotalDist();
+    double dist_proposed = dist_best; //proposed.getTotalDist();
     printf("\n\tBEST\t\tINCUMBENT\tPROPOSED\tTEMP");
     srand(42);      // set random seed
     vector<double> sa_new, sa_current, sa_best, sa_temp;
     //log = SAlog(temp);
-    for (int iter_num = 1; iter_num < sa_params.num_iterations; ++iter_num) {
+    for (int iter_num = 1; iter_num < sa_params.num_iterations + 1; ++iter_num) {
         if (best.msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); }
         printf("\n%d\t%5.3f\t%5.3f\t\t\t\t\t\t%.2e", iter_num, best.getTotalDist(), dist_incumbent, temp);
-        proposed = mutator(incumbent, iter_num, /*randomness, */print);
+        FullSoln proposed = mutator(incumbent, iter_num, /*randomness, */print);
         //printf("\t\tstop here");
         dist_incumbent = incumbent.getTotalDist();
-        dist_best = best.getTotalDist();
+        //dist_best = best.getTotalDist();
         dist_proposed = proposed.getTotalDist();
         printf("\n%d\t%5.3f\t\t%5.3f\t\t%5.3f\t\t%.2e", iter_num, dist_best, dist_incumbent, dist_proposed, temp);
 
@@ -334,7 +315,7 @@ FullSoln SA_fn(const FullSoln initialSolution,
     //log = SAlog(dist_proposed, dist_incumbent, dist_best, temp);        //update log
     //best.sa_log = log;
     printf("\n\n\tBEST\t\tINITIAL\t\t\tTEMP");
-    printf("\n\t%.3f\t\t%.3f\t\t%.2e", dist_best, dist_best_saved, temp);
+    printf("\n\t%.3f\t\t%.3f\t\t%.2e", dist_best, dist_initial, temp);
     FullSoln best_new = best;           // WHY is this line necessary?!
     return best_new;
 }

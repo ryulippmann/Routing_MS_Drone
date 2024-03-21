@@ -6,11 +6,21 @@ using namespace std;
 #include "class_prob.h"
 Pt depot = Pt(0, 0);		// depot must be first point initialised! ID = 0
 
-int no_pts = 12;//100;
+int no_pts = 100;
 	// validity check later: (numClust * numTenders * tenderCap = no_pts)
-int numClust = 3;//10;
+int numClust = 3;
 int numTenders = 2;
-int tenderCap = 2;//5;
+int tenderCap = 2;
+
+//int no_pts = 12;
+//// validity check later: (numClust * numTenders * tenderCap = no_pts)
+//int numClust = 3;
+//int numTenders = 2;
+//int tenderCap = 2;
+
+
+double w_ms = 5;
+double w_d = 1;
 
 // create GLOBAL instance of problem
 const Problem inst(initReefs(no_pts), numClust, depot, numTenders, tenderCap);
@@ -44,7 +54,7 @@ int main()
 
 	////////////   ClusterSoln Construction   ////////////
 	//\\//\\//\\//\\// Create clusters \\//\\//\\//\\//
-	int kMeansIters = pow(10,1);//1000
+	int kMeansIters = pow(10,4);//1000
 	vector<ClusterSoln*> clusters = kMeansConstrained(kMeansIters);
 	printClusters(clusters);		// PRINT clusters //
 	
@@ -74,7 +84,8 @@ int main()
 	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
 	//\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
 	FullSoln full_init(msSoln, ptr_tenderSolns);
-	printf("\n\nFull Soln Dist:\t%.2f", full_init.getTotalDist(print_detail));
+	printf("Full Soln Dist:\t%.2f", full_init.getTotalDist(print_detail));
+	//printf("WEIGHTED Full Soln Dist:\t%.2f", full_init.getTotalWeightedDist(4,2,print_detail));
 	if (csv_print) csvPrints(full_init);
 
 	////////////////////////////////

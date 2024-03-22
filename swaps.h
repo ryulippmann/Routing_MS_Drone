@@ -4,7 +4,6 @@
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 
-
 bool accept_new_solution(double current_dist, double proposed_dist, double temperature) {
     /*if (proposed_dist < current_dist) return true;
     else */return ((rand() / static_cast<double>(RAND_MAX)) < exp((current_dist - proposed_dist) / temperature));  // probability of accepting new solution (if worse)
@@ -12,8 +11,13 @@ bool accept_new_solution(double current_dist, double proposed_dist, double tempe
 
 /////////////////////////////////////////////////////////////////////////
 
-// Function for swapping routes
-// return pair of random indices [0, size_a) and [0, size_b) for swapping routes or stops
+/// <summary>
+/// Function for swapping routes
+/// </summary>
+/// <param name="size_a"></param>
+/// <param name="size_b">= -1</param>
+/// <param name="duplicate_rule">= True</param>
+/// <returns>pair of random indices [0, size_a) and [0, size_b) for swapping routes or stops</returns>
 pair<int, int> randSwapChoice(int size_a, /*int randomSeed = 12345, */int size_b = -1, bool duplicate_rule = true) {       // RANDOMLY CHOOSE WHICH d_route TO SWAP
     // if size = 2, and routes must be different, set one to 0, one to 1
     if (size_b == -1) { size_b = size_a; }
@@ -27,16 +31,16 @@ pair<int, int> randSwapChoice(int size_a, /*int randomSeed = 12345, */int size_b
     return make_pair(d_route_a, d_route_b);
 }
 
-// return random number [1, size-2] for swapping stops
+/// <summary>
+/// return random number [1, size-2] for swapping stops
+/// </summary>
+/// <param name="size"></param>
+/// <param name="clust_choice"></param>
+/// <returns></returns>
 int randChoice(int size/*, int randomSeed = 12345*/, bool clust_choice = false) {
     if (clust_choice) return getRandomNumber(size);
     else return getRandomNumber(size - 3/*, randomSeed*/) + 1;
 }
-//    mt19937 gen_stop(randomSeed);                      // check d_route to ensure d_route.size-2 is the right size distribution
-//    uniform_int_distribution<int> dist(1, size - 3);     //!constrict swaps between launch/retrieval nodes - i.e. only reef nodes
-//    //int from_stop = dist_from(gen_from_stop);   // d_route stop [1,10]    // choose stop number to swap out from current d_routes   
-//    return dist(gen_stop);
-//}
 
 vector<Pt*> UpdateLaunchPts(const vector<ClusterSoln*> clusters, bool print = false) {
     if (print) printf("\n---- SET LAUNCH POINTS ----\n\tID\t(  x  ,  y  )\n");
@@ -78,7 +82,13 @@ vector<Pt*> UpdateLaunchPts(const vector<ClusterSoln*> clusters, bool print = fa
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 
-// very similar to random_d_in_Swap... possibly duplicate or overload function
+/// <summary>
+/// very similar to random_d_in_Swap... possibly duplicate or overload function
+/// </summary>
+/// <param name="tenders"></param>
+/// <param name="iteration"></param>
+/// <param name="swap_print"></param>
+/// <returns></returns>
 pair<TenderSoln, TenderSoln> random_d_out_Swap(pair<TenderSoln, TenderSoln> tenders, int iteration,
     bool swap_print = false) { // d_route = ; tours = d_tours in this cluster
 
@@ -113,7 +123,12 @@ pair<TenderSoln, TenderSoln> random_d_out_Swap(pair<TenderSoln, TenderSoln> tend
     return tenders;
 }
 
-// arg FullSoln incumbent
+/// <summary>
+/// /// </summary>
+/// <param name="soln">: FullSoln incumbent</param>
+/// <param name="iteration"></param>
+/// <param name="print">= False</param>
+/// <returns></returns>
 FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, */bool print = false) {
     if (print) printf("---- OUT_Swap ----");
     pair<int, int> c = randSwapChoice(soln.msSoln.clusters.size()/*, iteration*/);    // generate swap pair of clusters
@@ -195,7 +210,11 @@ FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, *
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 
-// SWAP TenderSoln routes directly by ref
+/// <summary>
+/// SWAP TenderSoln routes directly by ref
+/// </summary>
+/// <param name="tender"></param>
+/// <param name="swap_print"></param>
 void random_d_in_Swap(TenderSoln& tender, /*int iteration, */bool swap_print = false) { // d_route = ; tours = d_tours in this cluster
     pair<int, int> s = randSwapChoice(tender.routes.size()/*, iteration*/);   // RANDOMLY CHOOSE WHICH d_routes TO SWAP
     if (swap_print) printf("\nSwap between d_routes:\t%d\tand\t%d", s.first, s.second);
@@ -221,52 +240,65 @@ void random_d_in_Swap(TenderSoln& tender, /*int iteration, */bool swap_print = f
     return;
 }
 
-//// print tender routes and dists - based on tenderSoln* tender
-//void printTenderRoutes(const TenderSoln* tender) {
-//	for (const auto& route : tender->routes) {
-//        for (auto& node : route) {
-//            printf("\t%d ->", node->ID);
-//        }
-//        printf("\nRoute dist:\t%f\n", tender->getTenderRouteDist(route));
-//    }
-//}
+/// <summary>
+/// print tender routes and dists - based on tenderSoln* tender
+/// Only called in IN_ClusterSwaps
+/// </summary>
+/// <param name="tender"></param>
+void printTenderRoutes(const TenderSoln* tender) {
+	for (const auto& route : tender->routes) {
+        for (auto& node : route) {
+            printf("\t%d ->", node->ID);
+        }
+        printf("\nTender route dist:\t%f\n", tender->getTenderRouteDist(route));
+    }
+}
 
 // MODIFY Fullsoln soln (not ref) and return the swapped copy to save as proposed - mutated cluster_index c to swap within
 FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, */bool print = false) {
-    int c = randChoice(soln.msSoln.clusters.size()/*, iteration*/, true);    // generate random CLUSTER to swap within
-    //throw runtime_error("Not all clusters swappable! randChoice limits choice [1,clusters.size()-3]");
-    if (print) {
-        cout << "\n" << string(50, '~') << "\n";
-        printf("\nSwap cluster:\t\t%d\n", c);
-        //printTenderRoutes(soln.tenderSolns[c]);
+    vector<vector<Pt*>> routes;
+    int c;
+
+    //double scaling_param = 0.04;                                        // scaling parameter
+    //double num_it = (1/(log(iteration) + 1)) * no_pts * scaling_param;  // number of swaps to make
+    //num_it = num_it > 1 ? num_it : 1;       	                        // ensure at least 1 swap is made    
+	int num_it = 1;                             // set number of swaps = 1
+    for (int i = 0; i < num_it; i++) {
+        c = randChoice(soln.msSoln.clusters.size()/*, iteration*/, true);    // generate random CLUSTER to swap within
+        //throw runtime_error("Not all clusters swappable! randChoice limits choice [1,clusters.size()-3]");
+        if (print) {
+            cout << "\n" << string(50, '~') << "\n";
+            printf("\nSwap cluster:\t\t%d\n", c);
+            printTenderRoutes(soln.tenderSolns[c]);
+        }
+        random_d_in_Swap(*soln.tenderSolns[c]/*, iteration*/);          // DONT CREATE COPY, as soln is NOT reference
+        if (print) { printTenderRoutes(soln.tenderSolns[c]); }
+
+        // these are only created to feed into greedyTenderCluster
+        ClusterSoln* cluster = soln.msSoln.clusters[c];
+        pair<Pt*, Pt*> launchPts = make_pair(soln.msSoln.launchPts[c], soln.msSoln.launchPts[c + 1]);
+        vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
+        routes = greedyTenderCluster(*soln.tenderSolns[c], dMatrix);                // Run greedy 2-Opt on routes
+        /* PRINT ROUTES AND DISTS FOR EACH SUB - TOUR!! */
     }
-    // DONT CREATE COPY, as soln is NOT reference
-    random_d_in_Swap(*soln.tenderSolns[c]/*, iteration*/);
-    //if (print) {
-    //    printTenderRoutes(soln.tenderSolns[c]);
-    //}
-    
-    // these are only created to feed into greedyTenderCluster
-    ClusterSoln* cluster = soln.msSoln.clusters[c];
-    pair<Pt*, Pt*> launchPts = make_pair(soln.msSoln.launchPts[c], soln.msSoln.launchPts[c + 1]);
-    vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
-    vector<vector<Pt*>> routes = greedyTenderCluster(*soln.tenderSolns[c], dMatrix);                // Run greedy 2-Opt on routes
     FullSoln new_soln = FullSoln(soln, routes, c);
-    /* PRINT ROUTES AND DISTS FOR EACH SUB - TOUR!! */
-    if (print) {
-        printf("\nOriginal route:\t%.2f\n", soln.getTotalDist());
-        //for (const auto& tender : new_soln.tenderSolns) {
-        //    printTenderRoutes(tender);
-        //}
-        //printf("\n%d\t%5.3f\t\t%5.3f\t\t\t\t\t%.2e", iter_num, best.getTotalDist(), dist_incumbent, temp);
-    }
+        if (print) { printf("\nOriginal route:\t%.2f\n", soln.getTotalDist());
+            for (const auto& tender : new_soln.tenderSolns) { printTenderRoutes(tender); }
+        }
 	return new_soln;
 }
 
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 
-// Simulated Annealing based on in/out mutator
+/// <summary>
+/// Simulated Annealing based on in/out mutator
+/// </summary>
+/// <param name="initialSolution"></param>
+/// <param name="mutator">: FUNCTION taken as IN_ClusterSwaps or OUT_ClusterSwaps</param>
+/// <param name="sa_params"></param>
+/// <param name="print"></param>
+/// <returns>FullSoln best_new</returns>
 FullSoln SA_fn(const FullSoln initialSolution,
     function<FullSoln(const FullSoln currentSolution, const int, /*const vector<int>, */const bool)> mutator,
     const SAparams sa_params,/* SAlog& log, */bool print = false) {
@@ -275,24 +307,21 @@ FullSoln SA_fn(const FullSoln initialSolution,
     //for (int i = 1; i < sa_params.num_iterations; i++) { randomness.push_back(i); }
     FullSoln best = initialSolution;
     FullSoln incumbent = initialSolution;
-    //FullSoln proposed = initialSolution;
     double dist_best = best.getTotalDist();
     double dist_initial = dist_best;
-    double dist_incumbent = dist_best; //proposed.getTotalDist();
-    double dist_proposed = dist_best; //proposed.getTotalDist();
-    printf("\n\tBEST\t\tINCUMBENT\tPROPOSED\tTEMP");
+    double dist_incumbent = dist_best;
+    double dist_proposed = dist_best;
+    printf("\n\tBEST\t\t\tINCUMBENT\t\tTEMP\t\t\tPROPOSED");
     srand(42);      // set random seed
     vector<double> sa_new, sa_current, sa_best, sa_temp;
     //log = SAlog(temp);
     for (int iter_num = 1; iter_num < sa_params.num_iterations + 1; ++iter_num) {
         if (best.msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); }
-        printf("\n%d\t%5.3f\t%5.3f\t\t\t\t\t\t%.2e", iter_num, best.getTotalDist(), dist_incumbent, temp);
+        printf("\n%d\t%5.3f\t\t%5.3f\t\t%.2e", iter_num, dist_best, dist_incumbent, temp);
         FullSoln proposed = mutator(incumbent, iter_num, /*randomness, */print);
-        //printf("\t\tstop here");
         dist_incumbent = incumbent.getTotalDist();
-        //dist_best = best.getTotalDist();
         dist_proposed = proposed.getTotalDist();
-        printf("\n%d\t%5.3f\t\t%5.3f\t\t%5.3f\t\t%.2e", iter_num, dist_best, dist_incumbent, dist_proposed, temp);
+        printf("\t\t%5.3f", dist_proposed);
 
         if (accept_new_solution(dist_incumbent, dist_proposed, temp)) {
             incumbent = proposed;       // overwrite old solution, but have been set as const...
@@ -301,7 +330,7 @@ FullSoln SA_fn(const FullSoln initialSolution,
             if (dist_proposed < dist_best) {
                 best = proposed; 
                 dist_best = best.getTotalDist();
-                printf("\n\t!!IMPROVED!! Proposed soln\n\t%.3f\t\t%.3f\t\t%.3f", dist_best, dist_incumbent, dist_proposed);
+                printf("\n\t!!IMPROVED!! Proposed soln\t%.3f\t\t%.3f\t\t%.3f", dist_best, dist_incumbent, dist_proposed);
             }
         }
         temp *= sa_params.cooling_rate;
@@ -314,13 +343,21 @@ FullSoln SA_fn(const FullSoln initialSolution,
     // log is not used correctly! - need to update log with new values iteratively
     //log = SAlog(dist_proposed, dist_incumbent, dist_best, temp);        //update log
     //best.sa_log = log;
-    printf("\n\n\tBEST\t\tINITIAL\t\t\tTEMP");
-    printf("\n\t%.3f\t\t%.3f\t\t%.2e", dist_best, dist_initial, temp);
+    if (dist_best == dist_initial) printf("\n\n\tNO IMPROVEMENT MADE\n");
+    else printf("\n\n\tBEST\t\t\tINITIAL\t\t\tTEMP\n\t%.3f\t\t%.3f\t\t%.2e", dist_best, dist_initial, temp);
     FullSoln best_new = best;           // WHY is this line necessary?!
     return best_new;
 }
 
-// Shell function setting up SA, and calling SA_fn with specified mutator (IN/OUT)
+/// <summary>
+/// Shell function setting up SA, and calling SA_fn with specified mutator (IN/OUT)
+/// </summary>
+/// <param name="soln_prev_best"></param>
+/// <param name="in_out"></param>
+/// <param name="print_stats">= false</param>
+/// <param name="csv_print">= false</param>
+/// <param name="SA_print">= true</param>
+/// <returns></returns>
 FullSoln SwapShell(const FullSoln soln_prev_best, bool in_out, 
     //int num_iterations = 10000, double initial_temperature = 200, double cooling_rate = 0.999,
     bool print_stats = false, bool csv_print = false, bool SA_print = true) {   //in_out = 1; // 0 = OUT, 1 = IN
@@ -345,23 +382,160 @@ FullSoln SwapShell(const FullSoln soln_prev_best, bool in_out,
         //SAparams(5000, 0.5 * dist_best, 0.98);
         //SAparams(1000, 0.5 * dist_best, 0.9);
     if (in_out == 0) {      //best = OUT_ClusterSwaps(soln_prev_best, 0, true);
-        //SAparams sa_params = SAparams(10000, 0.75*dist_best, 0.99/*pow(dist_best*5E-23,1/5000)*//*0.98*/);//(4000, 4000, 0.998);// initial temp ~ 2000 -> 
         best = SA_fn(soln_prev_best, OUT_ClusterSwaps, sa_params/*, log*/); 
-        // update clusters in best.msSoln
-        // populate clusters in best.msSoln with unique nodes from route in best.tenderSolns[i].routes[j] EXCLUDING launchPts
-
-        // update launchPts in best.msSoln by recalculating based on updated clusters in best.msSoln
-
-        
-        //best.msSoln
         printf("\n^^ OUT SWAPS ^^\n");
     }
     else {                  //best = IN_ClusterSwaps(soln_prev_best, 0, true);
-        //SAparams sa_params = SAparams(10000, 0.75*dist_best, 0.99);
         best = SA_fn(soln_prev_best, IN_ClusterSwaps, sa_params/*, log*//*, true*/);
         printf("\n^^ IN SWAPS ^^\n");
     }
 
     printf("\n------------- ^^ CLUST_OPT_D_TOURS ^^ --------------\n");
     return best;
+}
+
+//FullSoln SA_fn_RANDOM(const FullSoln initialSolution,
+//    function<FullSoln(const FullSoln currentSolution, const int, /*const vector<int>, */const bool)> mutator,
+//    const SAparams sa_params,/* SAlog& log, */bool print = false) {
+//    double temp = sa_params.initial_temp;           // is this redundant? - temp is updated in SAlog
+//    //vector<int> randomness;
+//    //for (int i = 1; i < sa_params.num_iterations; i++) { randomness.push_back(i); }
+//    FullSoln best = initialSolution;
+//    FullSoln incumbent = initialSolution;
+//    double dist_best = best.getTotalDist();
+//    double dist_initial = dist_best;
+//    double dist_incumbent = dist_best;
+//    double dist_proposed = dist_best;
+//    printf("\n\tBEST\t\t\tINCUMBENT\t\tTEMP\t\t\tPROPOSED");
+//    srand(42);      // set random seed
+//    vector<double> sa_new, sa_current, sa_best, sa_temp;
+//    //log = SAlog(temp);
+//    for (int iter_num = 1; iter_num < sa_params.num_iterations + 1; ++iter_num) {
+//        if (best.msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); }
+//        printf("\n%d\t%5.3f\t\t%5.3f\t\t%.2e", iter_num, dist_best, dist_incumbent, temp);
+//        FullSoln proposed = mutator(incumbent, iter_num, /*randomness, */print);
+//        dist_incumbent = incumbent.getTotalDist();
+//        dist_proposed = proposed.getTotalDist();
+//        printf("\t\t%5.3f", dist_proposed);
+//
+//        if (accept_new_solution(dist_incumbent, dist_proposed, temp)) {
+//            incumbent = proposed;       // overwrite old solution, but have been set as const...
+//            dist_incumbent = incumbent.getTotalDist();
+//            printf("\tACCEPTED Proposed soln");
+//            if (dist_proposed < dist_best) {
+//                best = proposed;
+//                dist_best = best.getTotalDist();
+//                printf("\n\t!!IMPROVED!! Proposed soln\t%.3f\t\t%.3f\t\t%.3f", dist_best, dist_incumbent, dist_proposed);
+//            }
+//        }
+//        temp *= sa_params.cooling_rate;
+//        sa_new.push_back(dist_proposed);
+//        sa_current.push_back(dist_incumbent);
+//        sa_best.push_back(dist_best);
+//        sa_temp.push_back(temp);
+//    }
+//    best.setSAlog(sa_new, sa_current, sa_best, sa_temp);        //.sa_log = new SAlog(sa_new, sa_current, sa_best, sa_temp);
+//    // log is not used correctly! - need to update log with new values iteratively
+//    //log = SAlog(dist_proposed, dist_incumbent, dist_best, temp);        //update log
+//    //best.sa_log = log;
+//    if (dist_best == dist_initial) printf("\n\n\tNO IMPROVEMENT MADE\n");
+//    else printf("\n\n\tBEST\t\t\tINITIAL\t\t\tTEMP\n\t%.3f\t\t%.3f\t\t%.2e", dist_best, dist_initial, temp);
+//    FullSoln best_new = best;           // WHY is this line necessary?!
+//    return best_new;
+//}
+
+
+/// <summary>
+/// Shell function setting up SA, and calling SA_fn with specified mutator 
+/// Randomly swapping by In/Out cluster with 50/50 probability
+/// </summary>
+/// <param name="soln_prev_best"></param>
+/// <param name="in_out"></param>
+/// <param name="print_stats"></param>
+/// <param name="csv_print"></param>
+/// <param name="SA_print"></param>
+/// <returns></returns>
+FullSoln SwapRandomly(const FullSoln soln_prev_best, 
+    //int num_iterations = 10000, double initial_temperature = 200, double cooling_rate = 0.999,
+    bool print_stats = false, bool csv_print = false, bool SA_print = true) {   //in_out = 1; // 0 = OUT, 1 = IN
+    printf("\n\nRANDOM IN/OUT Cluster Swaps!\n---------- CLUST_OPT_D_TOURS - Simulated Annealing ----------\n");
+
+    //SAlog log = SAlog(/*initial_temperature*/);
+    FullSoln best(soln_prev_best);
+    double dist_best = best.getTotalDist();
+    FullSoln incumbent = soln_prev_best;
+    double dist_initial = dist_best;
+
+    //SAparams                  (num_iter, init_temp, cooling_rate)
+    int num_iter = 10000;               // fixed at 10000
+    double init_temp = 0.2 * dist_best;
+    //double temp_diff = pow(10, -4);
+    //double final_temp = init_temp * temp_diff;//pow(10, -5);
+    //double cooling_rate = pow((temp_diff), 1 / num_iter);  //0.995;
+    double cooling_rate = 0.9995;
+    SAparams sa_params = //SAparams(10000, 0.2 * dist_best, 0.995);
+        SAparams(num_iter, init_temp, cooling_rate);
+    //SAparams(5000, 0.5 * dist_best, 0.98);    //SAparams(1000, 0.5 * dist_best, 0.9);
+    double temp = sa_params.initial_temp;           // is this redundant? - temp is updated in SAlog
+    
+    printf("\n\tBEST\t\t\tTEMP\t\t\tPROPOSED\t\tINCUMBENT");
+    srand(42);      // set random seed
+    vector<double> sa_new, sa_current, sa_best, sa_temp;
+    //log = SAlog(temp);
+        int in_swaps = 0;
+        int out_swaps = 0;
+    for (int iter_num = 1; iter_num < sa_params.num_iterations + 1; ++iter_num) {
+        if (best.msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); break; }
+        FullSoln proposed = incumbent;
+        // randomly set mutator as IN or OUT
+        bool in_out = rand() % 2;
+        if (in_out == 0) {      //best = OUT_ClusterSwaps(soln_prev_best, 0, true);
+            proposed = OUT_ClusterSwaps(incumbent, iter_num, /*randomness, */print_stats);
+            //printf("\tOUT SWAPS\n");
+            out_swaps += 1;
+		}
+		else {                  //best = IN_ClusterSwaps(soln_prev_best, 0, true);
+            proposed = IN_ClusterSwaps(incumbent, iter_num, /*randomness, */print_stats);
+            //printf("\tIN SWAPS\n");
+            in_swaps += 1;
+		}
+
+        double dist_proposed = proposed.getTotalDist(), dist_incumbent = incumbent.getTotalDist();
+        printf("\n%d\t%5.3f\t\t%.2e\t\t%5.3f\t\t%5.3f\t%s", iter_num, dist_best, temp, dist_proposed, dist_incumbent, in_out == 1 ? "IN" : "OUT");
+        if (accept_new_solution(dist_incumbent, dist_proposed, temp)) {
+            incumbent = proposed;       // overwrite old solution, but have been set as const...
+            dist_incumbent = incumbent.getTotalDist();
+            printf("\t\tACCEPTED Proposed soln");
+            if (dist_proposed < dist_best) {
+                best = proposed;
+                dist_best = best.getTotalDist();
+                printf("\n\t!!IMPROVED!! Proposed soln\t\t%.3f", dist_best);
+            }
+        }
+        
+        temp *= sa_params.cooling_rate;
+        sa_new.push_back(dist_proposed);
+        sa_current.push_back(dist_incumbent);
+        sa_best.push_back(dist_best);
+        sa_temp.push_back(temp);
+    }
+    best.setSAlog(sa_new, sa_current, sa_best, sa_temp);        //.sa_log = new SAlog(sa_new, sa_current, sa_best, sa_temp);
+    // log is not used correctly! - need to update log with new values iteratively
+    //log = SAlog(dist_proposed, dist_incumbent, dist_best, temp);        //update log
+    //best.sa_log = log;
+    if (dist_best == dist_initial) printf("\n\n\tNO IMPROVEMENT MADE\n");
+    else printf("\n\n\tBEST\t\t\tINITIAL\t\t\tTEMP\n\t%.3f\t\t%.3f\t\t%.2e", dist_best, dist_initial, temp);
+    FullSoln best_new = best;           // WHY is this line necessary?!
+
+    //if (in_out == 0) {      //best = OUT_ClusterSwaps(soln_prev_best, 0, true);
+    //    best = SA_fn(soln_prev_best, OUT_ClusterSwaps, sa_params/*, log*/);
+    //    printf("\n^^ OUT SWAPS ^^\n");
+    //}
+    //else {                  //best = IN_ClusterSwaps(soln_prev_best, 0, true);
+    //    best = SA_fn(soln_prev_best, IN_ClusterSwaps, sa_params/*, log*//*, true*/);
+    //    printf("\n^^ IN SWAPS ^^\n");
+    //}
+
+    printf("\n------------- ^^ CLUST_OPT_D_TOURS ^^ --------------\n");
+    return best_new;
 }

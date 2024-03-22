@@ -6,21 +6,23 @@ using namespace std;
 #include "class_prob.h"
 Pt depot = Pt(0, 0);		// depot must be first point initialised! ID = 0
 
-int no_pts = 100;
-	// validity check later: (numClust * numTenders * tenderCap = no_pts)
+//int no_pts = 10;//100;
+//	// validity check later: (numClust * numTenders * tenderCap = no_pts)
+//int numClust = 1;//5;
+//int numTenders = 4;
+//int tenderCap = 5;
+
+int no_pts = 12;
+// validity check later: (numClust * numTenders * tenderCap = no_pts)
 int numClust = 3;
 int numTenders = 2;
 int tenderCap = 2;
 
-//int no_pts = 12;
-//// validity check later: (numClust * numTenders * tenderCap = no_pts)
-//int numClust = 3;
-//int numTenders = 2;
-//int tenderCap = 2;
-
-
-double w_ms = 5;
+double w_ms = 1;
 double w_d = 1;
+
+bool csv_print = 1;
+bool print_detail = 1;
 
 // create GLOBAL instance of problem
 const Problem inst(initReefs(no_pts), numClust, depot, numTenders, tenderCap);
@@ -45,16 +47,13 @@ int FullSoln::count = 0;
 
 vector<Pt> reefPts;
 
-bool csv_print = 1;
-bool print_detail = 1;
-
 int main()
 {
 	if (checkParameters() == false) return 0;		// check if parameters are valid
 
 	////////////   ClusterSoln Construction   ////////////
 	//\\//\\//\\//\\// Create clusters \\//\\//\\//\\//
-	int kMeansIters = pow(10,4);//1000
+	int kMeansIters = pow(10,2);//1000
 	vector<ClusterSoln*> clusters = kMeansConstrained(kMeansIters);
 	printClusters(clusters);		// PRINT clusters //
 	
@@ -95,23 +94,38 @@ int main()
 	vector<double> best_dist{ fullSolns.back().getTotalDist()};			// initialise best_dist as vector with best solution distance
 	
 	////////////////////////////////
-	// Tendersoln Swaps
-	bool in_out = 0;//1;
-	while (best_dist.size() < 3 || best_dist.back() != best_dist.at(best_dist.size() - 3))
-	{
-		FullSoln best_new = SwapShell(fullSolns.back(), in_out);
-		printf("\nPrev Dist: \t\t%.2f", best_dist.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
-		best_dist.push_back(best_new.getTotalDist());
-		printf("\n%d\tNEW_Swap distance:\t%.2f\n", in_out, best_dist.back());
-		// vv fullSolns is not creating new fullSoln objects, but rather just pointing to the same object
-		fullSolns.push_back(best_new);
-		// csv print if solution updated
-		if (csv_print && best_dist.back() != best_dist.at(best_dist.size() - 2)) {
-			csvPrints(best_new, in_out);
-		}
-		in_out = !in_out;				// switch in_out flag
-		//best = best_new;
+	// Randomly run IN/OUT Swaps
+	FullSoln best_new = SwapRandomly(fullSolns.back());
+	printf("\nPrev Dist: \t\t%.2f", best_dist.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
+	best_dist.push_back(best_new.getTotalDist());
+	printf("\n\t\tNEW_Swap distance:\t%.2f\n", best_dist.back());
+	// vv fullSolns is not creating new fullSoln objects, but rather just pointing to the same object
+	fullSolns.push_back(best_new);
+	// csv print if solution updated
+	if (csv_print && best_dist.back() != best_dist.at(best_dist.size() - 2)) {
+		csvPrints(best_new/*, in_out*/);
 	}
+	//in_out = !in_out;				// switch in_out flag
+	//best = best_new;
+	////////////////////////////////
+
+	//// Tendersoln Swaps
+	//bool in_out = 0; //0;
+	//while (best_dist.size() < 3 || best_dist.back() != best_dist.at(best_dist.size() - 3))
+	//{
+	//	FullSoln best_new = SwapShell(fullSolns.back(), in_out);
+	//	printf("\nPrev Dist: \t\t%.2f", best_dist.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
+	//	best_dist.push_back(best_new.getTotalDist());
+	//	printf("\n%d\tNEW_Swap distance:\t%.2f\n", in_out, best_dist.back());
+	//	// vv fullSolns is not creating new fullSoln objects, but rather just pointing to the same object
+	//	fullSolns.push_back(best_new);
+	//	// csv print if solution updated
+	//	if (csv_print && best_dist.back() != best_dist.at(best_dist.size() - 2)) {
+	//		csvPrints(best_new, in_out);
+	//	}
+	//	in_out = !in_out;				// switch in_out flag
+	//	//best = best_new;
+	//}
 	////////////////////////////////
 
 

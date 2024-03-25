@@ -264,7 +264,7 @@ public:
 	vector<vector<Pt*>> routes;
 	pair<Pt*, Pt*> launchPts;
 
-	// route dist for cluster c		// this is ONLY called in greedyTenderCluster()
+	// route dist for cluster c		// this is ONLY called in greedyTenderCluster() && initTenderSoln()
 	double getTenderRouteDist(int c = -1) const {
 		if (c == -1) {
 			double dist = 0;
@@ -419,12 +419,17 @@ public:
 	//SAparams sa_params;
 	SAlog sa_log;
 
-	// Total dist = ms + sum(tender)
-	// dist = w_ms * ms + w_d * sum(tender)
+
+	/// <summary>
+	/// Method to get the total distance of the solution.
+	/// Total dist = w_ms*(ms) + w_d*(sum(tender))
+	/// </summary>
+	/// <param name="print">= false</param>
+	/// <returns></returns>
 	double getTotalDist(bool print = false) const {
 		double dist_ms = w_ms * msSoln.getDist(print);
 		double dist_tenders = 0;
-		if (print) printf("\nWEIGHTED MS Dist: \t%.2f", dist_ms);
+		if (print) printf("\nWEIGHTED MS Dist: \t%.2f\t\t(w_ms = %.1f)\n\tw_d = %.1f", dist_ms, w_ms, w_d);
 		for (auto& tenderSoln : tenderSolns) {
 			double dist_tender = 0;
 			if (print) printf("\nTenderSoln ID: \t%d\t\tDist:", tenderSoln->ID);
@@ -442,26 +447,6 @@ public:
 		}
 		return dist_total;
 	}
-
-	//double getTotalWeightedDist(double w_ms, double w_d, bool print = false) const {
-	//	double dist = w_ms * msSoln.getDist(print);
-	//	if (print) {
-	//		printf("\nWeighted MS Dist: \t%.2f", dist);
-	//	}
-	//	for (auto& tenderSoln : tenderSolns) {
-	//		double dist_tender = 0;
-	//		if (print) printf("\nTenderSoln ID: \t%d\t\tWEIGHTED Dist:", tenderSoln->ID);
-	//		for (auto& route : tenderSoln->routes) {
-	//			double leg = w_d * tenderSoln->getTenderRouteDist(route);
-	//			if (print) printf("\t+%.2f", leg);
-	//			dist_tender += leg;
-	//		}
-	//		if (print) printf("\t = %.2f", dist_tender);
-	//		dist += dist_tender;
-	//	}
-	//	if (print) printf("\nTotal Dist: \t%.2f\n", dist);
-	//	return dist;
-	//}
 
 	// Copy assignment operator for deep copy
 	FullSoln& operator=(const FullSoln& other) {

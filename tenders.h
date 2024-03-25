@@ -10,14 +10,20 @@
 //    return visit_count;
 //}//reefsVisited
 
-//vehicles argument not referenced, so are not updated...
+/// <summary>
+/// 
+/// </summary>
+/// <param name="cluster"></param>
+/// <param name="launchPts"></param>
+/// <param name="printStops"></param>
+/// <returns></returns>
 vector<vector<Pt*>> TenderWithinClusterNearestNeighbour(//const MSSoln& ms, const int c,
     const ClusterSoln* cluster, const pair<Pt*, Pt*>& launchPts, bool printStops = false) {
     int u = -1;                                         // initialise current reef index
     vector <double> route_dists(inst.tenders.size(),0.0);// list of route dist for each vehicle
     //vector<vector<int>> route_stops;                  // create routes to output to csv
     if (printStops) { cout << "\n\nNEAREST NEIGHBOUR\n"; }
-    vector<vector<Pt*>> routes(inst.tenders.size(), vector<Pt*>(inst.tenderCap, nullptr));  // create routes to save in TenderSoln.routes
+    vector<vector<Pt*>> routes(inst.tenders.size(), vector<Pt*>(inst.getTenderCap(), nullptr));  // create routes to save in TenderSoln.routes
     vector<bool> visited(cluster->reefs.size(), false);
     const vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);                  // for u vector in dMatrix
 
@@ -77,13 +83,20 @@ vector<vector<Pt*>> TenderWithinClusterNearestNeighbour(//const MSSoln& ms, cons
     return routes;
 }//nearestNeighbour
 
-// returns vector of reef indices in cluster.reefs. note dMatrix includes launch/retrieve pts and free link back to launchpt
+/// <summary>
+/// returns vector of reef indices in cluster.reefs. 
+/// note dMatrix includes launch/retrieve pts and free link back to launchpt
+/// </summary>
+/// <param name="clustTendersoln"></param>
+/// <param name="dMatrix"></param>
+/// <param name="print"></param>
+/// <returns></returns>
 vector<vector<Pt*>> greedyTenderCluster(const TenderSoln& clustTendersoln, const vector<vector<double>>& dMatrix, bool print = false) {
     ClusterSoln cluster = clustTendersoln.cluster;
     vector<vector<Pt*>> routes = clustTendersoln.routes;
     pair<Pt*, Pt*> launchPts = clustTendersoln.launchPts;
     double gd_2opt_dists;
-    int tenderCap = inst.tenderCap;
+    int tenderCap = inst.getTenderCap();
     if (print) printf("\n---- GREEDY TENDER CLUSTERS ----\n\tVehicle\t\tInitial\t\tGreedy 2-Opt\n");
     for (int d = 0; d < routes.size(); d++) {      // for each tender in cluster
         vector<int> i_tour;                 //(tenderCap/*init_solution.mothership.centroidMatrix.size()*/, 0);                         // ai_tour = city_index for each tour -> nearest neighbour
@@ -114,15 +127,23 @@ vector<vector<Pt*>> greedyTenderCluster(const TenderSoln& clustTendersoln, const
     return routes;//*init_solution.clustOrder*/;
 }
 
-// returns vector of tenderSolns for each cluster: Nearest Neighbour, then Greedy 2-Opt. added to tenderSolns
+/// <summary>
+/// returns vector of tenderSolns for each cluster: 
+/// (Nearest Neighbour, then) Greedy 2-Opt added to tenderSolns
+/// </summary>
+/// <param name="msSoln"></param>
+/// <param name="print"></param>
+/// <returns></returns>
 vector<TenderSoln> initTenderSoln(const MSSoln& msSoln, bool print=false) {   /*const vector<ClusterSoln*>& clusters, */
     vector<TenderSoln> tenderSolns;
+    cout << string(30, '-') << "\n";
+    printf("INITIALISE TENDER SOLUTIONS\n");
     cout << string(30, '-') << "\n";
     for (int c = 0; c < msSoln.clusters.size(); c++) {		// for each cluster
         const pair<Pt*, Pt*> launchPts = make_pair(msSoln.launchPts[c], msSoln.launchPts[c + 1]);		// launchPts for cluster
         ClusterSoln* cluster = msSoln.clusters[c];												// cluster
         if (print) {
-            Pt centroid = cluster->getCentroid();										// centroid for cluster	
+            Pt centroid = cluster->getCentroid();	        // centroid for cluster	
             printf("\nCluster %d\tcentroid: (%.2f, %.2f)\n", cluster->ID, centroid.x, centroid.y);
         }
         // distance matrix for cluster
@@ -132,26 +153,24 @@ vector<TenderSoln> initTenderSoln(const MSSoln& msSoln, bool print=false) {   /*
         // Tendersoln Nearest Neighbour
         //vector<vector<Pt*>> tenderRoutes = TenderWithinClusterNearestNeighbour(msSoln, c);
         TenderSoln tenderSoln(*cluster,
-            TenderWithinClusterNearestNeighbour(cluster, launchPts, true)/*tenderRoutes*/,
+            TenderWithinClusterNearestNeighbour(cluster, launchPts, print)/*tenderRoutes*/,
             launchPts);
         //\\//\\//\\//\\// TenderSoln Initialised //\\//\\//\\//\\//
 
         // Tendersoln Greedy 2-Opt update
-        tenderSoln.routes = greedyTenderCluster(tenderSoln, clusterMatrix, true);
-
-        // FIXED - deep copy operator: printf("\nERROR HERE - main L97 - ADDING tenderSoln to tenderSolns...\nIs this line necessary/doing anything?\n");
+        tenderSoln.routes = greedyTenderCluster(tenderSoln, clusterMatrix, print);
         tenderSolns.emplace_back(tenderSoln);
         // print routes
-        if (print) {
-            printf("CLUSTER %d:\tID:%d\n", c, tenderSoln.cluster.ID);
-            for (int i = 0; i < tenderSoln.routes.size(); i++) {
-                printf("\t\tRoute %d:\n", i);
-                for (int j = 0; j < tenderSoln.routes[i].size(); j++) {
-                    printf("\t\t\t%d\t(%.2f, %.2f)\n", tenderSoln.routes[i][j]->ID, tenderSoln.routes[i][j]->x, tenderSoln.routes[i][j]->y);
-                }// for each node in route
-            }// for each route
-            cout << string(30, '-') << "\n";
-        }
+        //if (print) {
+        printf("CLUSTER %d:\tID: %d\t\t\t\tCluster dist: %.2f\n", c, tenderSoln.cluster.ID, tenderSoln.getTenderRouteDist(-1));
+        for (int i = 0; i < tenderSoln.routes.size(); i++) {
+            printf("\t\t\tRoute %d:\n", i);
+            for (int j = 0; j < tenderSoln.routes[i].size(); j++) {
+                printf("\t\t\t\t%d\t(%.2f, %.2f)\n", tenderSoln.routes[i][j]->ID, tenderSoln.routes[i][j]->x, tenderSoln.routes[i][j]->y);
+            }// for each node in route
+        }// for each route
+        cout << string(30, '-') << "\n";
+        //}
     }// for each cluster
     return tenderSolns;
 }

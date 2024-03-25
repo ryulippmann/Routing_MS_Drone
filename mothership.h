@@ -1,7 +1,12 @@
 #pragma once
 #include "TSPheuristics_annotated.h"
 
-// returns dMatrix between centroids including depot of order c+1
+/// <summary>
+/// returns dMatrix between centroids including depot of order c+1
+/// </summary>
+/// <param name="clusters"></param>
+/// <param name="test"></param>
+/// <returns></returns>
 vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, bool test = false) {
     vector<vector<double>> centroidMatrix;
     if (test) {
@@ -76,9 +81,14 @@ int findClusterByID(int targetID, const vector<ClusterSoln*>& myList) {
     return -1;  // Return a special value (e.g., -1) to indicate that the ID was not found
 }
 
-// warning: this needs to be set before msSoln.getDist() is called
-// returns dMatrix betweem launchPts including depot
-// c clusters -> c+1 launchPts including depot
+/// <summary>
+/// warning: this needs to be set before msSoln.getDist() is called
+/// returns dMatrix betweem launchPts including depot
+/// c clusters -> c+1 launchPts including depot
+/// </summary>
+/// <param name="msSoln"></param>
+/// <param name="print"></param>
+/// <returns></returns>
 vector<vector<double>> setLaunchPts(MSSoln& msSoln, bool print = false) {
     const vector<ClusterSoln*> clusters = msSoln.clusters;
     if (print) printf("\n---- SET LAUNCH POINTS ----\n");
@@ -151,7 +161,7 @@ double clusterCentroidNearestNeighbour(MSSoln& msSoln, bool print = true) {
         if (print) printf("\t%d\t%.2f\n", v, min);
     }//for(cluster)
     msSoln.clusters = nearestCentroids;				// Update clustSoln.clusters    
-    setLaunchPts(msSoln, true);                           // Update msSoln.launchPts
+    setLaunchPts(msSoln, print);                           // Update msSoln.launchPts
     double msDist = msSoln.getDist();               // Calc msSoln.dist from depot to launchPts!
     printf("  =?=\t%.2f\n", msDist);
     return msDist;
@@ -224,17 +234,13 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
         // Create the oriented vector
         vector<int> oriented_vector;
         oriented_vector.reserve(p_tour.size());
-        for (size_t i = idx; i < p_tour.size(); ++i) {
-            oriented_vector.push_back(p_tour[i]);
-        }
-        for (size_t i = 0; i < idx; ++i) {
-            oriented_vector.push_back(p_tour[i]);
-        }
+        for (size_t i = idx; i < p_tour.size(); ++i) { oriented_vector.push_back(p_tour[i]); }
+        for (size_t i = 0; i < idx; ++i) { oriented_vector.push_back(p_tour[i]); }
 
         if (print) {
-            cout << "\n\t\t";
+            printf("\n\t\t");
             for (const auto& stop : oriented_vector) { cout << "\t" << stop; }
-            cout << "\n\n";
+            printf("\n\n");
         }
 
         vector <ClusterSoln*> temp_clust;
@@ -251,28 +257,37 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
 }
 
 ///////////////////////////////////////////////////////////////////
-
-vector<pair<double, MSSoln>> initMsSoln(const vector<ClusterSoln*>& clusters, MSSoln& msSoln, bool csv_print=0) {
+/// <summary>
+/// return vector of msSolns with dists: initial, NN, and greedy 2-opt
+/// </summary>
+/// <param name="clusters"></param>
+/// <param name="msSoln"></param>
+/// <param name="csv_print"></param>
+/// <returns></returns>
+vector<pair<double, MSSoln>> initMsSoln(const vector<ClusterSoln*>& clusters, MSSoln& msSoln, bool print_detail=0, bool csv_print=0) {
 	vector<pair<double, MSSoln>> msSolns;
     double msDist=DBL_MAX;                      // No launchPts initialised yet
     msSolns.push_back(make_pair(msDist, msSoln));
 
-    msDist = clusterCentroidNearestNeighbour(msSoln);		// clusters ordered by NN
+    msDist = clusterCentroidNearestNeighbour(msSoln, print_detail);		// clusters ordered by NN
     msSolns.push_back(make_pair(msDist, msSoln));
     if (csv_print) {
-        csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_init", msDist);
-        csvPrintLaunchPts(msSoln.launchPts, "launchPts_init");//"launchPts_fullSoln_" + boolToString(in_out));
+        csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_NN", msDist);
+        csvPrintLaunchPts(msSoln.launchPts, "launchPts_NN");//"launchPts_fullSoln_" + boolToString(in_out));
     }
-    msDist = greedyMSCluster(msSoln);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
+    msDist = greedyMSCluster(msSoln, print_detail);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
     msSolns.push_back(make_pair(msDist, msSoln));
-    //if (csv_print) csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_Gd", msDist);
-    //if (csv_print) csvPrintClusters(msSoln.clusters, "clusters_ordered", kMeansIters);		// CSV PRINT clusters //
-
-	//for (const auto& cluster : clusters) {
-	//	MSSoln msSoln(cluster);
-	//	msSoln.setLaunchPts();
-	//	msSolns.push_back(make_pair(msSoln.getDist(), msSoln));
-	//}
+    if (csv_print) {
+        csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_Gd", msDist);
+        csvPrintLaunchPts(msSoln.launchPts, "launchPts_Gd");//"launchPts_fullSoln_" + boolToString(in_out));
+    }
+    if (!print_detail) {
+        printf("\tMS LaunchPts\n");
+        for (const auto& launchPt : msSolns.back().second.launchPts) {
+            printf("\t%d\t(%.2f, %.2f)\n", launchPt->ID, launchPt->x, launchPt->y);
+        }
+        printf("\tDepot:\t(%.2f, %.2f)\tTOTAL MS DIST: %.2f\t-->  WEIGHTED == %.2f\n", inst.ms.depot.x, inst.ms.depot.y, msSolns.back().first, w_ms*msSolns.back().first);
+    }
 	return msSolns;
 }
 

@@ -88,10 +88,17 @@ double gd_two_opt(int ai_n, const vector<vector<double>>& ad_dist, double ad_z, 
 	return z;
 }//gd_two_opt
 
-//ai_tour should contain a valid initial solution for the local search
-// Full neighbourhood search is useful when many crossed links are expected.
-// local_2opt_search(node_count, distance_matrix, tour, use_full_neighbourhood)
-// out = pair(obj, route)
+/// <summary>
+/// ai_tour should contain a valid initial solution for the local search
+/// Full neighbourhood search is useful when many crossed links are expected.
+/// local_2opt_search(node_count, distance_matrix, tour, use_full_neighbourhood)
+/// out = pair(obj, route)
+/// </summary>
+/// <param name="ai_n"></param>
+/// <param name="ad_dist"></param>
+/// <param name="ai_tour"></param>
+/// <param name="ab_full_nbrhd"></param>
+/// <returns></returns>
 pair<double, vector<int>> gd_local_2opt_search(const int& ai_n, const vector<vector<double>>& ad_dist, vector<int> ai_tour, bool ab_full_nbrhd/*, bool drones=false*/) {
 	double z, d_znbr, d_znbr_best;
 	vector<int> i_nbr(ai_n);

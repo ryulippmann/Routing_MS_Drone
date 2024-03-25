@@ -1,5 +1,6 @@
 #pragma once
-//using namespace std;
+#include <chrono>
+#include <ctime>
 
 //#ifndef calcs_h
 //#define calcs_h
@@ -85,8 +86,8 @@ const struct Problem {
 private:
 	const int numClust;
 	const Pt depot;
-
 	const int numTenders;
+	const int tenderCap;
 
 	MS setMS(int msCap, Pt depot) {
 		MS ms(msCap, depot);
@@ -99,15 +100,49 @@ private:
 		return tenders;
 	}
 
+	string getCurrentTime() const {
+		auto now = chrono::system_clock::now();
+		time_t time = chrono::system_clock::to_time_t(now);
+		tm localTime;                       // Convert time to local time
+		localtime_s(&localTime, &time);
+		char output[80];
+		//string output;
+		strftime(output, sizeof(output), "%y-%m-%d_%H-%M-%S", &localTime);
+		return string(output);
+	}
+
 public:
-	Problem(vector<Pt> reefs, int numClust, Pt depot, int numTenders, int tenderCap) :
-		reefs(reefs), numClust(numClust), depot(depot), numTenders(numTenders), tenderCap(tenderCap)
-		//ms(MS(numClust)), msCap(msCap), tenderCap(tenderCap), numTenders(numTenders)
-	{}
-	//Problem(vector<ReefPt> reefs, int numClust, Pt depot, int numTenders, int tenderCap) :
-	//	reefs(reefs), numClust(numClust), depot(depot), numTenders(numTenders), tenderCap(tenderCap),
-	//	ms(MS())//, msCap(msCap), tenderCap(tenderCap), numTenders(numTenders)
-	//{}
+	Problem(vector<Pt> reefs, int numClust, Pt depot, int numTenders, int tenderCap, pair<double, double> weights) :
+		reefs(move(reefs)),
+		numClust(numClust), 
+		depot(depot), 
+		numTenders(numTenders), tenderCap(tenderCap),
+		weights(weights), time(getCurrentTime()) 
+	{
+		//auto now = chrono::system_clock::now();
+		//time_t time = chrono::system_clock::to_time_t(now);
+		//tm localTime;                       // Convert time to local time
+		//char output[80];
+		//strftime(output, sizeof(output), "%y-%m-%d_%H-%M-%S", &localTime);
+		//time = output;
+	}
+	
+	//const vector<vector<double>> dMatrix = this->getDMatrix(reefs, depot);
+	const vector<Pt> reefs;
+	const MS ms = this->setMS(numClust, depot);
+	const vector<Tender> tenders = this->setTenders(numTenders, tenderCap);
+	const pair<double, double> weights;
+	const string time;
+	//void printSetup() {
+	//	printf("Problem inst:\n");
+	//	printf("Number of reefs: %.0f\n", reefs.size());
+	//	printf("Number of clusters: %d\n", numClust);
+	//	printf("Depot: (%.2f, %.2f)\n", depot.x, depot.y);
+	//	printf("Number of tenders: %d\n", numTenders);
+	//	printf("Tender capacity: %d\n", tenderCap);
+	//	printf("Weighting:\n\t\tMS: %.1f\tDrone %.1f\n", weights.first, weights.second);
+	//}
+
 	vector<Pt*> getReefPointers() const { 
 		vector<Pt*> reefPtrs;
 		for (auto& reef : reefs) {
@@ -115,8 +150,10 @@ public:
 		}
 		return reefPtrs; 
 	}
-	int getnumClusters() const { return numClust; }
-	int getnumTenders() const { return numTenders; }
+	int getnumClusters() const	{ return numClust; }
+	int getnumTenders() const	{ return numTenders; }
+	int getTenderCap() const	{ return tenderCap; }
+	Pt getDepot() const			{ return depot; }
 	vector<vector<double>> getDMatrix(/*vector<Pt> reefs, Pt depot*/) {
 		vector<vector<double>> dMatrix;
 		vector<double> depotDists;
@@ -139,13 +176,19 @@ public:
 		}
 		return dMatrix;
 	}
-	//const vector<vector<double>> dMatrix = this->getDMatrix(reefs, depot);
-	const vector<Pt> reefs;
-
-	const MS ms = this->setMS(numClust, depot);
-
-	const int tenderCap;
-	const vector<Tender> tenders = this->setTenders(numTenders, tenderCap);
+	
 };
+
+void printSetup(Problem inst) {
+	printf("Problem inst:\n");
+	printf("Number of reefs: \t%d\n", inst.reefs.size());
+	printf("Number of clusters:\t%d\n", inst.getnumClusters());
+	printf("Depot:\t\t\t(%.2f, %.2f)\n", inst.getDepot().x, inst.getDepot().y);
+	printf("Number of tenders:\t%d\n", inst.getnumTenders());
+	printf("Tender capacity:\t%d\n", inst.getTenderCap());
+	printf("\t\t\tWeighting:\n\t\t\tMS: %.1f\t\tDrone %.1f\n", inst.weights.first, inst.weights.second);
+	printf("Time initialised: \t");
+}
+
 
 ////////////////////////////////////////////////////////////////////////////

@@ -6,12 +6,12 @@ import os
 import re
 
 cluster_soln = True
-cluster_path =      'clusters/'+    '24-03-21_17-29-56 clusters_init'               +'.csv'
+cluster_path =      'clusters/'+    '24-03-22_13-57-55 clusters_init'               +'.csv'
 ms_soln = True
-ms_path =           'ms_route/'+    '24-03-21_17-32-56 ms_launch_route_fullSoln'    +'.csv'
-launchpts_path =    'launchPts/'+   '24-03-21_17-32-56 launchPts_fullSoln'          +'.csv'
+ms_path =           'ms_route/'+    '24-03-22_14-00-48 ms_launch_route_fullSoln'    +'.csv'
+launchpts_path =    'launchPts/'+   '24-03-22_14-00-47 launchPts_fullSoln'          +'.csv'
 drone_soln = True
-d_path =            'd_route/'+     '24-03-21_17-32-56 drone_routes_in'            +'.csv'
+d_path =            'd_route/'+     '24-03-22_14-00-48 drone_routes'            +'.csv'
 
 w_ms = 5
 w_d = 1

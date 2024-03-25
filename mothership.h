@@ -272,14 +272,16 @@ vector<pair<double, MSSoln>> initMsSoln(const vector<ClusterSoln*>& clusters, MS
     msDist = clusterCentroidNearestNeighbour(msSoln, print_detail);		// clusters ordered by NN
     msSolns.push_back(make_pair(msDist, msSoln));
     if (csv_print) {
-        csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_NN", msDist);
-        csvPrintLaunchPts(msSoln.launchPts, "launchPts_NN");//"launchPts_fullSoln_" + boolToString(in_out));
+        csvPrintMS(msSoln.launchPts, msDist, "NN");
+        //csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_NN", msDist);
+        //csvPrintLaunchPts(msSoln.launchPts, "launchPts_NN");//"launchPts_fullSoln_" + boolToString(in_out));
     }
     msDist = greedyMSCluster(msSoln, print_detail);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
     msSolns.push_back(make_pair(msDist, msSoln));
     if (csv_print) {
-        csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_Gd", msDist);
-        csvPrintLaunchPts(msSoln.launchPts, "launchPts_Gd");//"launchPts_fullSoln_" + boolToString(in_out));
+        csvPrintMS(msSoln.launchPts, msDist, "Gd");
+        //csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_Gd", msDist, true);
+        //csvPrintLaunchPts(msSoln.launchPts, "launchPts_Gd");//"launchPts_fullSoln_" + boolToString(in_out));
     }
     if (!print_detail) {
         printf("\tMS LaunchPts\n");

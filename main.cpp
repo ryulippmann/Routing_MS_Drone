@@ -18,7 +18,7 @@ int tenderCap = 3;
 //int numTenders = 2;
 //int tenderCap = 2;
 
-double w_ms = 3;
+double w_ms = 1;
 double w_d = 1;
 
 bool csv_print = 1;
@@ -61,7 +61,7 @@ int main()
 	
 	//\\//\\//\\//\\//  MsSoln Construction //\\//\\//\\//\\//
 	MSSoln msSoln(clusters);				// No launchPts initialised yet
-	vector<pair<double,MSSoln>> msSolns = initMsSoln(clusters, msSoln, print_detail, csv_print);
+	vector<pair<double,MSSoln>> msSolns = initMsSoln(clusters, msSoln, print_detail/*, csv_print*/);
 	//vector<Pt*> ms_launch_route = msSoln.getRoute();
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 	//\\//\\//\\// clustOrder for MS route solution \\//\\//\\//
@@ -82,7 +82,7 @@ int main()
 	//\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
 	FullSoln full_init(msSoln, ptr_tenderSolns);
 	printf("Full Soln Dist:\t%.2f", full_init.getTotalDist(print_detail));
-	if (csv_print) csvPrints(full_init);
+	if (csv_print) csvPrints(full_init, "INIT");
 	////////////////////////////////
 	vector<FullSoln> fullSolns;
 	fullSolns.push_back(full_init);
@@ -96,7 +96,7 @@ int main()
 	// vv fullSolns is not creating new fullSoln objects, but rather just pointing to the same object
 	fullSolns.push_back(best);
 	// csv print if solution updated
-	if (csv_print && best_dist.back() != best_dist.at(best_dist.size() - 2)) {csvPrints(best); }
+	if (csv_print && best_dist.back() != best_dist.at(best_dist.size() - 2)) {csvPrints(best, "FINAL"); }
 	////////////////////////////////
 
 	//// Tendersoln Swaps

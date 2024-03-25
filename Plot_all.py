@@ -5,16 +5,23 @@ import datetime
 import os
 import re
 
-cluster_soln = True
-cluster_path =      'clusters/'+    '24-03-22_13-57-55 clusters_init'               +'.csv'
-ms_soln = True
-ms_path =           'ms_route/'+    '24-03-22_14-00-48 ms_launch_route_fullSoln'    +'.csv'
-launchpts_path =    'launchPts/'+   '24-03-22_14-00-47 launchPts_fullSoln'          +'.csv'
-drone_soln = True
-d_path =            'd_route/'+     '24-03-22_14-00-48 drone_routes'            +'.csv'
+path = 'outputs/24-03-25_17-55-54/'
 
-w_ms = 5
-w_d = 1
+cluster_soln = True
+cluster_path =      path + 'clusters_init'+'.csv'
+# 'clusters/'+    '24-03-22_13-57-55 clusters_init'               +'.csv'
+ms_soln = True
+path += '24-03-25_17-58-12_Full_FINAL/'
+ms_path =           path + 'ms_route.csv'
+# 'ms_route/'+    '24-03-22_14-00-48 ms_launch_route_fullSoln'    +'.csv'
+launchpts_path =    path + 'launchPts.csv'
+# 'launchPts/'+   '24-03-22_14-00-47 launchPts_fullSoln'          +'.csv'
+drone_soln = True
+d_path =            path + 'drone_routes.csv'
+# 'd_route/'+     '24-03-22_14-00-48 drone_routes'            +'.csv'
+
+# w_ms = 3
+# w_d = 1
 
 print_plt = True
 save_plt = True
@@ -27,6 +34,9 @@ def plot_clusters(csv_file, print_plt, save_plt):
         data = list(reader)
 
     kmeans_iters = int(reader._fieldnames[6])
+    w_ms = int(reader._fieldnames[9])
+    w_d = int(reader._fieldnames[12])
+
     # Extract x, y, cluster ID from the data
     x = [float(row['X']) for row in data]
     y = [float(row['Y']) for row in data]
@@ -86,7 +96,7 @@ def plot_clusters(csv_file, print_plt, save_plt):
         current_datetime = datetime.datetime.today().strftime('%Y%m%d_%H-%M-%S')
         plt.savefig(f"plots/clustering/{current_datetime}__kM={kmeans_iters}.png")
     if (print_plt and not (ms_soln or drone_soln)) : plt.show()
-    return nodes
+    return nodes, w_ms, w_d
 
 def Dist(a,b):
     return ((a[0]-b[0])**2 + (a[1]-b[1])**2)**0.5
@@ -208,7 +218,7 @@ def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, w_d, color = 'r
 
 dist_total = 0
 
-if cluster_soln: nodes = plot_clusters(      cluster_path, print_plt, save_plt)
+if cluster_soln: nodes, w_ms, w_d = plot_clusters(      cluster_path, print_plt, save_plt)
 
 print("\nNo clusters: "+str(max([sublist[-1] for sublist in nodes])+1))
 

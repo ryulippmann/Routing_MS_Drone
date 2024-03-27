@@ -23,8 +23,8 @@ struct SAlog {
 	//	best_dist = best_dist_val;
 	//	temp = temp_val;
 	//}
-    SAlog(vector<double> new_dist_val, vector<double> current_dist_val, vector<double> best_dist_val, vector<double> temp_val) :
-        new_dist(new_dist_val), current_dist(current_dist_val), best_dist(best_dist_val), temp(temp_val) {}
+    SAlog(vector<double> new_dist_val, vector<double> current_dist_val, vector<double> best_dist_val, vector<double> temp_val, SAparams params) :
+        new_dist(new_dist_val), current_dist(current_dist_val), best_dist(best_dist_val), temp(temp_val), params(params) {}
 
     SAlog(double new_dist_val, double current_dist_val, double best_dist_val, double temp_val) {
         new_dist.push_back(new_dist_val);
@@ -40,4 +40,6 @@ struct SAlog {
     vector<double> current_dist;
     vector<double> new_dist;
     vector<double> temp;
+
+    SAparams params;
 };

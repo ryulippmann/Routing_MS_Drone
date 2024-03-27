@@ -91,9 +91,7 @@ vector<Pt*> UpdateLaunchPts(const vector<ClusterSoln*> clusters, bool print = fa
 /// <param name="iteration"></param>
 /// <param name="swap_print"></param>
 /// <returns></returns>
-pair<TenderSoln, TenderSoln> random_d_out_Swap(pair<TenderSoln, TenderSoln> tenders, int iteration,
-    bool swap_print = false) { // d_route = ; tours = d_tours in this cluster
-
+pair<TenderSoln, TenderSoln> random_d_out_Swap(pair<TenderSoln, TenderSoln> tenders, bool swap_print = false) {//, int iteration) { // d_route = ; tours = d_tours in this cluster
     /* RANDOMLY CHOOSE WHICH d_route TO SWAP */
     pair<int, int> s = randSwapChoice(  tenders.first.routes.size(), //iteration, 
                                         tenders.second.routes.size(), false);   // RANDOMLY CHOOSE WHICH d_route TO SWAP
@@ -131,14 +129,13 @@ pair<TenderSoln, TenderSoln> random_d_out_Swap(pair<TenderSoln, TenderSoln> tend
 /// <param name="iteration"></param>
 /// <param name="print">= False</param>
 /// <returns></returns>
-FullSoln OUT_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, */bool print = false) {
+FullSoln OUT_ClusterSwaps(FullSoln soln/*, int iteration*//*vector<int> randoms, */, bool print = false) {
     if (print) printf("---- OUT_Swap ----");
     pair<int, int> c = randSwapChoice(soln.msSoln.clusters.size()/*, iteration*/);    // generate swap pair of clusters
     if (print) printf("\nSwap clusters:\t\t%d\tand\t%d", c.first, c.second);
 
-    pair<TenderSoln, TenderSoln> 
-        tenders = random_d_out_Swap(make_pair(*soln.tenderSolns[c.first], *soln.tenderSolns[c.second]),
-            iteration, false);
+    pair<TenderSoln, TenderSoln>
+        tenders = random_d_out_Swap(make_pair(*soln.tenderSolns[c.first], *soln.tenderSolns[c.second]));//,iteration, false);
 
     vector<TenderSoln*> tenderSolns;
     for (int i = 0; i < soln.tenderSolns.size(); i++) {
@@ -224,8 +221,14 @@ void printTenderRoutes(const TenderSoln* tender) {
     }
 }
 
-// MODIFY Fullsoln soln (not ref) and return the swapped copy to save as proposed - mutated cluster_index c to swap within
-FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, */bool print = false) {
+/// <summary>
+/// MODIFY Fullsoln soln (not ref) and return the swapped copy to save as proposed - mutated cluster_index c to swap within
+/// </summary>
+/// <param name="soln"></param>
+/// <param name="iteration"></param>
+/// <param name="print"></param>
+/// <returns></returns>
+FullSoln IN_ClusterSwaps(FullSoln soln, /*int iteration, *//*vector<int> randoms, */bool print = false) {
     vector<vector<Pt*>> routes;
     int c;
 
@@ -271,7 +274,7 @@ FullSoln IN_ClusterSwaps(FullSoln soln, int iteration, /*vector<int> randoms, */
 /// <param name="csv_print"></param>
 /// <param name="SA_print"></param>
 /// <returns></returns>
-FullSoln SwapRandomly(const FullSoln soln_prev_best, 
+FullSoln SwapRandomly(const FullSoln soln_prev_best, SAparams sa_params,
     //int num_iterations = 10000, double initial_temperature = 200, double cooling_rate = 0.999,
     bool print_stats = false, bool csv_print = false, bool SA_print = true) {   //in_out = 1; // 0 = OUT, 1 = IN
     printf("\n\n---------- RANDOM IN/OUT Cluster Swaps - Simulated Annealing ----------\n");
@@ -280,16 +283,7 @@ FullSoln SwapRandomly(const FullSoln soln_prev_best,
     double dist_best = best.getTotalDist();
     FullSoln incumbent = soln_prev_best;
     double dist_initial = dist_best;
-    //SAparams                  (num_iter, init_temp, cooling_rate)
-    int num_iter = 25000;//10000;               // fixed at 10000
-    double init_temp = 0.2 * dist_best;
-    //double temp_diff = pow(10, -4);
-    //double final_temp = init_temp * temp_diff;//pow(10, -5);
-    //double cooling_rate = pow((temp_diff), 1 / num_iter);  //0.995;
-    double cooling_rate = 0.9995;
-    SAparams sa_params = //SAparams(10000, 0.2 * dist_best, 0.995);
-        SAparams(num_iter, init_temp, cooling_rate);
-    //SAparams(5000, 0.5 * dist_best, 0.98);    //SAparams(1000, 0.5 * dist_best, 0.9);
+
     double temp = sa_params.initial_temp;           // is this redundant? - temp is updated in SAlog
     
     srand(42);      // set random seed
@@ -297,18 +291,18 @@ FullSoln SwapRandomly(const FullSoln soln_prev_best,
     //log = SAlog(temp);
     int in_swaps = 0, out_swaps = 0;
     printf("\n\tBEST\t\t\tTEMP\t\t\tPROPOSED\t\tINCUMBENT");
-    for (int iter_num = 1; iter_num < sa_params.num_iterations + 2; ++iter_num) {
-        //while (best_dist.size() < 3 || best_dist.back() != best_dist.at(best_dist.size() - 3))
+    // introduce while loop to ensure solution has found steady-state?
+    //while (best_dist.size() < 3 || best_dist.back() != best_dist.at(best_dist.size() - 3))
+    for (int iter_num = 0; iter_num < sa_params.num_iterations; ++iter_num) {
         if (best.msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); break; }
         FullSoln proposed = incumbent;
-        // randomly set mutator as IN or OUT
-        bool in_out = rand() % 2;
-        if (in_out) {           //best = IN_ClusterSwaps(soln_prev_best, 0, true);
-            proposed = IN_ClusterSwaps(incumbent, iter_num, /*randomness, */print_stats);
+        bool in_out = rand() % 2;       // randomly choose IN or OUT cluster swap
+        if (in_out) {
+            proposed = IN_ClusterSwaps(incumbent, /*iter_num, *//*randomness, */print_stats);
             in_swaps += 1;
 		}
-		else {                  //best = OUT_ClusterSwaps(soln_prev_best, 0, true);
-            proposed = OUT_ClusterSwaps(incumbent, iter_num, /*randomness, */print_stats);
+		else {
+            proposed = OUT_ClusterSwaps(incumbent, /*iter_num, *//*randomness, */print_stats);
             out_swaps += 1;
 		}
 
@@ -336,13 +330,13 @@ FullSoln SwapRandomly(const FullSoln soln_prev_best,
         sa_best.push_back(dist_best);
         sa_temp.push_back(temp);
     }
-    best.setSAlog(sa_new, sa_current, sa_best, sa_temp);        //.sa_log = new SAlog(sa_new, sa_current, sa_best, sa_temp);
+    best.setSAlog(sa_new, sa_current, sa_best, sa_temp, sa_params);        //.sa_log = new SAlog(sa_new, sa_current, sa_best, sa_temp);
     // log is not used correctly! - need to update log with new values iteratively
     //log = SAlog(dist_proposed, dist_incumbent, dist_best, temp);        //update log
     //best.sa_log = log;
     if (dist_best == dist_initial) printf("\n\n\tNO IMPROVEMENT MADE\n");
     else printf("\n\n\tBEST\t\t\tINITIAL\t\t\tTEMP\n\t%.3f\t\t%.3f\t\t%.2e", dist_best, dist_initial, temp);
-    FullSoln best_new = best;           // WHY is this line necessary?!
+    FullSoln best_new = best;           // IS this line necessary?!
 
     //if (in_out == 0) {      //best = OUT_ClusterSwaps(soln_prev_best, 0, true);
     //    best = SA_fn(soln_prev_best, OUT_ClusterSwaps, sa_params/*, log*/);

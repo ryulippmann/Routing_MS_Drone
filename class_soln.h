@@ -427,14 +427,14 @@ public:
 	/// <param name="print">= false</param>
 	/// <returns></returns>
 	double getTotalDist(bool print = false) const {
-		double dist_ms = w_ms * msSoln.getDist(print);
+		double dist_ms = inst.weights.first * msSoln.getDist(print);
 		double dist_tenders = 0;
-		if (print) printf("\nWEIGHTED MS Dist: \t%.2f\t\t(w_ms = %.1f)\n\tw_d = %.1f", dist_ms, w_ms, w_d);
+		if (print) printf("\nWEIGHTED MS Dist: \t%.2f\t\t(w_ms = %.1f)\n\tw_d = %.1f", dist_ms, inst.weights.first, inst.weights.second);
 		for (auto& tenderSoln : tenderSolns) {
 			double dist_tender = 0;
 			if (print) printf("\nTenderSoln ID: \t%d\t\tDist:", tenderSoln->ID);
 			for (auto& route : tenderSoln->routes) {
-				double leg = w_d * tenderSoln->getTenderRouteDist(route);
+				double leg = inst.weights.second * tenderSoln->getTenderRouteDist(route);
 				if (print) printf("\t+%.2f", leg);
 				dist_tender += leg;
 			}
@@ -475,11 +475,13 @@ public:
 	void setSAlog(const vector<double>& sa_new,
 		const vector<double>& sa_current,
 		const vector<double>& sa_best,
-		const vector<double>& sa_temp) {
+		const vector<double>& sa_temp,
+		const SAparams& params) {
 		this->sa_log.best_dist = sa_best;
 		this->sa_log.current_dist = sa_current;
 		this->sa_log.new_dist = sa_new;
 		this->sa_log.temp = sa_temp;
+		this->sa_log.params = params;
 	}
 
 private:

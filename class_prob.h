@@ -112,12 +112,13 @@ private:
 	}
 
 public:
-	Problem(vector<Pt> reefs, int numClust, Pt depot, int numTenders, int tenderCap, pair<double, double> weights) :
+	Problem(vector<Pt> reefs, int numClust, Pt depot, int numTenders, int tenderCap, pair<double, double> weights, int kMeansIters) :
 		reefs(move(reefs)),
 		numClust(numClust), 
 		depot(depot), 
 		numTenders(numTenders), tenderCap(tenderCap),
-		weights(weights), time(getCurrentTime()) 
+		weights(weights), kMeansIters(kMeansIters),
+		time(getCurrentTime()) 
 	{
 		//auto now = chrono::system_clock::now();
 		//time_t time = chrono::system_clock::to_time_t(now);
@@ -129,10 +130,12 @@ public:
 	
 	//const vector<vector<double>> dMatrix = this->getDMatrix(reefs, depot);
 	const vector<Pt> reefs;
-	const MS ms = this->setMS(numClust, depot);
-	const vector<Tender> tenders = this->setTenders(numTenders, tenderCap);
+	const MS ms						= this->setMS(numClust, depot);
+	const vector<Tender> tenders	= this->setTenders(numTenders, tenderCap);
 	const pair<double, double> weights;
 	const string time;
+	const int kMeansIters;//1000
+
 	//void printSetup() {
 	//	printf("Problem inst:\n");
 	//	printf("Number of reefs: %.0f\n", reefs.size());
@@ -150,10 +153,10 @@ public:
 		}
 		return reefPtrs; 
 	}
-	int getnumClusters() const	{ return numClust; }
-	int getnumTenders() const	{ return numTenders; }
-	int getTenderCap() const	{ return tenderCap; }
-	Pt getDepot() const			{ return depot; }
+	int getnumClusters()	const	{ return numClust; }
+	int getnumTenders()		const	{ return numTenders; }
+	int getTenderCap()		const	{ return tenderCap; }
+	Pt getDepot()			const	{ return depot; }
 	vector<vector<double>> getDMatrix(/*vector<Pt> reefs, Pt depot*/) {
 		vector<vector<double>> dMatrix;
 		vector<double> depotDists;
@@ -178,6 +181,38 @@ public:
 	}
 	
 };
+
+/// <summary>
+/// Check if the parameters are valid: return true=valid, false=not
+/// </summary>
+/// <param name="instance"></param>
+/// <returns></returns>
+bool checkParameters(Problem instance) {
+	try { if (instance.getnumClusters() * instance.getnumTenders() * instance.getTenderCap() != instance.getReefPointers().size()) throw invalid_argument("numClust * numTenders * tenderCap != no_pts"); }
+	catch (const invalid_argument& e) { cout << endl << e.what() << endl; return false; }
+	return true;
+}
+
+/// <summary>
+/// validity check later: (numClust * numTenders * tenderCap = no_pts)
+/// </summary>
+/// <param name="no_pts"></param>
+/// <param name="numClust"></param>
+/// <param name="numTenders"></param>
+/// <param name="tenderCap"></param>
+/// <param name="w_ms"></param>
+/// <param name="w_d"></param>
+/// <returns></returns>
+Problem CreateInst(	int no_pts = 48,/*100;*/int numClust = 4, /*5;*/
+					int numTenders = 4,		int tenderCap = 3,
+					double w_ms = 1,		double w_d = 1,
+					Pt depot = Pt(0,0),		int kMeansIters = pow(10,4))	{
+	Problem inst = Problem(initReefs(no_pts), numClust, depot, numTenders, tenderCap, make_pair(w_ms, w_d), kMeansIters);
+		//if (checkParameters(inst) == false) return 0;		// check if parameters are valid
+		//else {return inst;
+	if (checkParameters(inst)) return inst;
+}
+	//inst(initReefs(no_pts), numClust, depot, numTenders, tenderCap, make_pair(w_ms, w_d));
 
 void printSetup(Problem inst) {
 	printf("Problem inst:\n");

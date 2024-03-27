@@ -58,6 +58,7 @@ string addTimeToFilename(string file_name) {
 }
 
 void csvPrintClusters(const vector<ClusterSoln*>& clusters, string file_name, const int kMeansIters) {
+    createFolder();
     //createFolder("clusters");
     //file_name = addTimeToFilename(file_name);
     ofstream outfile("outputs/" + inst.time + "/"/*"/clusters/"*/ + file_name + ".csv");
@@ -65,7 +66,7 @@ void csvPrintClusters(const vector<ClusterSoln*>& clusters, string file_name, co
         cerr << "Error: Unable to open clusters.csv for writing\n";
         return;
     }
-    outfile << "ReefID,X,Y,ClusterID,,kMeansIters," << kMeansIters << ",,W_MS," << w_ms << ",,W_D," << w_ms << "\n";    // Write header
+    outfile << "ReefID,X,Y,ClusterID,,kMeansIters," << kMeansIters << ",,W_MS," << inst.weights.first << ",,W_D," << inst.weights.second << "\n";    // Write header
 
     // Helper lambda function to write each reef's attributes
     auto writeReef = [&](const Pt* reef, int clusterID) {
@@ -156,7 +157,7 @@ void csvPrintMSRoutes(vector<Pt*> launch_route, string file_name, double msDist=
     //if (!in_folder.empty()) 
     ofstream outputFile("outputs/" + inst.time + "/" + in_folder + "/" + file_name + ".csv");
     //else ofstream outputFile("outputs/" + inst.time + "/" + addTimeToFilename(file_name) + ".csv");
-
+    Pt depot = inst.getDepot();
     if (outputFile.is_open()) {
         outputFile << "X,Y,msDist," << msDist << "\n";                                 // skip header row
         outputFile << depot.x << "," << depot.y << "\n";                  // output depot
@@ -317,7 +318,7 @@ string csvPrintSA(SAlog log, string file_name, const string& in_folder = "") {
     ofstream outputFile("outputs/" + inst.time + "/" + in_folder + "/" + file_name + ".csv");
 
     if (outputFile.is_open()) {
-        outputFile << "temp,current_dist,new_dist,best_dist\n";
+        outputFile << "temp,current_dist,new_dist,best_dist,,cooling rate," << log.params.cooling_rate << "\n";
         for (int i = 0; i < log.temp.size(); i++) { outputFile << log.temp[i] << "," << log.current_dist[i] << "," << log.new_dist[i] << "," << log.best_dist[i] << "\n"; }
         outputFile.close();
     }

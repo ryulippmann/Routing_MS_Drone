@@ -288,7 +288,7 @@ vector<pair<double, MSSoln>> initMsSoln(const vector<ClusterSoln*>& clusters, MS
         for (const auto& launchPt : msSolns.back().second.launchPts) {
             printf("\t%d\t(%.2f, %.2f)\n", launchPt->ID, launchPt->x, launchPt->y);
         }
-        printf("\tDepot:\t(%.2f, %.2f)\tTOTAL MS DIST: %.2f\t-->  WEIGHTED == %.2f\n", inst.ms.depot.x, inst.ms.depot.y, msSolns.back().first, w_ms*msSolns.back().first);
+        printf("\tDepot:\t(%.2f, %.2f)\tTOTAL MS DIST: %.2f\t-->  WEIGHTED == %.2f\n", inst.ms.depot.x, inst.ms.depot.y, msSolns.back().first, inst.weights.first*msSolns.back().first);
     }
 	return msSolns;
 }

@@ -50,5 +50,8 @@
     <ClInclude Include="prints.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="sensitivity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

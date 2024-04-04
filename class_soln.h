@@ -122,7 +122,7 @@ public:
 	}
 	MSSoln(vector<ClusterSoln*> clustSolns, vector<Pt*> launchPts) :
 		ID(count++), clusters(clustSolns), launchPts() {
-		// Create new TenderSoln objects with new memory locations for pointers
+		// Create new DroneSoln objects with new memory locations for pointers
 		for (auto* pt : launchPts) {
 			this->launchPts.push_back(new Pt(*pt));
 		}
@@ -234,14 +234,14 @@ private:
 	static int count;
 };
 
-struct TenderSoln {		//typedef vector<Pt*> Route_Tender;
+struct DroneSoln {		//typedef vector<Pt*> Route_Drone;
 public:
-	TenderSoln(ClusterSoln cluster) : ID(count++), cluster(cluster) {}
-	TenderSoln(ClusterSoln cluster, vector<vector<Pt*>> routes, pair<Pt*, Pt*> launchPts) :
+	DroneSoln(ClusterSoln cluster) : ID(count++), cluster(cluster) {}
+	DroneSoln(ClusterSoln cluster, vector<vector<Pt*>> routes, pair<Pt*, Pt*> launchPts) :
 		ID(count++), cluster(cluster), routes(routes), launchPts(launchPts) {}//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) {}
 
 	// Copy constructor for deep copy
-	TenderSoln(const TenderSoln& other, bool reef_copy = false) :
+	DroneSoln(const DroneSoln& other, bool reef_copy = false) :
 		ID(other.ID), cluster(other.cluster), routes(), launchPts(other.launchPts) {
 		//if (!reef_copy) { 
 		//	this->cluster = other.cluster; 
@@ -264,11 +264,11 @@ public:
 	vector<vector<Pt*>> routes;
 	pair<Pt*, Pt*> launchPts;
 
-	// route dist for cluster c		// this is ONLY called in greedyTenderCluster() && initTenderSoln()
-	double getTenderRouteDist(int c = -1) const {
+	// route dist for cluster c		// this is ONLY called in greedyDroneCluster() && initDroneSoln()
+	double getDroneRouteDist(int c = -1) const {
 		if (c == -1) {
 			double dist = 0;
-			for (int c = 0; c < routes.size(); c++) { dist += getTenderRouteDist(c); }
+			for (int c = 0; c < routes.size(); c++) { dist += getDroneRouteDist(c); }
 			return dist;
 		}
 		vector<Pt*> route = routes[c];
@@ -287,7 +287,7 @@ public:
 		return route_dist;
 	}
 	// route dist for given route	// this is called by FullSoln.getTotalDist()
-	double getTenderRouteDist(vector<Pt*> route) const {
+	double getDroneRouteDist(vector<Pt*> route) const {
 		//vector<Pt*> route = routes[c];
 		double route_dist = 0;
 		//vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
@@ -299,7 +299,7 @@ public:
 	}
 	
 	// Copy assignment operator for deep copy
-	TenderSoln& operator=(const TenderSoln& other) {
+	DroneSoln& operator=(const DroneSoln& other) {
 		if (this != &other) {
 			//ID = other.ID;
 			cluster = other.cluster;
@@ -332,15 +332,15 @@ private:
 
 struct FullSoln {
 public:
-	//FullSoln(const MSSoln msSoln, const vector<TenderSoln*>& tenderSolns) :
-	//	ID(count++), msSoln(msSoln), tenderSolns(tenderSolns) 
+	//FullSoln(const MSSoln msSoln, const vector<DroneSoln*>& droneSolns) :
+	//	ID(count++), msSoln(msSoln), droneSolns(droneSolns) 
 	//	//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) 
 	//	{}
-	FullSoln(const MSSoln& msSoln, const vector<TenderSoln*>& tenderSolns) :
-		ID(count++), msSoln(msSoln), tenderSolns() {
-		// Create new TenderSoln objects with new memory locations for pointers
-		for (auto* tender : tenderSolns) {
-			this->tenderSolns.push_back(new TenderSoln(*tender));
+	FullSoln(const MSSoln& msSoln, const vector<DroneSoln*>& droneSolns) :
+		ID(count++), msSoln(msSoln), droneSolns() {
+		// Create new DroneSoln objects with new memory locations for pointers
+		for (auto* drone : droneSolns) {
+			this->droneSolns.push_back(new DroneSoln(*drone));
 		}
 	}
 
@@ -350,100 +350,100 @@ public:
 	// Copy constructor for deep copy
 	FullSoln(const FullSoln& other) :
 		ID(count++), msSoln(other.msSoln), // Deep copy
-		tenderSolns(), sa_log(other.sa_log)/*, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again)*/ 
+		droneSolns(), sa_log(other.sa_log)/*, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again)*/ 
 		{
-		for (auto& tendersoln : other.tenderSolns) {
-			this->tenderSolns.push_back(new TenderSoln(*tendersoln));
+		for (auto& dronesoln : other.droneSolns) {
+			this->droneSolns.push_back(new DroneSoln(*dronesoln));
 		}
 	}
 	// IN_SWAPS: Copy constructor with additional routes parameter
 	FullSoln(const FullSoln& other, const vector<vector<Pt*>>& routes, int c) :
 		ID(count++), msSoln(other.msSoln), // Deep copy
-		tenderSolns()
+		droneSolns()
 		//, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again) 
 		{
-		// Copy new TenderSoln objects with updated routes
-		for (int i = 0; i < other.tenderSolns.size(); ++i) {
+		// Copy new DroneSoln objects with updated routes
+		for (int i = 0; i < other.droneSolns.size(); ++i) {
 			// Ensure the routes vector is not out of bounds
 			if (i == c) {
 				// Modify the route for the specified index (c)
-				TenderSoln* modifiedTenderSoln = new TenderSoln(*other.tenderSolns[i]);
-				modifiedTenderSoln->routes = routes;
-				this->tenderSolns.push_back(modifiedTenderSoln);
+				DroneSoln* modifiedDroneSoln = new DroneSoln(*other.droneSolns[i]);
+				modifiedDroneSoln->routes = routes;
+				this->droneSolns.push_back(modifiedDroneSoln);
 			}
 			else {
 				// Use the original route if no replacement is provided
-				this->tenderSolns.push_back(new TenderSoln(*other.tenderSolns[i]));
+				this->droneSolns.push_back(new DroneSoln(*other.droneSolns[i]));
 			}
 		}
 	}
 	
 	//// NEW -- OUT_SWAPS: Copy constructor with additional routes parameters
-	//FullSoln(const MSSoln& msSoln, const vector<TenderSoln*>& tenderSolns) :
-	//	ID(count++), msSoln(msSoln), tenderSolns(tenderSolns) {}
+	//FullSoln(const MSSoln& msSoln, const vector<DroneSoln*>& droneSolns) :
+	//	ID(count++), msSoln(msSoln), droneSolns(droneSolns) {}
 
 	//// OUT_SWAPS: Copy constructor with additional routes parameters
 	//FullSoln(const FullSoln& other, const pair <vector<vector<Pt*>>, vector<vector<Pt*>>>& routes, pair<ClusterSoln, ClusterSoln> clusters, pair<int, int> c) :
-	//	ID(count++), msSoln(other.msSoln), // Deep copy - UPDATE based on TenderSoln!
-	//	tenderSolns()
+	//	ID(count++), msSoln(other.msSoln), // Deep copy - UPDATE based on DroneSoln!
+	//	droneSolns()
 	//	//, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again) 
 	//	{
-	//	// Copy new TenderSoln objects with updated routes
-	//	for (int i = 0; i < other.tenderSolns.size(); ++i) {
+	//	// Copy new DroneSoln objects with updated routes
+	//	for (int i = 0; i < other.droneSolns.size(); ++i) {
 	//		if (i == c.first) {
 	//			// Modify the route for the specified index (c)
-	//			TenderSoln modifiedTenderSoln = TenderSoln(*other.tenderSolns[i], true);
-	//			modifiedTenderSoln.routes = routes.first;
+	//			DroneSoln modifiedDroneSoln = DroneSoln(*other.droneSolns[i], true);
+	//			modifiedDroneSoln.routes = routes.first;
 	//			//create new clusterSoln* with updated reefs
-	//			modifiedTenderSoln.cluster = clusters.first;
-	//			this->tenderSolns.push_back(new TenderSoln(modifiedTenderSoln));
+	//			modifiedDroneSoln.cluster = clusters.first;
+	//			this->droneSolns.push_back(new DroneSoln(modifiedDroneSoln));
 	//		}
 	//		else if (i == c.second) {
 	//			// Modify the route for the specified index (c)
-	//			TenderSoln* modifiedTenderSoln = new TenderSoln(*other.tenderSolns[i]);
-	//			modifiedTenderSoln->routes = routes.second;
+	//			DroneSoln* modifiedDroneSoln = new DroneSoln(*other.droneSolns[i]);
+	//			modifiedDroneSoln->routes = routes.second;
 	//			//create new clusterSoln* with updated reefs
-	//			modifiedTenderSoln->cluster = clusters.second;
-	//			this->tenderSolns.push_back(modifiedTenderSoln);
+	//			modifiedDroneSoln->cluster = clusters.second;
+	//			this->droneSolns.push_back(modifiedDroneSoln);
 	//		}
 	//		else {
 	//			// Use the original route if no replacement is provided
-	//			this->tenderSolns.push_back(new TenderSoln(*other.tenderSolns[i]));
+	//			this->droneSolns.push_back(new DroneSoln(*other.droneSolns[i]));
 	//		}
 	//	}
 	//}
 
 	const int ID;
 	/*const*/ MSSoln msSoln;
-	vector<TenderSoln*> tenderSolns;
+	vector<DroneSoln*> droneSolns;
 	//SAparams sa_params;
 	SAlog sa_log;
 
 
 	/// <summary>
 	/// Method to get the total distance of the solution.
-	/// Total dist = w_ms*(ms) + w_d*(sum(tender))
+	/// Total dist = w_ms*(ms) + w_d*(sum(drone))
 	/// </summary>
 	/// <param name="print">= false</param>
 	/// <returns></returns>
 	double getTotalDist(bool print = false) const {
 		double dist_ms = inst.weights.first * msSoln.getDist(print);
-		double dist_tenders = 0;
+		double dist_drones = 0;
 		if (print) printf("\nWEIGHTED MS Dist: \t%.2f\t\t(w_ms = %.1f)\n\tw_d = %.1f", dist_ms, inst.weights.first, inst.weights.second);
-		for (auto& tenderSoln : tenderSolns) {
-			double dist_tender = 0;
-			if (print) printf("\nTenderSoln ID: \t%d\t\tDist:", tenderSoln->ID);
-			for (auto& route : tenderSoln->routes) {
-				double leg = inst.weights.second * tenderSoln->getTenderRouteDist(route);
+		for (auto& droneSoln : droneSolns) {
+			double dist_drone = 0;
+			if (print) printf("\nDroneSoln ID: \t%d\t\tDist:", droneSoln->ID);
+			for (auto& route : droneSoln->routes) {
+				double leg = inst.weights.second * droneSoln->getDroneRouteDist(route);
 				if (print) printf("\t+%.2f", leg);
-				dist_tender += leg;
+				dist_drone += leg;
 			}
-			if (print) printf("\t = %.2f", dist_tender);
-			dist_tenders += dist_tender;
+			if (print) printf("\t = %.2f", dist_drone);
+			dist_drones += dist_drone;
 		}
-		double dist_total = dist_ms + dist_tenders;
+		double dist_total = dist_ms + dist_drones;
 		if (print) {
-			printf("\nTender Dist: \t\t%.2f\n\nTotal Dist: \t%.2f\n", dist_tenders, dist_total);
+			printf("\nDrone Dist: \t\t%.2f\n\nTotal Dist: \t%.2f\n", dist_drones, dist_total);
 		}
 		return dist_total;
 	}
@@ -454,15 +454,15 @@ public:
 			// update msSoln
 			msSoln = other.msSoln;
 
-			// Release existing TenderSoln objects
-			for (auto& ptr : tenderSolns) {
+			// Release existing DroneSoln objects
+			for (auto& ptr : droneSolns) {
 				delete ptr;
 			}
-			tenderSolns.clear();
+			droneSolns.clear();
 
-			// Copy new TenderSoln objects
-			for (auto& tendersoln : other.tenderSolns) {
-				tenderSolns.push_back(new TenderSoln(*tendersoln/*, true*/)); // Pass 'true' to avoid copying launchPts
+			// Copy new DroneSoln objects
+			for (auto& dronesoln : other.droneSolns) {
+				droneSolns.push_back(new DroneSoln(*dronesoln/*, true*/)); // Pass 'true' to avoid copying launchPts
 			}
 			//// Update other members accordingly
 			//msSoln = other.msSoln;		// Deep copy MSSoln

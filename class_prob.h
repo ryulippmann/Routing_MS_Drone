@@ -70,34 +70,34 @@ private:
 	static int count;
 };
 
-struct Tender {
+struct Drone {
 public:
-	Tender(int cap) : ID(count++), cap(cap)/*, route(route)*/ {}
+	Drone(int cap) : ID(count++), cap(cap)/*, route(route)*/ {}
 
 	const int ID;
 	const int cap;
-	//Route_Tender* route;
-	//Route_Tender* getRoute() { return route; }
+	//Route_Drone* route;
+	//Route_Drone* getRoute() { return route; }
 private:
 	static int count;
 };
 
 const struct Problem {
 private:
-	const int numClust;
+	const int noClust;
 	const Pt depot;
-	const int numTenders;
-	const int tenderCap;
+	const int noDrones;
+	const int dCap;
 
 	MS setMS(int msCap, Pt depot) {
 		MS ms(msCap, depot);
 		return ms;
 	}
 
-	vector<Tender> setTenders(int numTenders, int tenderCap) {
-		vector<Tender> tenders;
-		for (int i = 0; i < numTenders; ++i) { tenders.push_back(Tender(tenderCap)); }
-		return tenders;
+	vector<Drone> setDrones(int noDrones, int dCap) {
+		vector<Drone> drones;
+		for (int i = 0; i < noDrones; ++i) { drones.push_back(Drone(dCap)); }
+		return drones;
 	}
 
 	string getCurrentTime() const {
@@ -112,11 +112,11 @@ private:
 	}
 
 public:
-	Problem(vector<Pt> reefs, int numClust, Pt depot, int numTenders, int tenderCap, pair<double, double> weights, int kMeansIters) :
+	Problem(vector<Pt> reefs, int noClust, Pt depot, int noDrones, int dCap, pair<double, double> weights, int kMeansIters) :
 		reefs(move(reefs)),
-		numClust(numClust), 
+		noClust(noClust), 
 		depot(depot), 
-		numTenders(numTenders), tenderCap(tenderCap),
+		noDrones(noDrones), dCap(dCap),
 		weights(weights), kMeansIters(kMeansIters),
 		time(getCurrentTime()) 
 	{
@@ -130,8 +130,8 @@ public:
 	
 	//const vector<vector<double>> dMatrix = this->getDMatrix(reefs, depot);
 	const vector<Pt> reefs;
-	const MS ms						= this->setMS(numClust, depot);
-	const vector<Tender> tenders	= this->setTenders(numTenders, tenderCap);
+	const MS ms						= this->setMS(noClust, depot);
+	const vector<Drone> drones	= this->setDrones(noDrones, dCap);
 	const pair<double, double> weights;
 	const string time;
 	const int kMeansIters;//1000
@@ -139,10 +139,10 @@ public:
 	//void printSetup() {
 	//	printf("Problem inst:\n");
 	//	printf("Number of reefs: %.0f\n", reefs.size());
-	//	printf("Number of clusters: %d\n", numClust);
+	//	printf("Number of clusters: %d\n", noClust);
 	//	printf("Depot: (%.2f, %.2f)\n", depot.x, depot.y);
-	//	printf("Number of tenders: %d\n", numTenders);
-	//	printf("Tender capacity: %d\n", tenderCap);
+	//	printf("Number of drones: %d\n", noDrones);
+	//	printf("Drone capacity: %d\n", dCap);
 	//	printf("Weighting:\n\t\tMS: %.1f\tDrone %.1f\n", weights.first, weights.second);
 	//}
 
@@ -153,9 +153,9 @@ public:
 		}
 		return reefPtrs; 
 	}
-	int getnumClusters()	const	{ return numClust; }
-	int getnumTenders()		const	{ return numTenders; }
-	int getTenderCap()		const	{ return tenderCap; }
+	int getnumClusters()	const	{ return noClust; }
+	int getnumDrones()		const	{ return noDrones; }
+	int get_dCap()		const	{ return dCap; }
 	Pt getDepot()			const	{ return depot; }
 	vector<vector<double>> getDMatrix(/*vector<Pt> reefs, Pt depot*/) {
 		vector<vector<double>> dMatrix;
@@ -188,39 +188,38 @@ public:
 /// <param name="instance"></param>
 /// <returns></returns>
 bool checkParameters(Problem instance) {
-	try { if (instance.getnumClusters() * instance.getnumTenders() * instance.getTenderCap() != instance.getReefPointers().size()) throw invalid_argument("numClust * numTenders * tenderCap != no_pts"); }
+	try { if (instance.getnumClusters() * instance.getnumDrones() * instance.get_dCap() != instance.getReefPointers().size()) throw invalid_argument("noClust * noDrones * dCap != no_pts"); }
 	catch (const invalid_argument& e) { cout << endl << e.what() << endl; return false; }
 	return true;
 }
 
 /// <summary>
-/// validity check later: (numClust * numTenders * tenderCap = no_pts)
+/// validity check later: (noClust * noDrones * dCap = no_pts)
 /// </summary>
-/// <param name="no_pts"></param>
-/// <param name="numClust"></param>
-/// <param name="numTenders"></param>
-/// <param name="tenderCap"></param>
-/// <param name="w_ms"></param>
-/// <param name="w_d"></param>
-/// <returns></returns>
-Problem CreateInst(	int no_pts = 48,/*100;*/int numClust = 4, /*5;*/
-					int numTenders = 4,		int tenderCap = 3,
-					double w_ms = 1,		double w_d = 1,
-					Pt depot = Pt(0,0),		int kMeansIters = pow(10,4))	{
-	Problem inst = Problem(initReefs(no_pts), numClust, depot, numTenders, tenderCap, make_pair(w_ms, w_d), kMeansIters);
+/// <param name="no_pts">= 48</param>
+/// <param name="noClust">= 4</param>
+/// <param name="noDrones">= 4</param>
+/// <param name="dCap">= 3</param>
+/// <param name="weights">= (1,1)</param>
+/// <param name="depot">= Pt(0,0)</param>
+/// <param name="kMeansIters">= 100</param>
+Problem CreateInst(	int no_pts = 48,/*100;*/int noClust = 4, /*5;*/
+					int noDrones = 4,		int dCap = 3,
+					pair<double, double> weights = make_pair(1,1), //= make_pair(1,1)
+					Pt depot = Pt(0,0),		int kMeansIters = pow(10,2))	{
+	Problem inst = Problem(initReefs(no_pts), noClust, depot, noDrones, dCap, weights, kMeansIters);
 		//if (checkParameters(inst) == false) return 0;		// check if parameters are valid
 		//else {return inst;
 	if (checkParameters(inst)) return inst;
 }
-	//inst(initReefs(no_pts), numClust, depot, numTenders, tenderCap, make_pair(w_ms, w_d));
 
 void printSetup(Problem inst) {
 	printf("Problem inst:\n");
+	printf("Depot:\t\t\t(%.2f, %.2f)\n", inst.getDepot().x, inst.getDepot().y);
 	printf("Number of reefs: \t%d\n", inst.reefs.size());
 	printf("Number of clusters:\t%d\n", inst.getnumClusters());
-	printf("Depot:\t\t\t(%.2f, %.2f)\n", inst.getDepot().x, inst.getDepot().y);
-	printf("Number of tenders:\t%d\n", inst.getnumTenders());
-	printf("Tender capacity:\t%d\n", inst.getTenderCap());
+	printf("Number of drones:\t%d\n", inst.getnumDrones());
+	printf("Drone capacity:\t\t%d\n", inst.get_dCap());
 	printf("\t\t\tWeighting:\n\t\t\tMS: %.1f\t\tDrone %.1f\n", inst.weights.first, inst.weights.second);
 	printf("Time initialised: \t");
 }

@@ -5,13 +5,13 @@ import datetime
 import os
 import re
 
-path = 'outputs/24-03-25_17-55-54/'
+path = 'outputs/24-03-28_10-22-36/'
 
 cluster_soln = True
 cluster_path =      path + 'clusters_init'+'.csv'
 # 'clusters/'+    '24-03-22_13-57-55 clusters_init'               +'.csv'
 ms_soln = True
-path += '24-03-25_17-58-12_Full_FINAL/'
+path += '24-03-28_10-33-50_Full_FINAL/'
 ms_path =           path + 'ms_route.csv'
 # 'ms_route/'+    '24-03-22_14-00-48 ms_launch_route_fullSoln'    +'.csv'
 launchpts_path =    path + 'launchPts.csv'
@@ -19,9 +19,6 @@ launchpts_path =    path + 'launchPts.csv'
 drone_soln = True
 d_path =            path + 'drone_routes.csv'
 # 'd_route/'+     '24-03-22_14-00-48 drone_routes'            +'.csv'
-
-# w_ms = 3
-# w_d = 1
 
 print_plt = True
 save_plt = True
@@ -60,7 +57,6 @@ def plot_clusters(csv_file, print_plt, save_plt):
         cluster_x = [x[i] for i in range(len(x)) if cluster_ids[i] == cluster_id]
         cluster_y = [y[i] for i in range(len(y)) if cluster_ids[i] == cluster_id]
         plt.scatter(cluster_x, cluster_y, label=f'Cluster {cluster_id}', color=color)
-
 
         # Annotate with cluster sequential number in centroid
         centroid_x = sum(cluster_x) / len(cluster_x)
@@ -155,6 +151,21 @@ def plot_MS_route(csv_file, print_plt, save_plt, w_ms, color = 'k'):
     if (print_plt and not drone_soln) : plt.show()
     return dist
 
+# def unique_numbers_so_far(arr):
+#     unique_numbers = set()
+#     unique_count = []
+#     for num in arr:
+#         unique_numbers.add(num)
+#         unique_count.append(len(unique_numbers))
+#     return unique_count
+
+def get_index_of_id(launchpts, target_id):
+    try:
+        index = list(launchpts.keys()).index(target_id)
+        return index
+    except ValueError:
+        return None
+
 def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, w_d, color = 'r'):
     routes_node = []
     # Read CSV file and extract data
@@ -167,6 +178,17 @@ def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, w_d, color = 'r
     routes_pt = []  # Dictionary to store the x, y coordinates of each node in the route
     dist_d_total = 0
     # Plot drones on the existing plot
+    # for cluster_id, color in zip(unique_cluster_ids, colors.colors):
+    #     cluster_x = [x[i] for i in range(len(x)) if cluster_ids[i] == cluster_id]
+    #     cluster_y = [y[i] for i in range(len(y)) if cluster_ids[i] == cluster_id]
+    #     plt.scatter(cluster_x, cluster_y, label=f'Cluster {cluster_id}', color=color)
+
+    # Get unique cluster IDs and assign colors
+    # unique_cluster_ids = list(OrderedDict.fromkeys(range(0,len(routes_node))))
+    num_clusters = len(launchpts)-1
+    colors = plt.cm.get_cmap('tab10', num_clusters)
+    # launchpt_set = set(launchpts.keys())
+    
     for route in routes_node:
         dist_route = 0
         route_coords = []
@@ -188,7 +210,9 @@ def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, w_d, color = 'r
         dist_d_total += dist_route
         # # # # ignore return to launch point # x, y = launchpts[route[-1]] # route_coords.append([route[-1], x, y])
         routes_pt.append(route_coords)
-        plt.plot([x[1] for x in route_coords], [y[2] for y in route_coords], color, linestyle='-', linewidth=1)
+        # print(get_index_of_id(launchpts, route_coords[0][0]))
+        plt.plot([x[1] for x in route_coords], [y[2] for y in route_coords], c=colors(get_index_of_id(launchpts, route_coords[0][0])), linestyle='-', linewidth=1)
+        # plt.show()
     print(f"\nTotal drone distance travelled: {dist_d_total:.2f}\n")
     print(f"\nTotal MS distance travelled: {dist_total:.2f}\n")
     plt.annotate(f'D_dist = {dist_d_total:.2f}\n@w_d = {w_d}', xy=(0.3, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')

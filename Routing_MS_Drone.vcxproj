@@ -189,7 +189,7 @@
     <ClInclude Include="prints.h" />
     <ClInclude Include="sensitivity.h" />
     <ClInclude Include="swaps.h" />
-    <ClInclude Include="tenders.h" />
+    <ClInclude Include="drones.h" />
     <ClInclude Include="TSPheuristics_annotated.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -32,7 +32,7 @@
     <ClInclude Include="mothership.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tenders.h">
+    <ClInclude Include="drones.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="class_soln.h">

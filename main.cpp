@@ -54,38 +54,44 @@ int main()
 {
 	if (checkParameters(inst) == false) return 0;		// check if parameters are valid
 	printSetup(inst);		// print problem setup
-	//\\//\\//\\//\\  ClusterSoln Construction  //\\//\\//\\//
-	vector<ClusterSoln*> clusters = kMeansConstrained(inst.kMeansIters);
-	if (print_detail) printClusters(clusters);		// PRINT clusters //
-	if (csv_print) createFolder();
-	if (csv_print) csvPrintClusters(clusters, "clusters_init");		// CSV PRINT clusters //
-	//\\//\\//\\//\\  ClusterSoln Initialised \\//\\//\\//\\//
-	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\	
-	//\\//\\//\\//\\//  MsSoln Construction //\\//\\//\\//\\//
-	MSSoln msSoln(clusters);				// No launchPts initialised yet
-	vector<pair<double,MSSoln>> msSolns = initMsSoln(clusters, msSoln, print_detail/*, csv_print*/);
-	//\\//\\//\\//\\/   MsSoln Initialised   /\\//\\//\\//\\//
-	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
-	//\\//\\//\\//\\  DroneSoln Construction  \\//\\//\\//\\/
-	vector<DroneSoln> droneSolns = initDroneSoln(msSoln, print_detail);
-	vector<DroneSoln*> ptr_droneSolns;
-	for (const auto& soln : droneSolns) { ptr_droneSolns.push_back(new DroneSoln(soln)); } // Assuming DroneSoln has a copy constructor
-	//\\//\\//\\//\   DroneSoln Initialised   \//\\//\\//\\//		
-	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
-	//\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
-	FullSoln full_init(msSoln, ptr_droneSolns);
-	printf("Full Soln Dist:\t%.2f", full_init.getTotalDist(print_detail));
-	if (csv_print) csvPrints(full_init, "INIT");
-	////////////////////////////////
-	vector<FullSoln> fullSolns;
-	fullSolns.push_back(full_init);
-	vector<double> best_dist{ fullSolns.back().getTotalDist()};			// initialise best_dist as vector with best solution distance	
-	//\\//\\//\\//\\   FullSoln Initialised   \\//\\//\\//\\//		
-	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
 
-	fullSolns.push_back(
-		BaseSwapRun(fullSolns.back(), best_dist)
-	);
+	vector<vector<FullSoln>> fullSolns;
+	int iter = 10;
+	for (int i = 0; i < iter; i++) {
+		fullSolns.push_back(FullRun(i));
+	}
+	
+	////\\//\\//\\//\\  ClusterSoln Construction  //\\//\\//\\//
+	//vector<ClusterSoln*> clusters = kMeansConstrained(inst.kMeansIters);
+	//if (print_detail) printClusters(clusters);		// PRINT clusters //
+	//if (csv_print) createFolder();
+	//if (csv_print) csvPrintClusters(clusters, "clusters_init");		// CSV PRINT clusters //
+	////\\//\\//\\//\\  ClusterSoln Initialised \\//\\//\\//\\//
+	////\\    \\//    //\\    \\//    //\\    \\//    //\\    \\	
+	////\\//\\//\\//\\//  MsSoln Construction //\\//\\//\\//\\//
+	//MSSoln msSoln(clusters);				// No launchPts initialised yet
+	//vector<pair<double,MSSoln>> msSolns = initMsSoln(clusters, msSoln, print_detail/*, csv_print*/);
+	////\\//\\//\\//\\/   MsSoln Initialised   /\\//\\//\\//\\//
+	////\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
+	////\\//\\//\\//\\  DroneSoln Construction  \\//\\//\\//\\/
+	//vector<DroneSoln> droneSolns = initDroneSoln(msSoln, print_detail);
+	//vector<DroneSoln*> ptr_droneSolns;
+	//for (const auto& soln : droneSolns) { ptr_droneSolns.push_back(new DroneSoln(soln)); } // Assuming DroneSoln has a copy constructor
+	////\\//\\//\\//\   DroneSoln Initialised   \//\\//\\//\\//		
+	////\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
+	////\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
+	//FullSoln full_init(msSoln, ptr_droneSolns);
+	//printf("Full Soln Dist:\t%.2f", full_init.getTotalDist(print_detail));
+	//if (csv_print) csvPrints(full_init, "INIT");
+	//////////////////////////////////
+	//vector<FullSoln> fullSolns;
+	//fullSolns.push_back(full_init);
+	//vector<double> best_dist{ fullSolns.back().getTotalDist()};			// initialise best_dist as vector with best solution distance	
+	////\\//\\//\\//\\   FullSoln Initialised   \\//\\//\\//\\//		
+	////\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
+	//fullSolns.push_back(
+	//	BaseSwapRun(fullSolns.back(), best_dist)
+	//);
 
 	//\\//\\//\\//\\//\\       FIN        //\\//\\//\\//\\//\\
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//	

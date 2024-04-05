@@ -7,13 +7,14 @@
 /// <param name="clusters"></param>
 /// <param name="test"></param>
 /// <returns></returns>
-vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, bool test = false) {
+vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, int min_idx, bool test = false) {
     vector<vector<double>> centroidMatrix;
     if (test) {
         vector<ClusterSoln*> clusters_ordered(clusters.size(), nullptr);
         vector<int> route(1,0);
+
         for (int i = 0; i < clusters.size(); i++) {		// for each cluster
-            int clust_ID = clusters[i]->ID;
+            int clust_ID = clusters[i]->ID - min_idx;
             route.push_back(clust_ID+1);
             clusters_ordered[clust_ID] = clusters[i];
         }
@@ -133,12 +134,20 @@ vector<vector<double>> setLaunchPts(MSSoln& msSoln, bool print = false) {
 	return dMatrix_launchpt;
 }
 
+int findMinIdx(const vector<ClusterSoln*>& clusters) {
+    int min_idx = (*min_element(clusters.begin(), clusters.end(),
+        [](const ClusterSoln* a, const ClusterSoln* b) {
+            return a->ID < b->ID;
+        }))->ID;                    // find min cluster ID to normalise to 0
+	return min_idx;
+}
+
 double clusterCentroidNearestNeighbour(MSSoln& msSoln, bool print = true) {
     const vector<ClusterSoln*> clusters = msSoln.clusters;
     vector<ClusterSoln*> nearestCentroids(clusters.size(), nullptr);// Initialize the result vector
     vector<bool> visited(clusters.size(), 0);
     int u = -1;                                                  // initialise current index
-    const vector<vector<double>> centroidMatrix = calc_centMatrix(clusters);
+    const vector<vector<double>> centroidMatrix = calc_centMatrix(clusters, findMinIdx(clusters));
     if (print) { printf("\n");
 		for (int i = 0; i < centroidMatrix.size(); i++) {
 			for (int j = 0; j < centroidMatrix[i].size(); j++) { printf("\t%.2f", centroidMatrix[i][j]); }
@@ -173,7 +182,10 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
     const vector<ClusterSoln*> clusters = msSoln.clusters;
     int n = clusters.size();
     double gd_2opt_dists;
-    const vector<vector<double>> centroidMatrix = calc_centMatrix(clusters, true);
+
+    int min_clust_idx = findMinIdx(clusters);
+
+    const vector<vector<double>> centroidMatrix = calc_centMatrix(clusters, min_clust_idx, true);
     const vector<vector<double>> launchPtMatrix = setLaunchPts(msSoln, print);
     // print centroidMatrix
     if (print) {
@@ -197,7 +209,7 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
 
     vector<int> i_tour (1, 0);                       // ai_tour = city_index for each tour -> nearest neighbour
     for (int i = 0; i < clusters.size(); i++) {
-        i_tour.push_back(clusters[i]->ID + 1);
+        i_tour.push_back(clusters[i]->ID + 1 - min_clust_idx);
     }//for(i=from_pts)
     //i_tour.push_back(0);                            // add depot as last stop
 

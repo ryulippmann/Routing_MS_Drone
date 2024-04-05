@@ -274,7 +274,7 @@ FullSoln IN_ClusterSwaps(FullSoln soln, /*int iteration, *//*vector<int> randoms
 /// <param name="csv_print"></param>
 /// <param name="SA_print"></param>
 /// <returns></returns>
-FullSoln SwapRandomly(const FullSoln soln_prev_best, SAparams sa_params,
+FullSoln SwapRandomly(const FullSoln soln_prev_best, SAparams sa_params, int run_iteration,
     //int num_iterations = 10000, double initial_temperature = 200, double cooling_rate = 0.999,
     bool print_stats = false, bool csv_print = false, bool SA_print = true) {   //in_out = 1; // 0 = OUT, 1 = IN
     printf("\n\n---------- RANDOM IN/OUT Cluster Swaps - Simulated Annealing ----------\n");
@@ -291,8 +291,10 @@ FullSoln SwapRandomly(const FullSoln soln_prev_best, SAparams sa_params,
     //log = SAlog(temp);
     int in_swaps = 0, out_swaps = 0;
     printf("\n\tBEST\t\t\tTEMP\t\t\tPROPOSED\t\tINCUMBENT");
+
     // introduce while loop to ensure solution has found steady-state?
     //while (best_dist.size() < 3 || best_dist.back() != best_dist.at(best_dist.size() - 3))
+    
     for (int iter_num = 0; iter_num < sa_params.num_iterations+1; ++iter_num) {
         if (best.msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); break; }
         FullSoln proposed = incumbent;
@@ -317,7 +319,7 @@ FullSoln SwapRandomly(const FullSoln soln_prev_best, SAparams sa_params,
                 dist_best = best.getTotalDist();
                 printf("\n\t!!IMPROVED!! Proposed soln\t\t%.3f", dist_best);
                 if (csv_print) {
-                    csvUpdate(best, in_out, in_swaps+out_swaps);
+                    csvUpdate(best, in_out, in_swaps+out_swaps, run_iteration);
                     //if (in_out) csvUpdate_IN(best);
                     //else csvUpdate_OUT(best);
                 }
@@ -337,15 +339,6 @@ FullSoln SwapRandomly(const FullSoln soln_prev_best, SAparams sa_params,
     if (dist_best == dist_initial) printf("\n\n\tNO IMPROVEMENT MADE\n");
     else printf("\n\n\tBEST\t\t\tINITIAL\t\t\tTEMP\n\t%.3f\t\t%.3f\t\t%.2e", dist_best, dist_initial, temp);
     FullSoln best_new = best;           // IS this line necessary?!
-
-    //if (in_out == 0) {      //best = OUT_ClusterSwaps(soln_prev_best, 0, true);
-    //    best = SA_fn(soln_prev_best, OUT_ClusterSwaps, sa_params/*, log*/);
-    //    printf("\n^^ OUT SWAPS ^^\n");
-    //}
-    //else {                  //best = IN_ClusterSwaps(soln_prev_best, 0, true);
-    //    best = SA_fn(soln_prev_best, IN_ClusterSwaps, sa_params/*, log*//*, true*/);
-    //    printf("\n^^ IN SWAPS ^^\n");
-    //}
 
     printf("\n------------- ^^ CLUST_OPT_D_TOURS ^^ --------------\n");
     return best_new;

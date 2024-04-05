@@ -24,29 +24,71 @@ void sensitivity() {
 /// <param name="soln_current"></param>
 /// <param name="best_dists"></param>
 /// <returns></returns>
-FullSoln BaseSwapRun(FullSoln soln_current, vector<double>& best_dists) {
+FullSoln BaseSwapRun(FullSoln soln_current, vector<double>& best_dists, int run_iteration) {
 	//SAparams                  (num_iter, init_temp, cooling_rate)
-	int num_iter = 100000;//50000;//25000;//10000;               // fixed at 10000
+	int num_iter = 50000;//100000;//25000;//10000;               // fixed at 10000
 	double init_temp = 0.2 * soln_current.getTotalDist();
 	//double temp_diff = pow(10, -4);
 	//double final_temp = init_temp * temp_diff;//pow(10, -5);
 	//double cooling_rate = pow((temp_diff), 1 / num_iter);  //0.995;
-	double cooling_rate = 0.99975;//0.9995;
-	//SAparams sa_params = //SAparams(10000, 0.2 * dist_best, 0.995);
-	//	SAparams(num_iter, init_temp, cooling_rate);
-	////SAparams(5000, 0.5 * dist_best, 0.98);    //SAparams(1000, 0.5 * dist_best, 0.9);
+	double cooling_rate = 0.9995;//0.99975;//
 
 	//\\//\\//\\//  Randomly run IN/OUT Swaps   //\\//\\//\\//
-	FullSoln best = SwapRandomly(soln_current, SAparams(num_iter, init_temp, cooling_rate), print_detail, csv_print);
+	FullSoln best = SwapRandomly(soln_current, SAparams(num_iter, init_temp, cooling_rate), run_iteration, 
+		print_detail, csv_print);
 	printf("\nPrev Dist: \t\t%.2f", best_dists.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
 	best_dists.push_back(best.getTotalDist());
 	printf("\n\t\tNEW_Swap distance:\t%.2f\n", best_dists.back());
 
 	//\\//\\//\\//  csv print (if solution updated)  //\\//\\//\\//
 	//if (csv_print && best_dist.back() != best_dist.at(best_dist.size() - 2)) { 
-	csvPrints(best, "FINAL");
+	csvPrints(best, "FINAL", run_iteration);
 	//}
 	return best;
+}
+
+vector<FullSoln> FullRun(const int& iter) {
+	//\\//\\//\\//\\  ClusterSoln Construction  //\\//\\//\\//
+	vector<ClusterSoln*> clusters = kMeansConstrained(inst.kMeansIters);
+	if (print_detail) printClusters(clusters);		// PRINT clusters //
+	//string run_path;
+	if (csv_print) {
+		createFolder();
+		/*run_path = */createRunFolder(iter);
+	}
+	//if (csv_print) csvPrintClusters(clusters, "clusters_init");		// CSV PRINT clusters //
+	//\\//\\//\\//\\  ClusterSoln Initialised \\//\\//\\//\\//
+	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\	
+	//\\//\\//\\//\\//  MsSoln Construction //\\//\\//\\//\\//
+	MSSoln msSoln(clusters);				// No launchPts initialised yet
+	vector<pair<double, MSSoln>> msSolns = initMsSoln(clusters, msSoln, print_detail/*, csv_print*/);
+	//\\//\\//\\//\\/   MsSoln Initialised   /\\//\\//\\//\\//
+	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
+	//\\//\\//\\//\\  DroneSoln Construction  \\//\\//\\//\\/
+	vector<DroneSoln> droneSolns = initDroneSoln(msSoln, print_detail);
+	vector<DroneSoln*> ptr_droneSolns;
+	for (const auto& soln : droneSolns) { ptr_droneSolns.push_back(new DroneSoln(soln)); } // Assuming DroneSoln has a copy constructor
+	//\\//\\//\\//\   DroneSoln Initialised   \//\\//\\//\\//		
+	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
+	//\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
+	FullSoln full_init(msSoln, ptr_droneSolns);
+	printf("Full Soln Dist:\t%.2f", full_init.getTotalDist(print_detail));
+	if (csv_print) {
+		csvPrintStops("reef_set");
+		csvPrints(full_init, "INIT", iter);
+	}
+	////////////////////////////////
+	vector<FullSoln> fullSolns;
+	fullSolns.push_back(full_init);
+	vector<double> best_dist{ fullSolns.back().getTotalDist() };			// initialise best_dist as vector with best solution distance	
+	//\\//\\//\\//\\   FullSoln Initialised   \\//\\//\\//\\//		
+	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
+
+	fullSolns.push_back(
+		BaseSwapRun(fullSolns.back(), best_dist, iter)
+	);
+
+	return fullSolns;
 }
 
 ///////////////////////////////////

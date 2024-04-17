@@ -2,29 +2,6 @@
 #include <chrono>
 #include <ctime>
 
-//#ifndef calcs_h
-//#define calcs_h
-
-//struct Pt {
-//public:
-//	Pt(double x, double y) : ID(count++), x(x), y(y) {}
-//	Pt(pair<double, double> coords) : Pt(coords.first, coords.second) {}
-//
-//	//int getID() const { return ID; }
-//	const int ID;
-//	const double x;
-//	const double y;
-//	//pair<double, double> getXY() const { return make_pair(x, y); }
-//
-//	//ReefPt& operator=(const ReefPt& point) {	// Assignment operator
-//	//	//pair<double, double> coords = point.getXY();
-//	//	if (this != &point) { ReefPt(point.x, point.y); }
-//	//	return *this;	// self-assignment check	
-//	//}
-//private:
-//	static int count;
-//};
-
 struct Pt {
 public:
 	Pt(double x = 0.0, double y = 0.0) : ID(count++), x(x), y(y) {}	// Default constructor
@@ -62,9 +39,6 @@ public:
 	const int ID;
 	const int cap=NULL;
 	const Pt depot;	
-	//int getID() const { return ID; }
-	//int getCap() const { return cap; }
-	//Pt getDepot() const { return depot; }
 
 private:
 	static int count;
@@ -76,8 +50,6 @@ public:
 
 	const int ID;
 	const int cap;
-	//Route_Drone* route;
-	//Route_Drone* getRoute() { return route; }
 private:
 	static int count;
 };
@@ -128,23 +100,12 @@ public:
 		//time = output;
 	}
 	
-	//const vector<vector<double>> dMatrix = this->getDMatrix(reefs, depot);
 	const vector<Pt> reefs;
-	const MS ms						= this->setMS(noClust, depot);
+	const MS ms					= this->setMS(noClust, depot);
 	const vector<Drone> drones	= this->setDrones(noDrones, dCap);
 	const pair<double, double> weights;
 	const string time;
 	const int kMeansIters;//1000
-
-	//void printSetup() {
-	//	printf("Problem inst:\n");
-	//	printf("Number of reefs: %.0f\n", reefs.size());
-	//	printf("Number of clusters: %d\n", noClust);
-	//	printf("Depot: (%.2f, %.2f)\n", depot.x, depot.y);
-	//	printf("Number of drones: %d\n", noDrones);
-	//	printf("Drone capacity: %d\n", dCap);
-	//	printf("Weighting:\n\t\tMS: %.1f\tDrone %.1f\n", weights.first, weights.second);
-	//}
 
 	vector<Pt*> getReefPointers() const { 
 		vector<Pt*> reefPtrs;
@@ -208,8 +169,6 @@ Problem CreateInst(	int no_pts = 48,/*100;*/int noClust = 4, /*5;*/
 					pair<double, double> weights = make_pair(1,1), //= make_pair(1,1)
 					Pt depot = Pt(0,0),		int kMeansIters = pow(10,2))	{
 	Problem inst = Problem(initReefs(no_pts), noClust, depot, noDrones, dCap, weights, kMeansIters);
-		//if (checkParameters(inst) == false) return 0;		// check if parameters are valid
-		//else {return inst;
 	if (checkParameters(inst)) return inst;
 }
 

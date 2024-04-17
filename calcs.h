@@ -1,8 +1,6 @@
 #pragma once
 #include <random>
 
-//using namespace std;
-
 random_device rd;       // Seed for the random number generator
 mt19937 gen(rd());      // Mersenne Twister engine
 
@@ -74,6 +72,12 @@ int findIndexByID(int targetID, const vector<Pt*>& myList, pair<Pt*, Pt*> launch
 	return -1;  // Return a special value (e.g., -1) to indicate that the ID was not found
 }
 
+int getRandomNumber(int size/*, int randomSeed = -1*/) {
+    mt19937 gen(rd());
+    uniform_int_distribution<int> dist(0, size - 1);
+    return dist(gen);
+}
+
 //vector<vector<double>> centroidMatrix(Problem& inst, vector<Pt*> reefs) {
 //    vector<vector<double>> centroidMatrix;
 //    //centroids.insert(centroids.begin(), ClusterPoint(depot.first, depot.second));
@@ -127,18 +131,7 @@ int findIndexByID(int targetID, const vector<Pt*>& myList, pair<Pt*, Pt*> launch
 //    return summing_route_dist;
 //}
 
-// Helper function for random number generation
-int getRandomNumber(int size/*, int randomSeed = -1*/) {
-    //if (randomSeed != -1) { mt19937 gen(randomSeed); }
-    //else { 
-    mt19937 gen(rd()); //}
-    //// Seed the random number generator
-    //random_device rd;
-    uniform_int_distribution<int> dist(0, size - 1);
-    return dist(gen);
-}
-
-// return string "in" or "out" based on bool value
-string boolToString(bool value) {
-    return value ? "in" : "out";
-}
+//// return string "in" or "out" based on bool value
+//string boolToString(bool value) {
+//    return value ? "in" : "out";
+//}

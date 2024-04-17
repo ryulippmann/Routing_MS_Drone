@@ -94,20 +94,22 @@ vector<vector<double>> setLaunchPts(MSSoln& msSoln, bool print = false) {
     const vector<ClusterSoln*> clusters = msSoln.clusters;
     if (print) printf("\n---- SET LAUNCH POINTS ----\n");
     vector<Pt*> launchPts;
-    //launchPts.push_back(new Pt(inst.ms.depot));       // add depot as first launch point
+
     launchPts.push_back(new Pt(
         (inst.ms.depot.x + clusters[0]->getCentroid().x)/2,
         (inst.ms.depot.y + clusters[0]->getCentroid().y)/2));
-	for (int c = 0; c < clusters.size()-1; c++) {
+	
+    for (int c = 0; c < clusters.size()-1; c++) {
         launchPts.push_back(new Pt(        // sum adjacent clusters x,y's to calc launchpts and 
                 (clusters[c]->getCentroid().x + clusters[c+1]->getCentroid().x) / 2,
                 (clusters[c]->getCentroid().y + clusters[c+1]->getCentroid().y) / 2));
 	}
+
     launchPts.push_back(new Pt(
         (inst.ms.depot.x + clusters.back()->getCentroid().x) / 2,
         (inst.ms.depot.y + clusters.back()->getCentroid().y) / 2));
-    //launchPts.push_back(new Pt(inst.ms.depot));       // add depot as first launch point
-	msSoln.launchPts = launchPts;
+
+    msSoln.launchPts = launchPts;
     vector<vector<double>> dMatrix_launchpt = msSoln.launchPt_dMatrix();
 	if (print) {
         printf("\tID\t(  x  ,  y  )\n");
@@ -115,14 +117,17 @@ vector<vector<double>> setLaunchPts(MSSoln& msSoln, bool print = false) {
         printf("\t%d\t( %2.2f, %2.2f)\n", inst.ms.depot.ID, inst.ms.depot.x, inst.ms.depot.y);
 		for (const auto& stop : msSoln.launchPts) { 
             printf("\t%d\t( %.2f, %.2f)\n", stop->ID, stop->x, stop->y);
-        } printf("\n");
+        } 
+        printf("\n");
         for (int i = 0; i < dMatrix_launchpt.size(); i++) {
             for (int j = 0; j < dMatrix_launchpt[i].size(); j++) {
                 printf("\t%.2f", dMatrix_launchpt[i][j]);
             }
             printf("\n");
-        } printf("\n");
+        } 
+        printf("\n");
         cout << string(30, '-') << "\n";
+        
         double total_dist = dMatrix_launchpt.back()[0];
         printf("\t%.2f ", total_dist);
         for (int i = 0; i < dMatrix_launchpt.size()-1; i++) {
@@ -198,15 +203,6 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
 		}
 	}
 
-    //double total_dist = 0;
-    //printf("\t%.2f ", dMatrix_launchpt.back()[0]);
-    //total_dist += dMatrix_launchpt.back()[0];
-    //for (int i = 0; i < dMatrix_launchpt.size() - 1; i++) {
-    //    printf("+\t%.2f ", dMatrix_launchpt[i][i + 1]);
-    //    total_dist += dMatrix_launchpt[i][i + 1];
-    //}
-    //printf("\n\t\t= %.2f", total_dist);
-
     vector<int> i_tour (1, 0);                       // ai_tour = city_index for each tour -> nearest neighbour
     for (int i = 0; i < clusters.size(); i++) {
         i_tour.push_back(clusters[i]->ID + 1 - min_clust_idx);
@@ -233,10 +229,6 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
     if (improvement > 0.0001 * route_dist) {                //if greedy solution is better than current
         if (print) printf("\t%.2f%%\tIMPROVEMENT\t", improvement * 100 / route_dist);
         route_dist = gd_2opt_dists;
-        /* CLOSE AND ORIEND CLUSTER LOOP!*/
-        //vector<int> d = closeandOrientClusterLoop(gd_out, init_solution.mothership, init_solution.clustOrder);
-        //init_solution.mothership.launch_stops = d;//UPDATE ROUTE LIST
-        //init_solution.clustOrder = make_pair(init_solution.mothership.launch_stops, gd_out.first);
         
         // Find the index of 0 in proposed_tour
         vector<int> p_tour = gd_out.second;
@@ -276,25 +268,15 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
 /// <param name="msSoln"></param>
 /// <param name="csv_print"></param>
 /// <returns></returns>
-vector<pair<double, MSSoln>> initMsSoln(const vector<ClusterSoln*>& clusters, MSSoln& msSoln, bool print_detail=0, bool csv_print=0) {
+vector<pair<double, MSSoln>> initMsSoln(const vector<ClusterSoln*>& clusters, MSSoln& msSoln, bool print_detail=0) {
 	vector<pair<double, MSSoln>> msSolns;
     double msDist=DBL_MAX;                      // No launchPts initialised yet
     msSolns.push_back(make_pair(msDist, msSoln));
 
     msDist = clusterCentroidNearestNeighbour(msSoln, print_detail);		// clusters ordered by NN
     msSolns.push_back(make_pair(msDist, msSoln));
-    //if (csv_print) {
-    //    csvPrintMS(msSoln.launchPts, msDist, "NN");
-    //    //csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_NN", msDist);
-    //    //csvPrintLaunchPts(msSoln.launchPts, "launchPts_NN");//"launchPts_fullSoln_" + boolToString(in_out));
-    //}
     msDist = greedyMSCluster(msSoln, print_detail);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
     msSolns.push_back(make_pair(msDist, msSoln));
-    //if (csv_print) {
-    //    csvPrintMS(msSoln.launchPts, msDist, "Gd");
-    //    //csvPrintMSRoutes(msSoln.launchPts, "ms_launch_route_Gd", msDist, true);
-    //    //csvPrintLaunchPts(msSoln.launchPts, "launchPts_Gd");//"launchPts_fullSoln_" + boolToString(in_out));
-    //}
     if (!print_detail) {
         printf("\tMS LaunchPts\n");
         for (const auto& launchPt : msSolns.back().second.launchPts) {
@@ -306,33 +288,3 @@ vector<pair<double, MSSoln>> initMsSoln(const vector<ClusterSoln*>& clusters, MS
 }
 
 ///////////////////////////////////////////////////////////////////
-
-//vector<Pt*> setLaunchPts(const vector<Cluster*>& clusters) {
-//	vector<Pt*> launchPts;
-//	for (const auto& cluster : clusters) {
-//		launchPts.push_back(cluster->getCentroid());
-//	}
-//	return launchPts;
-//}
-
-//vector<int> order_clusters(vector<vector<double>> centroidMatrix) {
-//	vector<int> order;
-//	vector<double> dist;
-//	for (int i = 0; i < centroidMatrix.size(); i++) {
-//		dist.push_back(0);
-//		for (int j = 0; j < centroidMatrix.size(); j++) {
-//			dist[i] += centroidMatrix[i][j];
-//		}
-//	}
-//	for (int i = 0; i < centroidMatrix.size(); i++) {
-//		int min = 0;
-//		for (int j = 0; j < centroidMatrix.size(); j++) {
-//			if (dist[j] < dist[min]) {
-//				min = j;
-//			}
-//		}
-//		order.push_back(min);
-//		dist[min] = 100000000;
-//	}
-//	return order;
-//}

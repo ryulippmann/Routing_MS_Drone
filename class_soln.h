@@ -6,6 +6,7 @@ struct ClusterSoln {
 public:
 	ClusterSoln() : ID(count++) {}
 	ClusterSoln(const vector<Pt*> reefs) : ID(count++), reefs(reefs) {}
+	
 	// Copy constructor for deep copy
 	ClusterSoln(const ClusterSoln& other) :
 		ID(other.ID), /*inst(other.inst), */reefs() {
@@ -118,7 +119,6 @@ public:
 		for (auto* pt : other.launchPts) {
 			this->launchPts.push_back(pt);
 		}
-
 	}
 	MSSoln(vector<ClusterSoln*> clustSolns, vector<Pt*> launchPts) :
 		ID(count++), clusters(clustSolns), launchPts() {
@@ -163,7 +163,7 @@ public:
 			double dist = sqrt(pow(inst.ms.depot.x - launch->x, 2) + pow(inst.ms.depot.y - launch->y, 2));
 			depotDists.push_back(dist);
 		}
-		dMatrix.push_back(depotDists); // is this dangerous in case where order changes?!
+		dMatrix.push_back(depotDists);
 
 		for (int s = 0; s < launchPts.size(); s++) {
 			vector<double> launchDists;
@@ -220,12 +220,6 @@ public:
 			}
 
 			launchPts = other.launchPts;
-			//// Deep copy launchPts
-			//for (auto& pt : launchPts) { delete pt; }			//careful with delete
-			//launchPts.clear();
-			//for (auto& pt : other.launchPts) {
-			//	launchPts.push_back(new Pt(*pt));
-			//}
 		}
 		return *this;
 	}
@@ -282,18 +276,15 @@ public:
 		for (int i = 0; i < route.size() - 2; ++i) {			// -2 to exclude return trip to launchPt
 			int u = findIndexByID(route[i]->ID,		reefs) - 1;
 			int v = findIndexByID(route[i + 1]->ID, reefs) - 1;
-			route_dist += dMatrix[u][v];//findIndexByID(route[i]->ID, route)][findIndexByID(route[i + 1]->ID, route)];
+			route_dist += dMatrix[u][v];
 		}
 		return route_dist;
 	}
 	// route dist for given route	// this is called by FullSoln.getTotalDist()
 	double getDroneRouteDist(vector<Pt*> route) const {
-		//vector<Pt*> route = routes[c];
 		double route_dist = 0;
-		//vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
 		for (int i = 0; i < route.size() - 2; ++i) {			// -2 to exclude return trip to launchPt	
 			route_dist += calculatePtDistance(route[i], route[i + 1]);
-			//route_dist += dMatrix[findIndexByID(route[i]->ID, cluster->reefs, launchPts)][findIndexByID(route[i + 1]->ID, cluster->reefs, launchPts)];
 		}
 		return route_dist;
 	}
@@ -332,10 +323,6 @@ private:
 
 struct FullSoln {
 public:
-	//FullSoln(const MSSoln msSoln, const vector<DroneSoln*>& droneSolns) :
-	//	ID(count++), msSoln(msSoln), droneSolns(droneSolns) 
-	//	//, greedy(true), without_clust(false), within_clust(false), greedy_again(false) 
-	//	{}
 	FullSoln(const MSSoln& msSoln, const vector<DroneSoln*>& droneSolns) :
 		ID(count++), msSoln(msSoln), droneSolns() {
 		// Create new DroneSoln objects with new memory locations for pointers
@@ -343,14 +330,13 @@ public:
 			this->droneSolns.push_back(new DroneSoln(*drone));
 		}
 	}
-
 	FullSoln(const MSSoln msSoln) :
-		ID(count++), msSoln(msSoln) //, greedy(true), without_clust(false), within_clust(false), greedy_again(false) 
+		ID(count++), msSoln(msSoln)
 	{}
 	// Copy constructor for deep copy
 	FullSoln(const FullSoln& other) :
 		ID(count++), msSoln(other.msSoln), // Deep copy
-		droneSolns(), sa_log(other.sa_log)/*, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again)*/ 
+		droneSolns(), sa_log(other.sa_log)
 		{
 		for (auto& dronesoln : other.droneSolns) {
 			this->droneSolns.push_back(new DroneSoln(*dronesoln));
@@ -381,37 +367,6 @@ public:
 	//// NEW -- OUT_SWAPS: Copy constructor with additional routes parameters
 	//FullSoln(const MSSoln& msSoln, const vector<DroneSoln*>& droneSolns) :
 	//	ID(count++), msSoln(msSoln), droneSolns(droneSolns) {}
-
-	//// OUT_SWAPS: Copy constructor with additional routes parameters
-	//FullSoln(const FullSoln& other, const pair <vector<vector<Pt*>>, vector<vector<Pt*>>>& routes, pair<ClusterSoln, ClusterSoln> clusters, pair<int, int> c) :
-	//	ID(count++), msSoln(other.msSoln), // Deep copy - UPDATE based on DroneSoln!
-	//	droneSolns()
-	//	//, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again) 
-	//	{
-	//	// Copy new DroneSoln objects with updated routes
-	//	for (int i = 0; i < other.droneSolns.size(); ++i) {
-	//		if (i == c.first) {
-	//			// Modify the route for the specified index (c)
-	//			DroneSoln modifiedDroneSoln = DroneSoln(*other.droneSolns[i], true);
-	//			modifiedDroneSoln.routes = routes.first;
-	//			//create new clusterSoln* with updated reefs
-	//			modifiedDroneSoln.cluster = clusters.first;
-	//			this->droneSolns.push_back(new DroneSoln(modifiedDroneSoln));
-	//		}
-	//		else if (i == c.second) {
-	//			// Modify the route for the specified index (c)
-	//			DroneSoln* modifiedDroneSoln = new DroneSoln(*other.droneSolns[i]);
-	//			modifiedDroneSoln->routes = routes.second;
-	//			//create new clusterSoln* with updated reefs
-	//			modifiedDroneSoln->cluster = clusters.second;
-	//			this->droneSolns.push_back(modifiedDroneSoln);
-	//		}
-	//		else {
-	//			// Use the original route if no replacement is provided
-	//			this->droneSolns.push_back(new DroneSoln(*other.droneSolns[i]));
-	//		}
-	//	}
-	//}
 
 	const int ID;
 	/*const*/ MSSoln msSoln;

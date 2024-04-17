@@ -19,7 +19,7 @@ void sensitivity() {
 ///////////////////////////////////
 
 /// <summary>
-/// 
+///
 /// </summary>
 /// <param name="soln_current"></param>
 /// <param name="best_dists"></param>
@@ -41,35 +41,39 @@ FullSoln BaseSwapRun(FullSoln soln_current, vector<double>& best_dists, int run_
 	printf("\n\t\tNEW_Swap distance:\t%.2f\n", best_dists.back());
 
 	//\\//\\//\\//  csv print (if solution updated)  //\\//\\//\\//
-	//if (csv_print && best_dist.back() != best_dist.at(best_dist.size() - 2)) { 
+	if (csv_print /*&& best_dists.back() != best_dists.at(best_dists.size() - 2)*/) { 
 	csvPrints(best, "FINAL", run_iteration);
-	//}
+	}
 	return best;
 }
 
-vector<FullSoln> FullRun(const int& iter) {
+vector<FullSoln> FullRun(const int& iter, Problem inst) {
 	//\\//\\//\\//\\  ClusterSoln Construction  //\\//\\//\\//
 	vector<ClusterSoln*> clusters = kMeansConstrained(inst.kMeansIters);
+	
 	if (print_detail) printClusters(clusters);		// PRINT clusters //
-	//string run_path;
+
 	if (csv_print) {
 		createFolder();
-		/*run_path = */createRunFolder(iter);
+		createRunFolder(iter);
 	}
 	//if (csv_print) csvPrintClusters(clusters, "clusters_init");		// CSV PRINT clusters //
-	//\\//\\//\\//\\  ClusterSoln Initialised \\//\\//\\//\\//
 	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\	
+	//\\//\\//\\//\\  ClusterSoln Initialised \\//\\//\\//\\//
+
 	//\\//\\//\\//\\//  MsSoln Construction //\\//\\//\\//\\//
 	MSSoln msSoln(clusters);				// No launchPts initialised yet
-	vector<pair<double, MSSoln>> msSolns = initMsSoln(clusters, msSoln, print_detail/*, csv_print*/);
-	//\\//\\//\\//\\/   MsSoln Initialised   /\\//\\//\\//\\//
+	vector<pair<double, MSSoln>> msSolns = initMsSoln(clusters, msSoln, print_detail);
 	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
+	//\\//\\//\\//\\/   MsSoln Initialised   /\\//\\//\\//\\//
+
 	//\\//\\//\\//\\  DroneSoln Construction  \\//\\//\\//\\/
 	vector<DroneSoln> droneSolns = initDroneSoln(msSoln, print_detail);
 	vector<DroneSoln*> ptr_droneSolns;
 	for (const auto& soln : droneSolns) { ptr_droneSolns.push_back(new DroneSoln(soln)); } // Assuming DroneSoln has a copy constructor
-	//\\//\\//\\//\   DroneSoln Initialised   \//\\//\\//\\//		
 	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
+	//\\//\\//\\//\   DroneSoln Initialised   \//\\//\\//\\//		
+
 	//\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
 	FullSoln full_init(msSoln, ptr_droneSolns);
 	printf("Full Soln Dist:\t%.2f", full_init.getTotalDist(print_detail));
@@ -81,8 +85,8 @@ vector<FullSoln> FullRun(const int& iter) {
 	vector<FullSoln> fullSolns;
 	fullSolns.push_back(full_init);
 	vector<double> best_dist{ fullSolns.back().getTotalDist() };			// initialise best_dist as vector with best solution distance	
-	//\\//\\//\\//\\   FullSoln Initialised   \\//\\//\\//\\//		
 	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
+	//\\//\\//\\//\\   FullSoln Initialised   \\//\\//\\//\\//		
 
 	fullSolns.push_back(
 		BaseSwapRun(fullSolns.back(), best_dist, iter)
@@ -94,37 +98,63 @@ vector<FullSoln> FullRun(const int& iter) {
 ///////////////////////////////////
 //// inst_based
 
-// Function to find factors of a number
-vector<int> findFactors(int number, int low=1, int high=INT_MAX) {
-	if (high == INT_MAX) high = number;
+//// Function to find factors of a number
+//vector<int> findFactors(int number, int low=1, int high=INT_MAX) {
+//	if (high == INT_MAX) high = number;
+//	vector<int> factors;
+//	// Loop from 1 to the number
+//	for (int i = low; i <= high; ++i) { 
+//		if (number % i == 0) { 
+//			factors.push_back(i); 
+//		} 
+//	}  // If i divides number with 0 remainder, i is a factor of number
+//	return factors;
+//}
+
+vector<int> Factors(int num) {
 	vector<int> factors;
-	// Loop from 1 to the number
-	for (int i = low; i <= high; ++i) { 
-		if (number % i == 0) { factors.push_back(i); } 
-	}  // If i divides number with 0 remainder, i is a factor of number
+	for (int i = 2; i <= num/2; ++i) {
+		if (num % i == 0) {
+			factors.push_back(i);
+		}	// If i divides num with 0 remainder, i is a factor of num
+	}
 	return factors;
 }
 
-void VaryInst() {
+void VaryNum_droneXclust() {
+	int total_drone_routes = inst.reefs.size()/inst.get_dCap();
+	vector<int> factors = Factors(total_drone_routes);
+	vector<pair<int,int>> factors_pairs;
+	for (int f : factors) {
+		factors_pairs.push_back(make_pair(f, total_drone_routes / f));
+	}
+	for (int i = 0; i < factors_pairs.size(); i++) {
+		int num_clust = factors_pairs[i].first;
+		int num_drone = factors_pairs[i].second;
+		Problem sens_inst = CreateInst(inst.reefs.size(), num_clust, num_drone, inst.get_dCap());
+		vector<FullSoln> fullSolns = FullRun(i, sens_inst);
+	}
+
 	return;
 }
+
+///////////////////////////////////
+///////////////////////////////////
 
 Problem VaryInstSize(int inst_size) {
 	return CreateInst(inst_size);
 }
 
-void VaryNumClust(int inst_size) {
-	vector<int> factors = findFactors(inst_size);
-
-	for (int f : factors) {
-		;
-	}
-
+void VaryInst() {
+	// call varyNum_droneXclust() for each instance size
 	return;
 }
-void VaryNumDrones() {
-	return;
-}
+
+///////////////////////////////////
+///////////////////////////////////
+///////////////////////////////////
+///////////////////////////////////
+
 void VaryDroneCap() {
 	return;
 }

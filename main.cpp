@@ -5,8 +5,8 @@ using namespace std;
 #include <utility>
 #include "class_prob.h"
 
-bool csv_print = 1;
-bool print_detail = 0;
+bool csv_print = 0;
+bool print_detail = 1;
 
 int Pt::count = 0;
 //Pt depot = Pt(0, 0);		// depot must be first point initialised! ID = 0
@@ -29,7 +29,7 @@ int Pt::count = 0;
 // create GLOBAL instance of problem
 const Problem inst =
 //CreateInst(100, 5, 5, 4, make_pair(2,1), Pt(0, 0), pow(10, 0));
-	CreateInst(48, 4,  4, 3, make_pair(1, 1), Pt(0, 0), 1); //  Base case instance!
+	CreateInst(48, 4,  4, 3, make_pair(2, 1), Pt(0, 0), 1); //  Base case instance!
 	//	no_pts, noClust, noDrones, dCap, make_pair(w_ms, w_d));
 
 ///////////////// Problem Initialised /////////////////
@@ -58,7 +58,7 @@ int main()
 	printSetup(inst);		// print problem setup
 
 	vector<vector<FullSoln>> fullSolns;
-	int iter = 10;
+	int iter = 1;
 	for (int i = 0; i < iter; i++) {
 		fullSolns.push_back(
 			FullRun(i, inst)

@@ -6,7 +6,7 @@ using namespace std;
 #include "class_prob.h"
 
 bool csv_print = 0;
-bool print_detail = 1;
+bool print_detail = 0;
 
 int Pt::count = 0;
 //Pt depot = Pt(0, 0);		// depot must be first point initialised! ID = 0
@@ -52,8 +52,10 @@ int FullSoln::count = 0;
 
 int main()
 {
-
-	vector<int> f = Factors(12);
+	vector <pair < pair<int, int>, pair<double, FullSoln> >> results  =
+		VaryNum_droneXclust();
+	
+	
 	if (checkParameters(inst) == false) return 0;		// check if parameters are valid
 	printSetup(inst);		// print problem setup
 

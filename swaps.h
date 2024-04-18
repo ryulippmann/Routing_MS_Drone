@@ -127,7 +127,7 @@ pair<DroneSoln, DroneSoln> random_d_out_Swap(pair<DroneSoln, DroneSoln> drones, 
 /// <param name="iteration"></param>
 /// <param name="print">= False</param>
 /// <returns></returns>
-FullSoln OUT_ClusterSwaps(FullSoln soln/*, int iteration*//*vector<int> randoms, */, bool print = false) {
+FullSoln OUT_ClusterSwaps(Problem inst, FullSoln soln/*, int iteration*//*vector<int> randoms, */, bool print = false) {
     if (print) printf("---- OUT_Swap ----");
     pair<int, int> c = randSwapChoice(soln.msSoln.clusters.size()/*, iteration*/);    // generate swap pair of clusters
     if (print) printf("\nSwap clusters:\t\t%d\tand\t%d", c.first, c.second);
@@ -161,8 +161,8 @@ FullSoln OUT_ClusterSwaps(FullSoln soln/*, int iteration*//*vector<int> randoms,
         dMatrix = make_pair(droneSolns[c.first]->cluster.getdMatrix(make_pair(launchPts[c.first], launchPts[c.first + 1])),
                             droneSolns[c.second]->cluster.getdMatrix(make_pair(launchPts[c.second], launchPts[c.second + 1])));
     pair <vector<vector<Pt*>>, vector<vector<Pt*>>>         // update routes with Gd before assessing solution
-        routes = make_pair( greedyDroneCluster(drones.first, dMatrix.first),
-                            greedyDroneCluster(drones.second, dMatrix.second));
+        routes = make_pair( greedyDroneCluster(drones.first, inst.get_dCap(), dMatrix.first),
+                            greedyDroneCluster(drones.second, inst.get_dCap(), dMatrix.second));
     droneSolns[c.first]->routes = routes.first;            // update clusters with new routes
     droneSolns[c.second]->routes = routes.second;
 
@@ -210,7 +210,7 @@ void random_d_in_Swap(DroneSoln& drone, /*int iteration, */bool swap_print = fal
 /// <param name="iteration"></param>
 /// <param name="print"></param>
 /// <returns></returns>
-FullSoln IN_ClusterSwaps(FullSoln soln, /*int iteration, *//*vector<int> randoms, */bool print = false) {
+FullSoln IN_ClusterSwaps(Problem inst, FullSoln soln, /*int iteration, *//*vector<int> randoms, */bool print = false) {
     vector<vector<Pt*>> routes;
     int c;
 
@@ -229,7 +229,7 @@ FullSoln IN_ClusterSwaps(FullSoln soln, /*int iteration, *//*vector<int> randoms
         ClusterSoln* cluster = soln.msSoln.clusters[c];
         pair<Pt*, Pt*> launchPts = make_pair(soln.msSoln.launchPts[c], soln.msSoln.launchPts[c + 1]);
         vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
-        routes = greedyDroneCluster(*soln.droneSolns[c], dMatrix);                // Run greedy 2-Opt on routes
+        routes = greedyDroneCluster(*soln.droneSolns[c], inst.get_dCap(), dMatrix);                // Run greedy 2-Opt on routes
     }
     FullSoln new_soln = FullSoln(soln, routes, c);
         if (print) { printf("\nOriginal route:\t%.2f\n", soln.getTotalDist());
@@ -251,7 +251,7 @@ FullSoln IN_ClusterSwaps(FullSoln soln, /*int iteration, *//*vector<int> randoms
 /// <param name="csv_print"></param>
 /// <param name="SA_print"></param>
 /// <returns></returns>
-FullSoln SwapRandomly(const FullSoln soln_prev_best, SAparams sa_params, int run_iteration,
+FullSoln SwapRandomly(Problem inst, const FullSoln soln_prev_best, SAparams sa_params, int run_iteration,
     //int num_iterations = 10000, double initial_temperature = 200, double cooling_rate = 0.999,
     bool print_stats = false, bool csv_print = false, bool SA_print = true) {   //in_out = 1; // 0 = OUT, 1 = IN
     printf("\n\n---------- RANDOM IN/OUT Cluster Swaps - Simulated Annealing ----------\n");
@@ -272,11 +272,11 @@ FullSoln SwapRandomly(const FullSoln soln_prev_best, SAparams sa_params, int run
         FullSoln proposed = incumbent;
         bool in_out = rand() % 2;       // randomly choose IN or OUT cluster swap
         if (in_out) {
-            proposed = IN_ClusterSwaps(incumbent, /*iter_num, *//*randomness, */print_stats);
+            proposed = IN_ClusterSwaps(inst, incumbent, /*iter_num, *//*randomness, */print_stats);
             //in_swaps += 1;
 		}
 		else {
-            proposed = OUT_ClusterSwaps(incumbent, /*iter_num, *//*randomness, */print_stats);
+            proposed = OUT_ClusterSwaps(inst, incumbent, /*iter_num, *//*randomness, */print_stats);
             //out_swaps += 1;
 		}
 

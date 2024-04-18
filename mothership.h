@@ -282,8 +282,11 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
         }
 
         vector <ClusterSoln*> temp_clust;
+        //find min ID of all clusters
+        int min_ID = INT_MAX;
+        for(const auto& clust : clusters) { min_ID = min(min_ID, clust->ID); }
         for (int i = 1; i < clusters.size() + 1; i++) {
-            temp_clust.push_back(clusters[findClusterByID(oriented_vector[i] - 1, clusters)]);
+            temp_clust.push_back(clusters[findClusterByID(oriented_vector[i] + min_ID - 1, clusters)]);
 	    }
         msSoln.clusters = temp_clust;                        // UPDATE CLUSTER ORDER
     } else if (print) { printf("\tNO IMPROVEMENT\n"); }//else

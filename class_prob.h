@@ -140,7 +140,6 @@ public:
 		}
 		return dMatrix;
 	}
-	
 };
 
 /// <summary>
@@ -168,8 +167,13 @@ Problem CreateInst(	int no_pts = 48,/*100;*/int noClust = 4, /*5;*/
 					int noDrones = 4,		int dCap = 3,
 					pair<double, double> weights = make_pair(1,1), //= make_pair(1,1)
 					Pt depot = Pt(0,0),		int kMeansIters = pow(10,2))	{
-	Problem inst = Problem(initReefs(no_pts), noClust, depot, noDrones, dCap, weights, kMeansIters);
-	if (checkParameters(inst)) return inst;
+		Problem inst = Problem(initReefs(no_pts), noClust, depot, noDrones, dCap, weights, kMeansIters);
+		if (checkParameters(inst)) return inst;
+}
+
+Problem CreateInst(Problem inst_ex, int noClust, int noDrones) {
+	Problem inst = Problem(inst_ex.reefs, noClust, inst_ex.getDepot(), noDrones, inst_ex.get_dCap(), inst_ex.weights, inst_ex.kMeansIters);
+		if (checkParameters(inst)) return inst;
 }
 
 void printSetup(Problem inst) {

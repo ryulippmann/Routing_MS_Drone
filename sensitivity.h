@@ -24,9 +24,9 @@ void sensitivity() {
 /// <param name="soln_current"></param>
 /// <param name="best_dists"></param>
 /// <returns></returns>
-FullSoln BaseSwapRun(FullSoln soln_current, vector<double>& best_dists, int run_iteration) {
+FullSoln BaseSwapRun(Problem inst, FullSoln soln_current, vector<double>& best_dists, int run_iteration) {
 	//SAparams                  (num_iter, init_temp, cooling_rate)
-	int num_iter = 50000;//100000;//25000;//10000;               // fixed at 10000
+	int num_iter = 1000;//50000;//100000;//25000;               // fixed at 10000
 	double init_temp = 0.2 * soln_current.getTotalDist();
 	//double temp_diff = pow(10, -4);
 	//double final_temp = init_temp * temp_diff;//pow(10, -5);
@@ -34,7 +34,7 @@ FullSoln BaseSwapRun(FullSoln soln_current, vector<double>& best_dists, int run_
 	double cooling_rate = 0.9995;//0.99975;//
 
 	//\\//\\//\\//  Randomly run IN/OUT Swaps   //\\//\\//\\//
-	FullSoln best = SwapRandomly(soln_current, SAparams(num_iter, init_temp, cooling_rate), run_iteration, 
+	FullSoln best = SwapRandomly(inst, soln_current, SAparams(num_iter, init_temp, cooling_rate), run_iteration, 
 		print_detail, csv_print);
 	printf("\nPrev Dist: \t\t%.2f", best_dists.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
 	best_dists.push_back(best.getTotalDist());
@@ -49,8 +49,11 @@ FullSoln BaseSwapRun(FullSoln soln_current, vector<double>& best_dists, int run_
 
 vector<FullSoln> FullRun(const int& iter, Problem inst) {
 	//\\//\\//\\//\\  ClusterSoln Construction  //\\//\\//\\//
-	vector<ClusterSoln*> clusters = kMeansConstrained(inst.kMeansIters);
-	
+	vector<ClusterSoln*> clusters = kMeansConstrained(inst.kMeansIters, inst.getReefPointers(), inst.ms.cap);
+	//int maxIterations = inst.kMeansIters;
+	//vector<Pt*> points = inst.getReefPointers();
+	//const int numClusters = inst.ms.cap;
+
 	if (print_detail) printClusters(clusters);		// PRINT clusters //
 
 	if (csv_print) {
@@ -68,7 +71,7 @@ vector<FullSoln> FullRun(const int& iter, Problem inst) {
 	//\\//\\//\\//\\/   MsSoln Initialised   /\\//\\//\\//\\//
 
 	//\\//\\//\\//\\  DroneSoln Construction  \\//\\//\\//\\/
-	vector<DroneSoln> droneSolns = initDroneSoln(msSoln, print_detail);
+	vector<DroneSoln> droneSolns = initDroneSoln(inst, msSoln, print_detail);
 	vector<DroneSoln*> ptr_droneSolns;
 	for (const auto& soln : droneSolns) { ptr_droneSolns.push_back(new DroneSoln(soln)); } // Assuming DroneSoln has a copy constructor
 	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
@@ -89,7 +92,7 @@ vector<FullSoln> FullRun(const int& iter, Problem inst) {
 	//\\//\\//\\//\\   FullSoln Initialised   \\//\\//\\//\\//		
 
 	fullSolns.push_back(
-		BaseSwapRun(fullSolns.back(), best_dist, iter)
+		BaseSwapRun(inst, fullSolns.back(), best_dist, iter)
 	);
 
 	return fullSolns;
@@ -97,19 +100,6 @@ vector<FullSoln> FullRun(const int& iter, Problem inst) {
 
 ///////////////////////////////////
 //// inst_based
-
-//// Function to find factors of a number
-//vector<int> findFactors(int number, int low=1, int high=INT_MAX) {
-//	if (high == INT_MAX) high = number;
-//	vector<int> factors;
-//	// Loop from 1 to the number
-//	for (int i = low; i <= high; ++i) { 
-//		if (number % i == 0) { 
-//			factors.push_back(i); 
-//		} 
-//	}  // If i divides number with 0 remainder, i is a factor of number
-//	return factors;
-//}
 
 vector<int> Factors(int num) {
 	vector<int> factors;
@@ -121,7 +111,8 @@ vector<int> Factors(int num) {
 	return factors;
 }
 
-void VaryNum_droneXclust() {
+vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_droneXclust() {
+	vector<vector<FullSoln>> fullSolns;
 	int total_drone_routes = inst.reefs.size()/inst.get_dCap();
 	vector<int> factors = Factors(total_drone_routes);
 	vector<pair<int,int>> factors_pairs;
@@ -131,11 +122,18 @@ void VaryNum_droneXclust() {
 	for (int i = 0; i < factors_pairs.size(); i++) {
 		int num_clust = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
-		Problem sens_inst = CreateInst(inst.reefs.size(), num_clust, num_drone, inst.get_dCap());
-		vector<FullSoln> fullSolns = FullRun(i, sens_inst);
+		Problem sens_inst = CreateInst(inst, num_clust, num_drone);
+		fullSolns.push_back(FullRun(i, sens_inst));
 	}
-
-	return;
+	//vector<double> dists;
+	//for (int i = 0; i < fullSolns.size(); i++) {
+	//	dists.push_back(fullSolns[i].back().getTotalDist());
+	//}
+	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
+	for (int i = 0; i < fullSolns.size(); i++) {
+		results.push_back(make_pair(factors_pairs[i], make_pair(fullSolns[i].back().getTotalDist(), fullSolns[i].back())));
+	}
+	return results;
 }
 
 ///////////////////////////////////

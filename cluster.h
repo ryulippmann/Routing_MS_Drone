@@ -31,12 +31,13 @@ void randomSwapClusters(vector<Pt*>& clust_a, vector<Pt*>& clust_b, const pair<d
     return;
 }
 
-vector<ClusterSoln*> kMeansConstrained(int maxIterations = 1000, 
+vector<ClusterSoln*> kMeansConstrained(int maxIterations, vector<Pt*> points, const int numClusters,
+    //Problem inst,
     bool clusterPrint = false, int randomSeed = 12345) { //10^6 iter ~ 8-9 sec. 10^7 iter ~ 3 mins
     if (clusterPrint) cout << "\n---- kMEANS CONSTRAINED ----\n";
-    
-    vector<Pt*> points = inst.getReefPointers();
-    const int numClusters = inst.ms.cap;
+    //int maxIterations = inst.kMeansIters;
+    //vector<Pt*> points = inst.getReefPointers();
+    //const int numClusters = inst.ms.cap;
     int numPoints = points.size();
     // Check if desired cluster size is feasible
     if (numPoints % numClusters != 0) { throw invalid_argument("Clusters don't divide evenly..."); }

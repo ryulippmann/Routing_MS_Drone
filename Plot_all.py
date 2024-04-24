@@ -5,24 +5,10 @@ import datetime
 import os
 import re
 
-path = 'outputs/24-03-28_10-22-36/'
-
-cluster_soln = True
-cluster_path =      path + 'clusters_init'+'.csv'
-# 'clusters/'+    '24-03-22_13-57-55 clusters_init'               +'.csv'
-ms_soln = True
-path += '24-03-28_10-33-50_Full_FINAL/'
-ms_path =           path + 'ms_route.csv'
-# 'ms_route/'+    '24-03-22_14-00-48 ms_launch_route_fullSoln'    +'.csv'
-launchpts_path =    path + 'launchPts.csv'
-# 'launchPts/'+   '24-03-22_14-00-47 launchPts_fullSoln'          +'.csv'
-drone_soln = True
-d_path =            path + 'drone_routes.csv'
-# 'd_route/'+     '24-03-22_14-00-48 drone_routes'            +'.csv'
+path = 'outputs/24-04-05_14-28-43/'
 
 print_plt = True
-save_plt = True
-
+save_plt = False
 
 def plot_clusters(csv_file, print_plt, save_plt):
     # Read CSV file and extract data
@@ -69,9 +55,6 @@ def plot_clusters(csv_file, print_plt, save_plt):
     # Annotate with kMeansIters
     plt.annotate(f'kMeansIters: {kmeans_iters}', xy=(0.95, 0.05), xycoords='axes fraction', ha='right', va='top', fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
 
-    # plt.title('Reefs Clustered by Cluster ID')
-    # plt.xlabel('X')
-    # plt.ylabel('Y')
     plt.legend(loc='upper right')    # Show the legend in top right corner
     plt.grid(True)
 
@@ -242,21 +225,35 @@ def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, w_d, color = 'r
 
 dist_total = 0
 
-if cluster_soln: nodes, w_ms, w_d = plot_clusters(      cluster_path, print_plt, save_plt)
+cluster_soln = False
+ms_soln = False
+drone_soln = False
 
-print("\nNo clusters: "+str(max([sublist[-1] for sublist in nodes])+1))
-
-if ms_soln: 
-    if (max([sublist[-1] for sublist in nodes])>0):
-        launchpts = get_launchpts(launchpts_path)     # launchpts returns a dictionary of launch points by ID = (x, y)
-    # c_gd = 'k'
-    dist_total +=       w_ms *  plot_MS_route(ms_path, print_plt, save_plt, w_ms)
-    # c_nn = 'k'
-    # dist_drones_nn = plot_MS_route('ms_route/24-03-14_15-32-32 ms_launch_route_NN.csv', c_nn)
-    # plt.annotate(f'Drones_dist_NN = {dist_drones_nn}', xy=(0.01, 0.85), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = c_gd, fontweight='bold')
-
-if drone_soln: 
-    # c_d_gd = 'r'
-    dist_total +=       w_d *   plot_drones(d_path, nodes, launchpts, print_plt, save_plt, w_d)
+for folder in os.listdir(path):
+    if os.path.isdir(os.path.join(path, folder)):
+        folder_path = os.path.join(path, folder)
+        print(folder_path)
+        for subfolder in os.listdir(folder_path):
+            dist_total = 0
+            if subfolder.endswith("_Full_INIT") or subfolder.endswith("_Full_FINAL"):
+                iterpath = os.path.join(folder_path, subfolder)
+                for file in os.listdir(iterpath):
+                    if file.endswith(".csv"):
+                        if file.startswith('clusters'): 
+                            cluster_path = os.path.join(iterpath, file)
+                            cluster_soln = True
+                        if file.startswith('ms_route'): 
+                            ms_path = os.path.join(iterpath, file)
+                            ms_soln = True
+                        elif file.startswith('launchPts'): 
+                            launchpts_path = os.path.join(iterpath, file)
+                        elif file.startswith('drone_routes'): 
+                            d_path = os.path.join(iterpath, file)
+                            drone_soln = True
+                nodes, w_ms, w_d = plot_clusters(      cluster_path, print_plt, save_plt)
+                print("\nNo clusters: "+str(max([sublist[-1] for sublist in nodes])+1))
+                if (max([sublist[-1] for sublist in nodes])>0): launchpts = get_launchpts(launchpts_path)
+                dist_total +=       w_ms *  plot_MS_route(ms_path, print_plt, save_plt, w_ms)
+                dist_total +=       w_d *   plot_drones(d_path, nodes, launchpts, print_plt, save_plt, w_d)
 
 print("End of Plot_clusters.py")

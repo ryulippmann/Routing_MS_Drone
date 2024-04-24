@@ -149,9 +149,12 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_droneXclust() {
 /// </returns>
 vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryDrones() {
 	vector<vector<FullSoln>> fullSolns;
+	vector<pair<int, int>> factors_pairs;
+	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
+
 	int pts_in_clust = inst.reefs.size() / inst.getnumClusters();
 	vector<int> factors = Factors(pts_in_clust);
-	vector<pair<int, int>> factors_pairs;
+
 	for (int f : factors) {
 		factors_pairs.push_back(make_pair(f, pts_in_clust / f));
 	}
@@ -161,7 +164,6 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryDrones() {
 		Problem sens_inst = CreateInst(inst, inst.getnumClusters(), num_drone, dCap);
 		fullSolns.push_back(FullRun(i, sens_inst));
 	}
-	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
 	for (int i = 0; i < fullSolns.size(); i++) {
 		double dist = fullSolns[i].back().getTotalDist();
 		results.push_back(make_pair(factors_pairs[i], make_pair(dist, fullSolns[i].back())));
@@ -171,8 +173,43 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryDrones() {
 
 ///////////////////////////////////
 
-void VaryWeights() {
-	return;
+/// <summary>
+/// vary weights by a factor of 2, sens_iter times
+/// </summary>
+/// <param name="w_ms"></param>
+/// <param name="w_d"></param>
+/// <param name="sens_iter"></param>
+/// <returns>
+/// results of varying weights as vector of pairs: (ms weight and d weight, and total_dist of solution)
+/// </returns>
+vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryWeights(double w_ms, double w_d, int sens_iter) {
+
+	vector<vector<FullSoln>> fullSolns;
+	vector<pair<int, int>> weighting_pairs;
+	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
+
+	double w_ms_min = w_ms * pow(2, -1	* (sens_iter));
+	double w_ms_max = w_ms * pow(2, 1	* (sens_iter));
+	double w_d_min = w_d *	pow	(2, -1	* (sens_iter));
+	double w_d_max = w_d *	pow	(2, 1	* (sens_iter));
+	int iterations = 2 * sens_iter + 1; 
+
+	for (double ms = w_ms_min; ms <= w_ms_max; ms *= 2) {
+		for (double d = w_d_min; d <= w_d_max; d *= 2) {
+			weighting_pairs.push_back(make_pair(static_cast<int>(ms), static_cast<int>(d)));
+		}
+	}
+
+	for (int i = 0; i < weighting_pairs.size(); i++) {
+		Problem sens_inst = CreateInst(inst, weighting_pairs[i]);
+		fullSolns.push_back(FullRun(i, sens_inst));
+	}
+	for (int i = 0; i < fullSolns.size(); i++) {
+		double dist = fullSolns[i].back().getTotalDist();
+		results.push_back(make_pair(weighting_pairs[i], make_pair(dist, fullSolns[i].back())));
+	}
+
+	return results;
 }
 
 ///////////////////////////////////

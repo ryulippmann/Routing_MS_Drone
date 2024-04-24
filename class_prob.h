@@ -176,6 +176,11 @@ Problem CreateInst(Problem inst_ex, int noClust, int noDrones, int dCap) {
 		if (checkParameters(inst)) return inst;
 }
 
+Problem CreateInst(Problem inst_ex, pair<double, double> weights) {
+	Problem inst = Problem(inst_ex.reefs, inst_ex.getnumClusters(), inst_ex.getDepot(), inst_ex.getnumDrones(), inst_ex.get_dCap(), weights, inst_ex.kMeansIters);
+		if (checkParameters(inst)) return inst;
+}
+
 void printSetup(Problem inst) {
 	printf("Problem inst:\n");
 	printf("Depot:\t\t\t(%.2f, %.2f)\n", inst.getDepot().x, inst.getDepot().y);

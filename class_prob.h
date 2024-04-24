@@ -171,8 +171,8 @@ Problem CreateInst(	int no_pts = 48,/*100;*/int noClust = 4, /*5;*/
 		if (checkParameters(inst)) return inst;
 }
 
-Problem CreateInst(Problem inst_ex, int noClust, int noDrones) {
-	Problem inst = Problem(inst_ex.reefs, noClust, inst_ex.getDepot(), noDrones, inst_ex.get_dCap(), inst_ex.weights, inst_ex.kMeansIters);
+Problem CreateInst(Problem inst_ex, int noClust, int noDrones, int dCap) {
+	Problem inst = Problem(inst_ex.reefs, noClust, inst_ex.getDepot(), noDrones, dCap, inst_ex.weights, inst_ex.kMeansIters);
 		if (checkParameters(inst)) return inst;
 }
 

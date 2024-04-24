@@ -111,6 +111,12 @@ vector<int> Factors(int num) {
 	return factors;
 }
 
+/// <summary>
+/// given number of pts and dCap
+/// </summary>
+/// <returns>
+/// vector of pairs: (number of clusters and drones, and total_dist of solution)
+/// </returns>
 vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_droneXclust() {
 	vector<vector<FullSoln>> fullSolns;
 	int total_drone_routes = inst.reefs.size()/inst.get_dCap();
@@ -122,18 +128,51 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_droneXclust() {
 	for (int i = 0; i < factors_pairs.size(); i++) {
 		int num_clust = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
-		Problem sens_inst = CreateInst(inst, num_clust, num_drone);
+		Problem sens_inst = CreateInst(inst, num_clust, num_drone, inst.get_dCap());
 		fullSolns.push_back(FullRun(i, sens_inst));
 	}
-	//vector<double> dists;
-	//for (int i = 0; i < fullSolns.size(); i++) {
-	//	dists.push_back(fullSolns[i].back().getTotalDist());
-	//}
 	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
 	for (int i = 0; i < fullSolns.size(); i++) {
-		results.push_back(make_pair(factors_pairs[i], make_pair(fullSolns[i].back().getTotalDist(), fullSolns[i].back())));
+		double dist = fullSolns[i].back().getTotalDist();
+		results.push_back(make_pair(factors_pairs[i], make_pair(dist, fullSolns[i].back())));
 	}
 	return results;
+}
+
+///////////////////////////////////
+
+/// <summary>
+/// given number of pts and num_clust
+/// </summary>
+/// <returns>
+/// vector of pairs: (dCap and number of drones, and total_dist of solution)
+/// </returns>
+vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryDrones() {
+	vector<vector<FullSoln>> fullSolns;
+	int pts_in_clust = inst.reefs.size() / inst.getnumClusters();
+	vector<int> factors = Factors(pts_in_clust);
+	vector<pair<int, int>> factors_pairs;
+	for (int f : factors) {
+		factors_pairs.push_back(make_pair(f, pts_in_clust / f));
+	}
+	for (int i = 0; i < factors.size(); i++) {
+		int dCap = factors_pairs[i].first;
+		int num_drone = factors_pairs[i].second;
+		Problem sens_inst = CreateInst(inst, inst.getnumClusters(), num_drone, dCap);
+		fullSolns.push_back(FullRun(i, sens_inst));
+	}
+	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
+	for (int i = 0; i < fullSolns.size(); i++) {
+		double dist = fullSolns[i].back().getTotalDist();
+		results.push_back(make_pair(factors_pairs[i], make_pair(dist, fullSolns[i].back())));
+	}
+	return results;
+}
+
+///////////////////////////////////
+
+void VaryWeights() {
+	return;
 }
 
 ///////////////////////////////////
@@ -144,19 +183,12 @@ Problem VaryInstSize(int inst_size) {
 }
 
 void VaryInst() {
-	// call varyNum_droneXclust() for each instance size
 	return;
 }
 
 ///////////////////////////////////
 ///////////////////////////////////
 ///////////////////////////////////
-///////////////////////////////////
-
-void VaryDroneCap() {
-	return;
-}
-
 ///////////////////////////////////
 
 void VaryClusterBunching() {
@@ -179,17 +211,7 @@ void VarySwapIters() {
 	return;
 }
 
-void VarySwapTypeProb() {
-	return;
-}
-
-void VarykMeansIters() {
-	return;
-}
-
-///////////////////////////////////
-
-void VaryWeights() {
-	return;
-}
+//void VarySwapTypeProb() {
+//	return;
+//}
 

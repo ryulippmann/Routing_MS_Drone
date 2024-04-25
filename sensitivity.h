@@ -50,9 +50,6 @@ FullSoln BaseSwapRun(Problem inst, FullSoln soln_current, vector<double>& best_d
 vector<FullSoln> FullRun(const int& iter, Problem inst) {
 	//\\//\\//\\//\\  ClusterSoln Construction  //\\//\\//\\//
 	vector<ClusterSoln*> clusters = kMeansConstrained(inst.kMeansIters, inst.getReefPointers(), inst.ms.cap);
-	//int maxIterations = inst.kMeansIters;
-	//vector<Pt*> points = inst.getReefPointers();
-	//const int numClusters = inst.ms.cap;
 
 	if (print_detail) printClusters(clusters);		// PRINT clusters //
 
@@ -60,22 +57,15 @@ vector<FullSoln> FullRun(const int& iter, Problem inst) {
 		createFolder();
 		createRunFolder(iter);
 	}
-	//if (csv_print) csvPrintClusters(clusters, "clusters_init");		// CSV PRINT clusters //
-	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\	
-	//\\//\\//\\//\\  ClusterSoln Initialised \\//\\//\\//\\//
 
 	//\\//\\//\\//\\//  MsSoln Construction //\\//\\//\\//\\//
 	MSSoln msSoln(clusters);				// No launchPts initialised yet
 	vector<pair<double, MSSoln>> msSolns = initMsSoln(clusters, msSoln, print_detail);
-	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
-	//\\//\\//\\//\\/   MsSoln Initialised   /\\//\\//\\//\\//
 
 	//\\//\\//\\//\\  DroneSoln Construction  \\//\\//\\//\\/
 	vector<DroneSoln> droneSolns = initDroneSoln(inst, msSoln, print_detail);
 	vector<DroneSoln*> ptr_droneSolns;
 	for (const auto& soln : droneSolns) { ptr_droneSolns.push_back(new DroneSoln(soln)); } // Assuming DroneSoln has a copy constructor
-	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
-	//\\//\\//\\//\   DroneSoln Initialised   \//\\//\\//\\//		
 
 	//\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
 	FullSoln full_init(msSoln, ptr_droneSolns);
@@ -88,8 +78,6 @@ vector<FullSoln> FullRun(const int& iter, Problem inst) {
 	vector<FullSoln> fullSolns;
 	fullSolns.push_back(full_init);
 	vector<double> best_dist{ fullSolns.back().getTotalDist() };			// initialise best_dist as vector with best solution distance	
-	//\\    \\//    //\\    \\//    //\\    \\//    //\\    \\
-	//\\//\\//\\//\\   FullSoln Initialised   \\//\\//\\//\\//		
 
 	fullSolns.push_back(
 		BaseSwapRun(inst, fullSolns.back(), best_dist, iter)
@@ -174,32 +162,30 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryDrones() {
 ///////////////////////////////////
 
 /// <summary>
-/// vary weights by a factor of 2, sens_iter times
+/// vary weights by a factor of 2, sens_iter times. variant in comments by 10% increments
 /// </summary>
 /// <param name="w_ms"></param>
 /// <param name="w_d"></param>
-/// <param name="sens_iter"></param>
+/// <param name="sens_iter"></param> number of variation iterations below & above base weights
 /// <returns>
 /// results of varying weights as vector of pairs: (ms weight and d weight, and total_dist of solution)
 /// </returns>
 vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryWeights(double w_ms, double w_d, int sens_iter) {
-
 	vector<vector<FullSoln>> fullSolns;
 	vector<pair<int, int>> weighting_pairs;
 	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
 
-	double w_ms_min = w_ms * pow(2, -1	* (sens_iter));
-	double w_ms_max = w_ms * pow(2, 1	* (sens_iter));
-	double w_d_min = w_d *	pow	(2, -1	* (sens_iter));
-	double w_d_max = w_d *	pow	(2, 1	* (sens_iter));
-	int iterations = 2 * sens_iter + 1; 
+	double w_ms_min = w_ms * pow(2, -1	* (sens_iter));		// w_ms * (1 - 0.1 * sens_iter);
+	double w_ms_max = w_ms * pow(2, 1	* (sens_iter));		// w_ms * (1 + 0.1 * sens_iter);
+	double w_d_min = w_d *	pow	(2, -1	* (sens_iter));		// w_d * (1 - 0.1 * sens_iter);
+	double w_d_max = w_d *	pow	(2, 1	* (sens_iter));		// w_d * (1 + 0.1 * sens_iter);
+	int iterations = 2 * sens_iter + 1;
 
-	for (double ms = w_ms_min; ms <= w_ms_max; ms *= 2) {
-		for (double d = w_d_min; d <= w_d_max; d *= 2) {
+	for (double ms = w_ms_min; ms <= w_ms_max; ms *= 2) {	// for (double ms = w_ms_min; ms <= w_ms_max; ms += 0.1 * w_ms) {
+		for (double d = w_d_min; d <= w_d_max; d *= 2) {	// for (double d = w_d_min; d <= w_d_max; d += 0.1 * w_d) {
 			weighting_pairs.push_back(make_pair(static_cast<int>(ms), static_cast<int>(d)));
 		}
 	}
-
 	for (int i = 0; i < weighting_pairs.size(); i++) {
 		Problem sens_inst = CreateInst(inst, weighting_pairs[i]);
 		fullSolns.push_back(FullRun(i, sens_inst));
@@ -208,7 +194,6 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryWeights(double w_ms
 		double dist = fullSolns[i].back().getTotalDist();
 		results.push_back(make_pair(weighting_pairs[i], make_pair(dist, fullSolns[i].back())));
 	}
-
 	return results;
 }
 
@@ -235,18 +220,17 @@ void VaryClusterBunching() {
 ///////////////////////////////////
 //// clust_based
 
-void VarySwapIters() {
-	//FullSoln best = SwapRandomly(fullSolns.back(), print_detail, csv_print);
-	//printf("\nPrev Dist: \t\t%.2f", best_dist.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
-	//best_dist.push_back(best.getTotalDist());
-	//printf("\n\t\tNEW_Swap distance:\t%.2f\n", best_dist.back());
-	//// vv fullSolns is not creating new fullSoln objects, but rather just pointing to the same object
-	//fullSolns.push_back(best);
-	//// csv print if solution updated
-	//if (csv_print && best_dist.back() != best_dist.at(best_dist.size() - 2)) { csvPrints(best, "FINAL"); }
-
-	return;
-}
+//void VarySwapIters() {
+//	//FullSoln best = SwapRandomly(fullSolns.back(), print_detail, csv_print);
+//	//printf("\nPrev Dist: \t\t%.2f", best_dist.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
+//	//best_dist.push_back(best.getTotalDist());
+//	//printf("\n\t\tNEW_Swap distance:\t%.2f\n", best_dist.back());
+//	//// vv fullSolns is not creating new fullSoln objects, but rather just pointing to the same object
+//	//fullSolns.push_back(best);
+//	//// csv print if solution updated
+//	//if (csv_print && best_dist.back() != best_dist.at(best_dist.size() - 2)) { csvPrints(best, "FINAL"); }
+//	return;
+//}
 
 //void VarySwapTypeProb() {
 //	return;

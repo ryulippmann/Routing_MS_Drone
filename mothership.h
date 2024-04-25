@@ -94,6 +94,7 @@ vector<vector<double>> setLaunchPts(MSSoln& msSoln, bool print = false) {
     const vector<ClusterSoln*> clusters = msSoln.clusters;
     if (print) printf("\n---- SET LAUNCH POINTS ----\n");
 
+    /*ALT CALCS*/
     ////double w_ms_d = inst.weights.first / (inst.weights.first + inst.weights.second);
     ////vector<Pt*> launchPts;
     ////launchPts.push_back(new Pt(
@@ -124,7 +125,7 @@ vector<vector<double>> setLaunchPts(MSSoln& msSoln, bool print = false) {
 
     double w_ms = inst.weights.first / (inst.weights.first + 2 * inst.weights.second);
     double w_d = inst.weights.second / (inst.weights.first + 2 * inst.weights.second);
-    // this formulation take into account the following destination, and the 'gravity' towards that point
+    // this formulation takes into account the following destination, and the 'gravity' towards that point
     vector<Pt*> launchPts;
     launchPts.push_back(new Pt(
         w_ms * inst.ms.depot.x + 2 * w_d * clusters[0]->getCentroid().x,
@@ -141,7 +142,6 @@ vector<vector<double>> setLaunchPts(MSSoln& msSoln, bool print = false) {
     launchPts.push_back(new Pt(
         w_ms * inst.ms.depot.x + 2 * w_d * launchPts.back()->x,
         w_ms * inst.ms.depot.y + 2 * w_d * launchPts.back()->y));
-
 
     msSoln.launchPts = launchPts;
     vector<vector<double>> dMatrix_launchpt = msSoln.launchPt_dMatrix();
@@ -173,12 +173,10 @@ vector<vector<double>> setLaunchPts(MSSoln& msSoln, bool print = false) {
 	return dMatrix_launchpt;
 }
 
-int findMinIdx(const vector<ClusterSoln*>& clusters) {
-    int min_idx = (*min_element(clusters.begin(), clusters.end(),
-        [](const ClusterSoln* a, const ClusterSoln* b) {
-            return a->ID < b->ID;
-        }))->ID;                    // find min cluster ID to normalise to 0
-	return min_idx;
+int findMinIdx(const vector<ClusterSoln*>& clusters) {    //find min ID of all clusters
+    int min_ID = INT_MAX;
+    for (const auto& clust : clusters) { min_ID = min(min_ID, clust->ID); }
+    return min_ID;
 }
 
 double clusterCentroidNearestNeighbour(MSSoln& msSoln, bool print = true) {
@@ -216,7 +214,7 @@ double clusterCentroidNearestNeighbour(MSSoln& msSoln, bool print = true) {
 }//nearestNeighbour
 
 double greedyMSCluster(MSSoln& msSoln, bool print = true) {
-    if (print) cout << "\n---- GREEDY M/S CLUSTERS ----\n";
+    if (print) printf("\n---- GREEDY M/S CLUSTERS ----\n");
     printf("%.2f\n", msSoln.getDist());
     const vector<ClusterSoln*> clusters = msSoln.clusters;
     int n = clusters.size();
@@ -225,10 +223,10 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
     int min_clust_idx = findMinIdx(clusters);
 
     const vector<vector<double>> centroidMatrix = calc_centMatrix(clusters, min_clust_idx, true);
-    const vector<vector<double>> launchPtMatrix = setLaunchPts(msSoln, print);
+    //const vector<vector<double>> launchPtMatrix = setLaunchPts(msSoln, print);
     // print centroidMatrix
     if (print) {
-		cout << "\n";
+        printf("\n");
 		for (int i = 0; i < centroidMatrix.size(); i++) {
 			for (int j = 0; j < centroidMatrix[i].size(); j++) {
 				printf("\t%.2f", centroidMatrix[i][j]);
@@ -247,7 +245,6 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
     if (print) printf("\n");//\t % .2f", route_dist);
     for (int i = 0; i < centroidMatrix.size() - 1; i++) {
         double ddd = centroidMatrix[i_tour[i]][i_tour[i + 1]];
-            //[i + 1];
         if (print) printf("\t%.2f", ddd);
         route_dist += ddd;
     }//for(i=from_pts)
@@ -277,16 +274,16 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
 
         if (print) {
             printf("\n\t\t");
-            for (const auto& stop : oriented_vector) { cout << "\t" << stop; }
+            for (const auto& stop : oriented_vector) { printf("\t", stop); }
             printf("\n\n");
         }
 
         vector <ClusterSoln*> temp_clust;
-        //find min ID of all clusters
-        int min_ID = INT_MAX;
-        for(const auto& clust : clusters) { min_ID = min(min_ID, clust->ID); }
+        ////find min ID of all clusters
+        //int min_ID = INT_MAX;
+        //for (const auto& clust : clusters) { min_ID = min(min_ID, clust->ID); }
         for (int i = 1; i < clusters.size() + 1; i++) {
-            temp_clust.push_back(clusters[findClusterByID(oriented_vector[i] + min_ID - 1, clusters)]);
+            temp_clust.push_back(clusters[findClusterByID(oriented_vector[i] + min_clust_idx - 1, clusters)]);
 	    }
         msSoln.clusters = temp_clust;                        // UPDATE CLUSTER ORDER
     } else if (print) { printf("\tNO IMPROVEMENT\n"); }//else

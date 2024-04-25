@@ -29,7 +29,7 @@ int Pt::count = 0;
 // create GLOBAL instance of problem
 const Problem inst =
 //CreateInst(100, 5, 5, 4, make_pair(2,1), Pt(0, 0), pow(10, 0));
-	CreateInst(48, 4,  4, 3, make_pair(2, 1), Pt(0, 0), 1); //  Base case instance!
+	CreateInst(48, 4,  4, 3, make_pair(2, 1), Pt(0, 0), 0); //  Base case instance!
 	//	no_pts, noClust, noDrones, dCap, make_pair(w_ms, w_d));
 
 ///////////////// Problem Initialised /////////////////
@@ -52,8 +52,8 @@ int FullSoln::count = 0;
 
 int main()
 {
-	vector <pair < pair<int, int>, pair<double, FullSoln> >> results  =
-		VaryNum_droneXclust();
+	//vector <pair < pair<int, int>, pair<double, FullSoln> >> results  =
+	//	VaryNum_droneXclust();
 	
 	
 	if (checkParameters(inst) == false) return 0;		// check if parameters are valid

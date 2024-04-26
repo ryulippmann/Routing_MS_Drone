@@ -26,7 +26,7 @@ void sensitivity() {
 /// <returns></returns>
 FullSoln BaseSwapRun(Problem inst, FullSoln soln_current, vector<double>& best_dists, int run_iteration) {
 	//SAparams                  (num_iter, init_temp, cooling_rate)
-	int num_iter = 1000;//50000;//100000;//25000;               // fixed at 10000
+	int num_iter = 10000;//50000;//100000;//25000;               // fixed at 10000
 	double init_temp = 0.2 * soln_current.getTotalDist();
 	//double temp_diff = pow(10, -4);
 	//double final_temp = init_temp * temp_diff;//pow(10, -5);
@@ -35,7 +35,7 @@ FullSoln BaseSwapRun(Problem inst, FullSoln soln_current, vector<double>& best_d
 
 	//\\//\\//\\//  Randomly run IN/OUT Swaps   //\\//\\//\\//
 	FullSoln best = SwapRandomly(inst, soln_current, SAparams(num_iter, init_temp, cooling_rate), run_iteration, 
-		print_detail, csv_print);
+								print_detail, csv_print);
 	printf("\nPrev Dist: \t\t%.2f", best_dists.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
 	best_dists.push_back(best.getTotalDist());
 	printf("\n\t\tNEW_Swap distance:\t%.2f\n", best_dists.back());
@@ -47,7 +47,13 @@ FullSoln BaseSwapRun(Problem inst, FullSoln soln_current, vector<double>& best_d
 	return best;
 }
 
-vector<FullSoln> FullRun(const int& iter, Problem inst) {
+/// <summary>
+/// 
+/// </summary>
+/// <param name="iter"></param>
+/// <param name="INST"></param> GLOBAL VARIABLE included to allow for sensitivity changes
+/// <returns></returns>
+vector<FullSoln> FullRun(const int& iter, const Problem inst) {
 	//\\//\\//\\//\\  ClusterSoln Construction  //\\//\\//\\//
 	vector<ClusterSoln*> clusters = kMeansConstrained(inst.kMeansIters, inst.getReefPointers(), inst.ms.cap);
 
@@ -107,7 +113,7 @@ vector<int> Factors(int num) {
 /// </returns>
 vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_droneXclust() {
 	vector<vector<FullSoln>> fullSolns;
-	int total_drone_routes = inst.reefs.size()/inst.get_dCap();
+	int total_drone_routes = INST.reefs.size()/INST.get_dCap();
 	vector<int> factors = Factors(total_drone_routes);
 	vector<pair<int,int>> factors_pairs;
 	for (int f : factors) {
@@ -116,7 +122,7 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_droneXclust() {
 	for (int i = 0; i < factors_pairs.size(); i++) {
 		int num_clust = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
-		Problem sens_inst = CreateInst(inst, num_clust, num_drone, inst.get_dCap());
+		Problem sens_inst = CreateInst(INST, num_clust, num_drone, INST.get_dCap());
 		fullSolns.push_back(FullRun(i, sens_inst));
 	}
 	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
@@ -140,7 +146,7 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryDrones() {
 	vector<pair<int, int>> factors_pairs;
 	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
 
-	int pts_in_clust = inst.reefs.size() / inst.getnumClusters();
+	int pts_in_clust = INST.reefs.size() / INST.getnumClusters();
 	vector<int> factors = Factors(pts_in_clust);
 
 	for (int f : factors) {
@@ -149,7 +155,7 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryDrones() {
 	for (int i = 0; i < factors.size(); i++) {
 		int dCap = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
-		Problem sens_inst = CreateInst(inst, inst.getnumClusters(), num_drone, dCap);
+		Problem sens_inst = CreateInst(INST, INST.getnumClusters(), num_drone, dCap);
 		fullSolns.push_back(FullRun(i, sens_inst));
 	}
 	for (int i = 0; i < fullSolns.size(); i++) {
@@ -187,7 +193,7 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryWeights(double w_ms
 		}
 	}
 	for (int i = 0; i < weighting_pairs.size(); i++) {
-		Problem sens_inst = CreateInst(inst, weighting_pairs[i]);
+		Problem sens_inst = CreateInst(INST, weighting_pairs[i]);
 		fullSolns.push_back(FullRun(i, sens_inst));
 	}
 	for (int i = 0; i < fullSolns.size(); i++) {

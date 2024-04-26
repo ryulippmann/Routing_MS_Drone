@@ -1,15 +1,5 @@
 #pragma once
 
-//// RETURN reefs visited
-//int reefsVisited(const vector<Pt*>& reefs) { 
-//    int visit_count = 0;
-//    vector<bool> visited(reefs.size(), false);
-//    for (int i = 0; i < reefs.size(); i++) {
-//        if (visited[i] == true) { visit_count++; }
-//    }
-//    return visit_count;
-//}//reefsVisited
-
 /// <summary>
 /// 
 /// </summary>
@@ -17,12 +7,11 @@
 /// <param name="launchPts"></param>
 /// <param name="printStops"></param>
 /// <returns></returns>
-vector<vector<Pt*>> DroneWithinClusterNearestNeighbour(//const MSSoln& ms, const int c,
-    vector<Drone> drones, int d_cap,
+vector<vector<Pt*>> DroneWithinClusterNearestNeighbour(vector<Drone> drones, int d_cap,
     const ClusterSoln* cluster, const pair<Pt*, Pt*>& launchPts, bool printStops = false) {
     int u = -1;                                         // initialise current reef index
-    vector <double> route_dists(drones.size(),0.0);// list of route dist for each vehicle
-    //vector<vector<int>> route_stops;                  // create routes to output to csv
+    vector <double> route_dists(drones.size()+2,0.0);   // list of route dist for each vehicle
+
     if (printStops) { cout << "\n\nNEAREST NEIGHBOUR\n"; }
     vector<vector<Pt*>> routes(drones.size(), vector<Pt*>(d_cap, nullptr));  // create routes to save in DroneSoln.routes
     vector<bool> visited(cluster->reefs.size(), false);
@@ -36,6 +25,7 @@ vector<vector<Pt*>> DroneWithinClusterNearestNeighbour(//const MSSoln& ms, const
             row.push_back(launchPts.first);                             // add launchPt to row
             u = 0;                                                      // set u as launchPt index
         }//if(v.stops==0)
+        
         // Find the shortest trip from current node u to an unvisited node v
         for (int s = 0; s < drones[d].cap; s++) {                 // for stops within vehicle capacity    /* && reefs_visit_count < cluster->reefs.size()*/
             const vector<double>& neighbours = dMatrix[u];              // for u vector in dMatrix    //cluster->getdMatrix(d, make_pair(ms->launchPts[d], ms->launchPts[d]));//[u];
@@ -54,6 +44,7 @@ vector<vector<Pt*>> DroneWithinClusterNearestNeighbour(//const MSSoln& ms, const
             visited[u-1] = true;                                    // Mark u=v(new) as visited.
             row.push_back(cluster->reefs[u-1]);
         }//for(d.capacity)
+
         // when one stop left, go to pick up pt
         int v = cluster->reefs.size() + 1;                  // careful here, v has already been used...
         route_dist += dMatrix[u][v];
@@ -70,10 +61,9 @@ vector<vector<Pt*>> DroneWithinClusterNearestNeighbour(//const MSSoln& ms, const
             //cout << "Return from final node: " << row.back()->ID << "\t(" << row.back()->x << ", " << row.back()->y << ")\n\t\t\t\t\t\tback to node: "; 
             printf("Return from final node: %d\t(%.2f, %.2f)\n\t\t\t\t\t\tback to node:\t", row.back()->ID, row.back()->x, row.back()->y);
         }
+
         row.push_back(row[0]);                  //append first stop to end of "row"
         if (printStops) { printf("%d\t(%.2f, %.2f)\tdone!\n", row.back()->ID, row.back()->x, row.back()->y); }
-        // add distance of 2nd last->last stops to route_dist
-        //route_dist += dMatrix.back()[0];      // this dist should be ZERO because it's from drop to pick nodes...
 
         routes[d] = row;
         route_dists[d] = route_dist;                  // append distance of vehicle route
@@ -85,31 +75,31 @@ vector<vector<Pt*>> DroneWithinClusterNearestNeighbour(//const MSSoln& ms, const
 }//nearestNeighbour
 
 /// <summary>
-/// returns vector of reef indices in cluster.reefs. 
 /// note dMatrix includes launch/retrieve pts and free link back to launchpt
 /// </summary>
-/// <param name="clustDronesoln"></param>
+/// <param name="clustDroneSoln"> = drone solution for the cluster </param>
 /// <param name="dMatrix"></param>
 /// <param name="print"></param>
-/// <returns></returns>
-vector<vector<Pt*>> greedyDroneCluster(const DroneSoln& clustDronesoln, int dCap, const vector<vector<double>>& dMatrix, bool print = false) {
-    ClusterSoln cluster = clustDronesoln.cluster;
-    vector<vector<Pt*>> routes = clustDronesoln.routes;
-    pair<Pt*, Pt*> launchPts = clustDronesoln.launchPts;
+/// <returns>
+/// vector of reef indices in cluster.reefs
+/// </returns>
+vector<vector<Pt*>> greedyDroneCluster(const DroneSoln& clustDroneSoln, const vector<vector<double>>& dMatrix, bool print = false) {
+    ClusterSoln cluster = clustDroneSoln.cluster;
+    vector<vector<Pt*>> routes = clustDroneSoln.routes;
+    pair<Pt*, Pt*> launchPts = clustDroneSoln.launchPts;
     double gd_2opt_dists;
-    //int dCap = inst.get_dCap();
+    //int dCap = INST.get_dCap();
     if (print) printf("\n---- GREEDY TENDER CLUSTERS ----\n\tVehicle\t\tInitial\t\tGreedy 2-Opt\n");
-    for (int d = 0; d < routes.size(); d++) {      // for each drone in cluster
-        vector<int> i_tour;                 //(dCap/*init_solution.mothership.centroidMatrix.size()*/, 0);                         // ai_tour = city_index for each tour -> nearest neighbour
-        for (auto& pt : routes[d]) {        //(int i = 0; i < dCap/*init_solution.mothership.centroidMatrix.size()*/; i++) {
-            // return the index of every stop in route list
+    for (int d = 0; d < routes.size(); d++) {       // for each drone in cluster
+        vector<int> i_tour;                         // ai_tour = city_index for each tour -> nearest neighbour
+        for (auto& pt : routes[d]) {                // return the index of every stop in route list
             i_tour.push_back(findIndexByID(pt->ID, cluster.reefs, launchPts));
         }//for(i=from_pts)
 
         pair<double, vector<int>> gd_out = gd_local_2opt_search(i_tour.size(), dMatrix, i_tour, true);      // args = (int ai_n, vector<vector<double>> &ad_dist, vector<int> &ai_tour, bool ab_full_nbrhd)
         gd_2opt_dists = gd_out.first;
         vector<int> gd_route_id = gd_out.second;
-        double route_dist = clustDronesoln.getDroneRouteDist(d);
+        double route_dist = clustDroneSoln.getDroneRouteDist(d);
         if (print) { printf("\t%d\t\t%7.3f  \t%7.3f\t\n", d, route_dist, gd_2opt_dists > 999999 ? 999999 : gd_2opt_dists); } // if gd_2opt_dists is too large, print 9999}
         double improvement = route_dist - gd_2opt_dists;
 
@@ -125,7 +115,7 @@ vector<vector<Pt*>> greedyDroneCluster(const DroneSoln& clustDronesoln, int dCap
             routes[d] = route_new;									    // update route
         }
     }//for(d=vehicles)
-    return routes;//*init_solution.clustOrder*/;
+    return routes;
 }
 
 /// <summary>
@@ -150,16 +140,14 @@ vector<DroneSoln> initDroneSoln(Problem inst, const MSSoln& msSoln, bool print=f
         // distance matrix for cluster
         vector<vector<double>> clusterMatrix = cluster->getdMatrix(launchPts);
         if (print) { for (int i = 0; i < clusterMatrix.size(); i++) { for (int j = 0; j < clusterMatrix[i].size(); j++) { { printf("%.2f\t", abs(clusterMatrix[i][j]) < DBL_MAX ? clusterMatrix[i][j] : 9999); } } printf("\n"); } printf("\n"); }
-        //\\//\\//\\//\\// Initialise DroneSoln  //\\//\\//\\//\\//
+
         // Dronesoln Nearest Neighbour
-        //vector<vector<Pt*>> droneRoutes = DroneWithinClusterNearestNeighbour(msSoln, c);
         DroneSoln droneSoln(*cluster,
             DroneWithinClusterNearestNeighbour(inst.drones, inst.get_dCap(), cluster, launchPts, print)/*droneRoutes*/,
             launchPts);
-        //\\//\\//\\//\\// DroneSoln Initialised //\\//\\//\\//\\//
 
         // Dronesoln Greedy 2-Opt update
-        droneSoln.routes = greedyDroneCluster(droneSoln, inst.get_dCap(), clusterMatrix, print);
+        droneSoln.routes = greedyDroneCluster(droneSoln, clusterMatrix, print);
         droneSolns.emplace_back(droneSoln);
         // print routes
         //if (print) {

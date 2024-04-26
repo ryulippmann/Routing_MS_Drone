@@ -9,7 +9,7 @@ public:
 	
 	// Copy constructor for deep copy
 	ClusterSoln(const ClusterSoln& other) :
-		ID(other.ID), /*inst(other.inst), */reefs() {
+		ID(other.ID), /*INST(other.INST), */reefs() {
 		// Copy new Pt objects in the reefs vector
 		for (auto& reef : other.reefs) {
 			this->reefs.push_back(new Pt(*reef));
@@ -138,7 +138,7 @@ public:
 		vector<double> depotDists;
 		depotDists.push_back(0.0);
 		for (auto& clust : clusters) {
-			double dist = sqrt(pow(inst.ms.depot.x - clust->getCentroid().x, 2) + pow(inst.ms.depot.y - clust->getCentroid().y, 2));
+			double dist = sqrt(pow(INST.ms.depot.x - clust->getCentroid().x, 2) + pow(INST.ms.depot.y - clust->getCentroid().y, 2));
 			depotDists.push_back(dist);
 		}
 		dMatrix.push_back(depotDists); // is this dangerous in case where order changes?!
@@ -160,7 +160,7 @@ public:
 		vector<double> depotDists;
 		depotDists.push_back(0.0);
 		for (auto& launch : launchPts) {
-			double dist = sqrt(pow(inst.ms.depot.x - launch->x, 2) + pow(inst.ms.depot.y - launch->y, 2));
+			double dist = sqrt(pow(INST.ms.depot.x - launch->x, 2) + pow(INST.ms.depot.y - launch->y, 2));
 			depotDists.push_back(dist);
 		}
 		dMatrix.push_back(depotDists);
@@ -185,7 +185,7 @@ public:
 			return -1;
 		}
 		double dist = 0;
-		double leg = sqrt(pow(inst.ms.depot.x - launchPts[0]->x, 2) + pow(inst.ms.depot.y - launchPts[0]->y, 2));
+		double leg = sqrt(pow(INST.ms.depot.x - launchPts[0]->x, 2) + pow(INST.ms.depot.y - launchPts[0]->y, 2));
 		dist += leg;
 		if (print) printf("\nMS Dist: \t\t%.2f\t", leg);
 		for (int c = 0; c < clusters.size(); c++) { 
@@ -193,7 +193,7 @@ public:
 			dist += leg;
 			if (print) printf("+  %.2f\t", leg);
 		}
-		leg = sqrt(pow(inst.ms.depot.x - launchPts[clusters.size()]->x, 2) + pow(inst.ms.depot.y - launchPts[clusters.size()]->y, 2));
+		leg = sqrt(pow(INST.ms.depot.x - launchPts[clusters.size()]->x, 2) + pow(INST.ms.depot.y - launchPts[clusters.size()]->y, 2));
 		dist += leg;
 		if (print) printf("+ %.2f\t\nTotal Dist: \t%.2f\n", leg, dist);
 		return dist;
@@ -201,11 +201,11 @@ public:
 
 	vector<Pt*> getRoute() {			//update/check this! use mp's of centroids...
 		vector<Pt*> route;//(launchPts.size() + 1, nullptr);
-		route.push_back(new Pt(inst.ms.depot)); // Assuming Pt has a copy/move constructor
+		route.push_back(new Pt(INST.ms.depot)); // Assuming Pt has a copy/move constructor
 		for (auto& pt : launchPts) {
 			route.push_back(pt);
 		}
-		route.push_back(new Pt(inst.ms.depot)); // Assuming Pt has a copy/move constructor
+		route.push_back(new Pt(INST.ms.depot)); // Assuming Pt has a copy/move constructor
 		return route;
 	}
 
@@ -382,14 +382,14 @@ public:
 	/// <param name="print">= false</param>
 	/// <returns></returns>
 	double getTotalDist(bool print = false) const {
-		double dist_ms = inst.weights.first * msSoln.getDist(print);
+		double dist_ms = INST.weights.first * msSoln.getDist(print);
 		double dist_drones = 0;
-		if (print) printf("\nWEIGHTED MS Dist: \t%.2f\t\t(w_ms = %.1f)\n\tw_d = %.1f", dist_ms, inst.weights.first, inst.weights.second);
+		if (print) printf("\nWEIGHTED MS Dist: \t%.2f\t\t(w_ms = %.1f)\n\tw_d = %.1f", dist_ms, INST.weights.first, INST.weights.second);
 		for (auto& droneSoln : droneSolns) {
 			double dist_drone = 0;
 			if (print) printf("\nDroneSoln ID: \t%d\t\tDist:", droneSoln->ID);
 			for (auto& route : droneSoln->routes) {
-				double leg = inst.weights.second * droneSoln->getDroneRouteDist(route);
+				double leg = INST.weights.second * droneSoln->getDroneRouteDist(route);
 				if (print) printf("\t+%.2f", leg);
 				dist_drone += leg;
 			}

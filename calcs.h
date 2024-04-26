@@ -78,13 +78,13 @@ int getRandomNumber(int size/*, int randomSeed = -1*/) {
     return dist(gen);
 }
 
-//vector<vector<double>> centroidMatrix(Problem& inst, vector<Pt*> reefs) {
+//vector<vector<double>> centroidMatrix(Problem& INST, vector<Pt*> reefs) {
 //    vector<vector<double>> centroidMatrix;
 //    //centroids.insert(centroids.begin(), ClusterPoint(depot.first, depot.second));
 //    vector<double> depot_row;
 //    depot_row.push_back(0);
 //    for (int i = 0; i < reefs.size(); i++) {		// for each cluster
-//        depot_row.push_back(calculatePtDistance(inst.ms.depot, reefs[i]));
+//        depot_row.push_back(calculatePtDistance(INST.ms.depot, reefs[i]));
 //    }
 //    centroidMatrix.push_back(depot_row);
 //

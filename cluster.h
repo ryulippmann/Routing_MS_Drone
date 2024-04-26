@@ -85,18 +85,6 @@ vector<ClusterSoln*> kMeansConstrained(int maxIterations, vector<Pt*> points, co
     return clusterss;
 }
 
-void printClusters(vector<ClusterSoln*> clusters) {
-    for (int i = 0; i < clusters.size(); i++) {
-        printf("\tCluster: %d\n", i);					// Print clusters
-        for (int j = 0; j < clusters[i]->reefs.size(); j++) {	// for reefs in cluster
-            printf("%d\t(%.2f, %.2f)\n", clusters[i]->reefs[j]->ID, clusters[i]->reefs[j]->x, clusters[i]->reefs[j]->y);
-        } // print ID (x,y) for each reef in cluster
-        printf("Centroid:\t\t%d\t(%.2f, %.2f)\n", clusters[i]->getCentroid().ID, clusters[i]->getCentroid().x, clusters[i]->getCentroid().y);
-    } // for each cluster
-
-    return;
-}
-
 //ClusterSoln clusterAndCentroid(Problem problem) {
 //    //if (!init_solution) {
 //    ClusterSoln init_solution(  kMeansConstrained(

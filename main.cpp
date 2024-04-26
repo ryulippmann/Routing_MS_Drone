@@ -27,7 +27,7 @@ int Pt::count = 0;
 //int kMeansIters = pow(10,7);//1000
 
 // create GLOBAL instance of problem
-const Problem inst =
+const Problem INST =
 //CreateInst(100, 5, 5, 4, make_pair(2,1), Pt(0, 0), pow(10, 0));
 	CreateInst(48, 4,  4, 3, make_pair(2, 1), Pt(0, 0), 0); //  Base case instance!
 	//	no_pts, noClust, noDrones, dCap, make_pair(w_ms, w_d));
@@ -38,6 +38,7 @@ const Problem inst =
 #include "class_soln.h"
 #include "cluster.h"
 #include "prints.h"
+//#include "opt.h"
 #include "mothership.h"
 #include "drones.h"
 #include "swaps.h"
@@ -56,14 +57,14 @@ int main()
 	//	VaryNum_droneXclust();
 	
 	
-	if (checkParameters(inst) == false) return 0;		// check if parameters are valid
-	printSetup(inst);		// print problem setup
+	if (checkParameters(INST) == false) return 0;		// check if parameters are valid
+	printSetup(INST);		// print problem setup
 
 	vector<vector<FullSoln>> fullSolns;
 	int iter = 1;
 	for (int i = 0; i < iter; i++) {
 		fullSolns.push_back(
-			FullRun(i, inst)
+			FullRun(i, INST)
 		);
 	}
 	

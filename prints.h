@@ -20,13 +20,13 @@ bool createDirectory(const string& path) {
 }
 
 string inFolder(const string& in_folder = "") {
-	string folderPath = "outputs/" + inst.time;    // Define the path of the folder
+	string folderPath = "outputs/" + INST.time;    // Define the path of the folder
 	if (!in_folder.empty()) folderPath += "/" + in_folder;
 	return folderPath;
 }
 
 string createFolder(const string& folder_name = "", const string& sub_folder ="") {
-    string folderPath = "outputs/" + inst.time;    // Define the path of the folder
+    string folderPath = "outputs/" + INST.time;    // Define the path of the folder
     if (!folder_name.empty()) 
         folderPath += "/" + folder_name;
         if (!sub_folder.empty())
@@ -42,7 +42,7 @@ string createFolder(const string& folder_name = "", const string& sub_folder =""
 }
 
 void createRunFolder(int iter) {
-    string folderPath = "outputs/" + inst.time + "/" + to_string(iter);    // Define the path of the folder
+    string folderPath = "outputs/" + INST.time + "/" + to_string(iter);    // Define the path of the folder
     if (directoryExists(folderPath)) {    // Check if the folder already exists
         cout << "Folder '" << folderPath << "' already exists." << endl;
         return;
@@ -79,10 +79,10 @@ string addTimeToFilename(string file_name) {
 }
 
 void csvPrintStops(const string& file_name) {
-    ofstream outputFile("outputs/" + inst.time + "/" + file_name + ".csv");    // create .csv file from string name
+    ofstream outputFile("outputs/" + INST.time + "/" + file_name + ".csv");    // create .csv file from string name
     if (outputFile.is_open()) {
         outputFile << "ClusterID" << "," << "PtID" << "," << "X" << "," << "Y" << "\n";
-        for (const auto& reef : inst.reefs) {
+        for (const auto& reef : INST.reefs) {
 			outputFile << "," << reef.ID << "," << reef.x << "," << reef.y << "\n";
 		}
         outputFile.close();
@@ -118,7 +118,7 @@ void csvPrintClusters(const vector<ClusterSoln*>& clusters, string file_name="cl
         cerr << "Error: Unable to open clusters.csv for writing\n";
         return;
     }
-    outfile << "ReefID,X,Y,ClusterID,,kMeansIters," << inst.kMeansIters << ",,W_MS," << inst.weights.first << ",,W_D," << inst.weights.second << "\n";    // Write header
+    outfile << "ReefID,X,Y,ClusterID,,kMeansIters," << INST.kMeansIters << ",,W_MS," << INST.weights.first << ",,W_D," << INST.weights.second << "\n";    // Write header
 
     // Helper lambda function to write each reef's attributes
     auto writeReef = [&](const Pt* reef, int clusterID) {
@@ -161,7 +161,7 @@ void csvPrintLaunchPts(vector<Pt*> launch_route, string file_name, const string&
 void csvPrintMSRoutes(vector<Pt*> launch_route, string file_name, double msDist, const string& in_folder, bool print=true) {
     ofstream outputFile(in_folder + "/" + file_name + ".csv");
 
-    Pt depot = inst.getDepot();
+    Pt depot = INST.getDepot();
     if (outputFile.is_open()) {
         outputFile << "X,Y,msDist," << msDist << "\n";                                 // skip header row
         outputFile << depot.x << "," << depot.y << "\n";                  // output depot
@@ -258,5 +258,17 @@ void csvUpdate(FullSoln best_new, bool in_out, int numUpdate, int run_iteration=
     csvPrintLaunchPts(best_new.msSoln.launchPts, "launchPts", folderPath, false);//"launchPts_fullSoln_" + boolToString(in_out));
     csvPrintMSRoutes(best_new.msSoln.launchPts, "ms_route", best_new.msSoln.getDist(), folderPath, false);//_"+boolToString(in_out));
     csvPrintDroneRoutes(total_routes, "drone_routes", folderPath);
+    return;
+}
+
+void printClusters(vector<ClusterSoln*> clusters) {
+    for (int i = 0; i < clusters.size(); i++) {
+        printf("\tCluster: %d\n", i);					// Print clusters
+        for (int j = 0; j < clusters[i]->reefs.size(); j++) {	// for reefs in cluster
+            printf("%d\t(%.2f, %.2f)\n", clusters[i]->reefs[j]->ID, clusters[i]->reefs[j]->x, clusters[i]->reefs[j]->y);
+        } // print ID (x,y) for each reef in cluster
+        printf("Centroid:\t\t%d\t(%.2f, %.2f)\n", clusters[i]->getCentroid().ID, clusters[i]->getCentroid().x, clusters[i]->getCentroid().y);
+    } // for each cluster
+
     return;
 }

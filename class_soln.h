@@ -107,11 +107,11 @@ private:
 
 struct MSSoln {
 public:
-	MSSoln(vector<ClusterSoln*> clustSolns) :
-		ID(count++), clusters(clustSolns), launchPts(clustSolns.size() + 1, nullptr) {}
+	MSSoln(vector<ClusterSoln*> clustSolns, MS ms) :
+		ID(count++), clusters(clustSolns), launchPts(clustSolns.size() + 1, nullptr), ms(ms){}
 	// Copy constructor for deep copy
 	MSSoln(const MSSoln& other) :
-		ID(count++), clusters(), launchPts() {
+		ID(count++), clusters(), launchPts(), ms(other.ms) {
 		// Copy new ClusterSoln objects
 		for (auto& cluster : other.clusters) {
 			this->clusters.push_back(new ClusterSoln(*cluster)); 
@@ -120,8 +120,8 @@ public:
 			this->launchPts.push_back(pt);
 		}
 	}
-	MSSoln(vector<ClusterSoln*> clustSolns, vector<Pt*> launchPts) :
-		ID(count++), clusters(clustSolns), launchPts() {
+	MSSoln(vector<ClusterSoln*> clustSolns, vector<Pt*> launchPts, MS ms) :
+		ID(count++), clusters(clustSolns), launchPts(), ms(ms) {
 		// Create new DroneSoln objects with new memory locations for pointers
 		for (auto* pt : launchPts) {
 			this->launchPts.push_back(new Pt(*pt));
@@ -131,6 +131,7 @@ public:
 	const int ID;
 	vector<ClusterSoln*> clusters;
 	vector<Pt*> launchPts;
+	const MS& ms;
 
 	//check this works correctly between correct points...
 	vector<vector<double>> ordered_dMatrix() {
@@ -138,7 +139,7 @@ public:
 		vector<double> depotDists;
 		depotDists.push_back(0.0);
 		for (auto& clust : clusters) {
-			double dist = sqrt(pow(INST.ms.depot.x - clust->getCentroid().x, 2) + pow(INST.ms.depot.y - clust->getCentroid().y, 2));
+			double dist = sqrt(pow(this->ms.depot.x - clust->getCentroid().x, 2) + pow(this->ms.depot.y - clust->getCentroid().y, 2));
 			depotDists.push_back(dist);
 		}
 		dMatrix.push_back(depotDists); // is this dangerous in case where order changes?!
@@ -160,7 +161,7 @@ public:
 		vector<double> depotDists;
 		depotDists.push_back(0.0);
 		for (auto& launch : launchPts) {
-			double dist = sqrt(pow(INST.ms.depot.x - launch->x, 2) + pow(INST.ms.depot.y - launch->y, 2));
+			double dist = sqrt(pow(this->ms.depot.x - launch->x, 2) + pow(this->ms.depot.y - launch->y, 2));
 			depotDists.push_back(dist);
 		}
 		dMatrix.push_back(depotDists);
@@ -185,7 +186,7 @@ public:
 			return -1;
 		}
 		double dist = 0;
-		double leg = sqrt(pow(INST.ms.depot.x - launchPts[0]->x, 2) + pow(INST.ms.depot.y - launchPts[0]->y, 2));
+		double leg = sqrt(pow(this->ms.depot.x - launchPts[0]->x, 2) + pow(this->ms.depot.y - launchPts[0]->y, 2));
 		dist += leg;
 		if (print) printf("\nMS Dist: \t\t%.2f\t", leg);
 		for (int c = 0; c < clusters.size(); c++) { 
@@ -193,7 +194,7 @@ public:
 			dist += leg;
 			if (print) printf("+  %.2f\t", leg);
 		}
-		leg = sqrt(pow(INST.ms.depot.x - launchPts[clusters.size()]->x, 2) + pow(INST.ms.depot.y - launchPts[clusters.size()]->y, 2));
+		leg = sqrt(pow(this->ms.depot.x - launchPts[clusters.size()]->x, 2) + pow(this->ms.depot.y - launchPts[clusters.size()]->y, 2));
 		dist += leg;
 		if (print) printf("+ %.2f\t\nTotal Dist: \t%.2f\n", leg, dist);
 		return dist;
@@ -201,11 +202,11 @@ public:
 
 	vector<Pt*> getRoute() {			//update/check this! use mp's of centroids...
 		vector<Pt*> route;//(launchPts.size() + 1, nullptr);
-		route.push_back(new Pt(INST.ms.depot)); // Assuming Pt has a copy/move constructor
+		route.push_back(new Pt(this->ms.depot)); // Assuming Pt has a copy/move constructor
 		for (auto& pt : launchPts) {
 			route.push_back(pt);
 		}
-		route.push_back(new Pt(INST.ms.depot)); // Assuming Pt has a copy/move constructor
+		route.push_back(new Pt(this->ms.depot)); // Assuming Pt has a copy/move constructor
 		return route;
 	}
 
@@ -381,15 +382,15 @@ public:
 	/// </summary>
 	/// <param name="print">= false</param>
 	/// <returns></returns>
-	double getTotalDist(bool print = false) const {
-		double dist_ms = INST.weights.first * msSoln.getDist(print);
+	double getTotalDist(pair<double, double> weights, bool print = false) const {
+		double dist_ms = weights.first * msSoln.getDist(print);
 		double dist_drones = 0;
-		if (print) printf("\nWEIGHTED MS Dist: \t%.2f\t\t(w_ms = %.1f)\n\tw_d = %.1f", dist_ms, INST.weights.first, INST.weights.second);
+		if (print) printf("\nWEIGHTED MS Dist: \t%.2f\t\t(w_ms = %.1f)\n\tw_d = %.1f", dist_ms, weights.first, weights.second);
 		for (auto& droneSoln : droneSolns) {
 			double dist_drone = 0;
 			if (print) printf("\nDroneSoln ID: \t%d\t\tDist:", droneSoln->ID);
 			for (auto& route : droneSoln->routes) {
-				double leg = INST.weights.second * droneSoln->getDroneRouteDist(route);
+				double leg = weights.second * droneSoln->getDroneRouteDist(route);
 				if (print) printf("\t+%.2f", leg);
 				dist_drone += leg;
 			}

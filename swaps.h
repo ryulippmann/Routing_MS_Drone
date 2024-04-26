@@ -44,27 +44,27 @@ int randChoice(const size_t size/*, int randomSeed = 12345*/, bool clust_choice 
     else return getRandomNumber(size - 3/*, randomSeed*/) + 1;
 }
 
-vector<Pt*> UpdateLaunchPts(const vector<ClusterSoln*> clusters, bool print = false) {
+vector<Pt*> UpdateLaunchPts(const vector<ClusterSoln*> clusters, Pt depot, pair<double, double> weights, bool print = false) {
     if (print) printf("\n---- SET LAUNCH POINTS ----\n\tID\t(  x  ,  y  )\n");
-    vector<Pt*> launchPts = SetWeightedLaunchPts(clusters);
+    vector<Pt*> launchPts = SetWeightedLaunchPts(clusters, depot, weights);
     // add depot as first launch point
     if (print) {
         printf("\tID\t(  x  ,  y  )\n");
         cout << string(30, '-') << "\n";
-        printf("\t%d\t( %2.2f, %2.2f)\n", INST.ms.depot.ID, INST.ms.depot.x, INST.ms.depot.y);
+        printf("\t%d\t( %2.2f, %2.2f)\n", depot.ID, depot.x, depot.y);
         for (const auto& stop : launchPts) {
             printf("\t%d\t( %.2f, %.2f)\n", stop->ID, stop->x, stop->y);
         } printf("\n");
         cout << string(30, '-') << "\n";
-        double total_dist = calculatePtDistance(INST.ms.depot, launchPts[0]);
+        double total_dist = calculatePtDistance(depot, launchPts[0]);
         printf("\t%.2f ", total_dist);
         for (int i = 0; i < launchPts.size() - 1; i++) {
             double leg_dist = calculatePtDistance(launchPts[i], launchPts[i + 1]);
             printf("+\t%.2f ", leg_dist);
             total_dist += leg_dist;
         }
-        printf("+\t%.2f ", calculatePtDistance(INST.ms.depot, launchPts.back()));
-        total_dist += calculatePtDistance(INST.ms.depot, launchPts.back());
+        printf("+\t%.2f ", calculatePtDistance(depot, launchPts.back()));
+        total_dist += calculatePtDistance(depot, launchPts.back());
         printf("\n\t\t= %.2f", total_dist);
     }
     return launchPts;
@@ -131,7 +131,7 @@ FullSoln OUT_ClusterSwaps(const Problem& inst, const FullSoln& soln/*, int itera
 
     // update droneSolns with new launchPts & in routes
     vector<Pt*>
-        launchPts = UpdateLaunchPts(clusters/*, true*/);
+        launchPts = UpdateLaunchPts(clusters, inst.ms.depot, inst.weights/*, true*/);
     for (int d = 0; d < droneSolns.size(); d++) {
         droneSolns[d]->launchPts = make_pair(launchPts[d], launchPts[d + 1]);
         for (auto& route : droneSolns[d]->routes) {
@@ -151,7 +151,7 @@ FullSoln OUT_ClusterSwaps(const Problem& inst, const FullSoln& soln/*, int itera
     droneSolns[c.first]->routes = routes.first;            // update clusters with new routes
     droneSolns[c.second]->routes = routes.second;
 
-    MSSoln msSoln = MSSoln(clusters, launchPts);
+    MSSoln msSoln = MSSoln(clusters, launchPts, inst.ms);
     FullSoln new_soln = FullSoln(msSoln, droneSolns);      // create new FullSoln with updated clusters and launchPts
     if (print) printf("-- ^^ OUT_Swap ^^ --");
     return new_soln;
@@ -217,7 +217,7 @@ FullSoln IN_ClusterSwaps(const Problem& inst, const FullSoln& soln, /*int iterat
     routes = greedyDroneCluster(*soln.droneSolns[c], dMatrix);                // Run greedy 2-Opt on routes
     //}
     FullSoln new_soln = FullSoln(soln, routes, c);
-        if (print) { printf("\nOriginal route:\t%.2f\n", soln.getTotalDist());
+        if (print) { printf("\nOriginal route:\t%.2f\n", soln.getTotalDist(inst.weights));
             for (const auto& drone : new_soln.droneSolns) { printDroneRoutes(drone); }
         }
 	return new_soln;
@@ -241,7 +241,7 @@ FullSoln SwapRandomly(Problem inst, const FullSoln soln_prev_best, SAparams sa_p
     bool print_stats = false, bool csv_print = false, bool SA_print = true) {   //in_out = 1; // 0 = OUT, 1 = IN
     printf("\n\n---------- RANDOM IN/OUT Cluster Swaps - Simulated Annealing ----------\n");
     FullSoln best(soln_prev_best);
-    double dist_best = best.getTotalDist();
+    double dist_best = best.getTotalDist(inst.weights);
     FullSoln incumbent = soln_prev_best;
     double dist_initial = dist_best;
 
@@ -265,18 +265,18 @@ FullSoln SwapRandomly(Problem inst, const FullSoln soln_prev_best, SAparams sa_p
             //out_swaps += 1;
 		}
 
-        double dist_proposed = proposed.getTotalDist(), dist_incumbent = incumbent.getTotalDist();
+        double dist_proposed = proposed.getTotalDist(inst.weights), dist_incumbent = incumbent.getTotalDist(inst.weights);
         printf("\n%d\t%5.3f\t\t%.2e\t\t%5.3f\t\t%5.3f\t%s", iter_num, dist_best, temp, dist_proposed, dist_incumbent, in_out == 1 ? "IN" : "OUT");
         if (accept_new_solution(dist_incumbent, dist_proposed, temp)) {
             incumbent = proposed;       // overwrite old solution, but have been set as const...
-            dist_incumbent = incumbent.getTotalDist();
+            dist_incumbent = incumbent.getTotalDist(inst.weights);
             printf("\tACCEPTED Proposed soln");
             if (dist_proposed < dist_best) {
                 best = proposed;
-                dist_best = best.getTotalDist();
+                dist_best = best.getTotalDist(inst.weights);
                 printf("\n\t%.3f\t!!IMPROVED!! Proposed soln", dist_best);
                 if (csv_print) {
-                    csvUpdate(best, in_out, iter_num/*in_swaps+out_swaps*/, run_iteration);
+                    csvUpdate(best, inst, in_out, iter_num/*in_swaps+out_swaps*/, run_iteration);
                 }
             }
         }

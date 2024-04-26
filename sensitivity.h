@@ -27,7 +27,7 @@ void sensitivity() {
 FullSoln BaseSwapRun(Problem inst, FullSoln soln_current, vector<double>& best_dists, int run_iteration) {
 	//SAparams                  (num_iter, init_temp, cooling_rate)
 	int num_iter = 10000;//50000;//100000;//25000;               // fixed at 10000
-	double init_temp = 0.2 * soln_current.getTotalDist();
+	double init_temp = 0.2 * soln_current.getTotalDist(inst.weights);
 	//double temp_diff = pow(10, -4);
 	//double final_temp = init_temp * temp_diff;//pow(10, -5);
 	//double cooling_rate = pow((temp_diff), 1 / num_iter);  //0.995;
@@ -37,12 +37,12 @@ FullSoln BaseSwapRun(Problem inst, FullSoln soln_current, vector<double>& best_d
 	FullSoln best = SwapRandomly(inst, soln_current, SAparams(num_iter, init_temp, cooling_rate), run_iteration, 
 								print_detail, csv_print);
 	printf("\nPrev Dist: \t\t%.2f", best_dists.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
-	best_dists.push_back(best.getTotalDist());
+	best_dists.push_back(best.getTotalDist(inst.weights));
 	printf("\n\t\tNEW_Swap distance:\t%.2f\n", best_dists.back());
 
 	//\\//\\//\\//  csv print (if solution updated)  //\\//\\//\\//
 	if (csv_print /*&& best_dists.back() != best_dists.at(best_dists.size() - 2)*/) { 
-	csvPrints(best, "FINAL", run_iteration);
+	csvPrints(best, inst, "FINAL", run_iteration);
 	}
 	return best;
 }
@@ -60,13 +60,13 @@ vector<FullSoln> FullRun(const int& iter, const Problem inst) {
 	if (print_detail) printClusters(clusters);		// PRINT clusters //
 
 	if (csv_print) {
-		createFolder();
-		createRunFolder(iter);
+		createFolder(inst);
+		createRunFolder(inst, iter);
 	}
 
 	//\\//\\//\\//\\//  MsSoln Construction //\\//\\//\\//\\//
-	MSSoln msSoln(clusters);				// No launchPts initialised yet
-	vector<pair<double, MSSoln>> msSolns = initMsSoln(clusters, msSoln, print_detail);
+	MSSoln msSoln(clusters, inst.ms);				// No launchPts initialised yet
+	vector<pair<double, MSSoln>> msSolns = initMsSoln(clusters, msSoln, inst.weights, print_detail);
 
 	//\\//\\//\\//\\  DroneSoln Construction  \\//\\//\\//\\/
 	vector<DroneSoln> droneSolns = initDroneSoln(inst, msSoln, print_detail);
@@ -75,15 +75,15 @@ vector<FullSoln> FullRun(const int& iter, const Problem inst) {
 
 	//\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
 	FullSoln full_init(msSoln, ptr_droneSolns);
-	printf("Full Soln Dist:\t%.2f", full_init.getTotalDist(print_detail));
+	printf("Full Soln Dist:\t%.2f", full_init.getTotalDist(inst.weights, print_detail));
 	if (csv_print) {
-		csvPrintStops("reef_set");
-		csvPrints(full_init, "INIT", iter);
+		csvPrintStops(inst, "reef_set");
+		csvPrints(full_init, inst, "INIT", iter);
 	}
 	////////////////////////////////
 	vector<FullSoln> fullSolns;
 	fullSolns.push_back(full_init);
-	vector<double> best_dist{ fullSolns.back().getTotalDist() };			// initialise best_dist as vector with best solution distance	
+	vector<double> best_dist{ fullSolns.back().getTotalDist(inst.weights) };			// initialise best_dist as vector with best solution distance	
 
 	fullSolns.push_back(
 		BaseSwapRun(inst, fullSolns.back(), best_dist, iter)
@@ -111,9 +111,9 @@ vector<int> Factors(int num) {
 /// <returns>
 /// vector of pairs: (number of clusters and drones, and total_dist of solution)
 /// </returns>
-vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_droneXclust() {
+vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_droneXclust(const Problem& inst) {
 	vector<vector<FullSoln>> fullSolns;
-	int total_drone_routes = INST.reefs.size()/INST.get_dCap();
+	int total_drone_routes = inst.reefs.size()/ inst.get_dCap();
 	vector<int> factors = Factors(total_drone_routes);
 	vector<pair<int,int>> factors_pairs;
 	for (int f : factors) {
@@ -122,12 +122,12 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_droneXclust() {
 	for (int i = 0; i < factors_pairs.size(); i++) {
 		int num_clust = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
-		Problem sens_inst = CreateInst(INST, num_clust, num_drone, INST.get_dCap());
+		Problem sens_inst = CreateInst(inst, num_clust, num_drone, inst.get_dCap());
 		fullSolns.push_back(FullRun(i, sens_inst));
 	}
 	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
 	for (int i = 0; i < fullSolns.size(); i++) {
-		double dist = fullSolns[i].back().getTotalDist();
+		double dist = fullSolns[i].back().getTotalDist(inst.weights);
 		results.push_back(make_pair(factors_pairs[i], make_pair(dist, fullSolns[i].back())));
 	}
 	return results;
@@ -141,12 +141,12 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_droneXclust() {
 /// <returns>
 /// vector of pairs: (dCap and number of drones, and total_dist of solution)
 /// </returns>
-vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryDrones() {
+vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryDrones(const Problem& inst) {
 	vector<vector<FullSoln>> fullSolns;
 	vector<pair<int, int>> factors_pairs;
 	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
 
-	int pts_in_clust = INST.reefs.size() / INST.getnumClusters();
+	int pts_in_clust = inst.reefs.size() / inst.getnumClusters();
 	vector<int> factors = Factors(pts_in_clust);
 
 	for (int f : factors) {
@@ -155,11 +155,11 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryDrones() {
 	for (int i = 0; i < factors.size(); i++) {
 		int dCap = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
-		Problem sens_inst = CreateInst(INST, INST.getnumClusters(), num_drone, dCap);
+		Problem sens_inst = CreateInst(inst, inst.getnumClusters(), num_drone, dCap);
 		fullSolns.push_back(FullRun(i, sens_inst));
 	}
 	for (int i = 0; i < fullSolns.size(); i++) {
-		double dist = fullSolns[i].back().getTotalDist();
+		double dist = fullSolns[i].back().getTotalDist(inst.weights);
 		results.push_back(make_pair(factors_pairs[i], make_pair(dist, fullSolns[i].back())));
 	}
 	return results;
@@ -176,7 +176,7 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryDrones() {
 /// <returns>
 /// results of varying weights as vector of pairs: (ms weight and d weight, and total_dist of solution)
 /// </returns>
-vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryWeights(double w_ms, double w_d, int sens_iter) {
+vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryWeights(double w_ms, double w_d, const Problem& inst, int sens_iter) {
 	vector<vector<FullSoln>> fullSolns;
 	vector<pair<int, int>> weighting_pairs;
 	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
@@ -193,11 +193,11 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryWeights(double w_ms
 		}
 	}
 	for (int i = 0; i < weighting_pairs.size(); i++) {
-		Problem sens_inst = CreateInst(INST, weighting_pairs[i]);
+		Problem sens_inst = CreateInst(inst, weighting_pairs[i]);
 		fullSolns.push_back(FullRun(i, sens_inst));
 	}
 	for (int i = 0; i < fullSolns.size(); i++) {
-		double dist = fullSolns[i].back().getTotalDist();
+		double dist = fullSolns[i].back().getTotalDist(inst.weights);
 		results.push_back(make_pair(weighting_pairs[i], make_pair(dist, fullSolns[i].back())));
 	}
 	return results;

@@ -7,7 +7,7 @@
 /// <param name="clusters"></param>
 /// <param name="test"></param>
 /// <returns></returns>
-vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, int min_idx, bool test = false) {
+vector<vector<double>> calc_centMatrix(const Pt depot, const vector<ClusterSoln*>& clusters, int min_idx, bool test = false) {
     vector<vector<double>> centroidMatrix;
     if (test) {
         vector<ClusterSoln*> clusters_ordered(clusters.size(), nullptr);
@@ -21,7 +21,7 @@ vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, int
         vector<double> depot_row;
         depot_row.push_back(0);
         for (int i = 0; i < clusters.size(); i++) {		// for each cluster
-            depot_row.push_back(calculatePtDistance(INST.ms.depot, clusters_ordered[i]->getCentroid()));
+            depot_row.push_back(calculatePtDistance(depot, clusters_ordered[i]->getCentroid()));
         }
         centroidMatrix.push_back(depot_row);
         for (int i = 0; i < clusters.size(); i++) {		// for each cluster
@@ -38,7 +38,7 @@ vector<vector<double>> calc_centMatrix(const vector<ClusterSoln*>& clusters, int
         vector<double> depot_row;
         depot_row.push_back(0);
         for (int i = 0; i < clusters.size(); i++) {		// for each cluster
-            depot_row.push_back(calculatePtDistance(INST.ms.depot, clusters[i]->getCentroid()));
+            depot_row.push_back(calculatePtDistance(depot, clusters[i]->getCentroid()));
         }
         centroidMatrix.push_back(depot_row);
         for (int i = 0; i < clusters.size(); i++) {		// for each cluster
@@ -82,7 +82,7 @@ int findClusterByID(int targetID, const vector<ClusterSoln*>& myList) {
     return -1;  // Return a special value (e.g., -1) to indicate that the ID was not found
 }
 
-vector<Pt*> SetWeightedLaunchPts(const vector<ClusterSoln*>& clusters) {
+vector<Pt*> SetWeightedLaunchPts(const vector<ClusterSoln*>& clusters, Pt depot, pair<double, double> weights) {
     /*ALT CALCS*/
     ////double w_ms_d = INST.weights.first / (INST.weights.first + INST.weights.second);
     ////vector<Pt*> launchPts;
@@ -112,13 +112,13 @@ vector<Pt*> SetWeightedLaunchPts(const vector<ClusterSoln*>& clusters) {
     //    w_ms_d * (INST.ms.depot.x + launchPts.back()->x),
     //    w_ms_d * (INST.ms.depot.y + launchPts.back()->y)));
     
-    double w_ms = INST.weights.first / (INST.weights.first + 2 * INST.weights.second);
-    double w_d = INST.weights.second / (INST.weights.first + 2 * INST.weights.second);
+    double w_ms = weights.first / (weights.first + 2 * weights.second);
+    double w_d = weights.second / (weights.first + 2 * weights.second);
     // this formulation takes into account the following destination, and the 'gravity' towards that point
     vector<Pt*> launchPts;
     launchPts.push_back(new Pt(
-        w_ms * INST.ms.depot.x + 2 * w_d * clusters[0]->getCentroid().x,
-        w_ms * INST.ms.depot.y + 2 * w_d * clusters[0]->getCentroid().y));
+        w_ms * depot.x + 2 * w_d * clusters[0]->getCentroid().x,
+        w_ms * depot.y + 2 * w_d * clusters[0]->getCentroid().y));
     for (int c = 0; c < clusters.size() - 2; c++) {
         launchPts.push_back(new Pt(
             w_ms * launchPts[c]->x + w_d * (clusters[c + 1]->getCentroid().x + clusters[c]->getCentroid().x)/*launchPts[c+1]->x*/,
@@ -129,8 +129,8 @@ vector<Pt*> SetWeightedLaunchPts(const vector<ClusterSoln*>& clusters) {
         w_ms * launchPts.back()->y + w_d * (clusters[clusters.size() - 2]->getCentroid().y + clusters.back()->getCentroid().x)/*launchPts[c+1]->y*/));
 
     launchPts.push_back(new Pt(
-        w_ms * INST.ms.depot.x + 2 * w_d * launchPts.back()->x,
-        w_ms * INST.ms.depot.y + 2 * w_d * launchPts.back()->y));
+        w_ms * depot.x + 2 * w_d * launchPts.back()->x,
+        w_ms * depot.y + 2 * w_d * launchPts.back()->y));
     return launchPts;
 }
 
@@ -142,18 +142,18 @@ vector<Pt*> SetWeightedLaunchPts(const vector<ClusterSoln*>& clusters) {
 /// <param name="msSoln"></param>
 /// <param name="print"></param>
 /// <returns></returns>
-vector<vector<double>> setLaunchPts(MSSoln& msSoln, bool print = false) {
+vector<vector<double>> setLaunchPts(MSSoln& msSoln, pair<double, double> weights, bool print = false) {
     const vector<ClusterSoln*> clusters = msSoln.clusters;
     if (print) printf("\n---- SET LAUNCH POINTS ----\n");
 
-    vector<Pt*> launchPts = SetWeightedLaunchPts(clusters);
+    vector<Pt*> launchPts = SetWeightedLaunchPts(clusters, msSoln.ms.depot, weights);
 
     msSoln.launchPts = launchPts;
     vector<vector<double>> dMatrix_launchpt = msSoln.launchPt_dMatrix();
 	if (print) {
         printf("\tID\t(  x  ,  y  )\n");
         cout << string(30, '-') << "\n";
-        printf("\t%d\t( %2.2f, %2.2f)\n", INST.ms.depot.ID, INST.ms.depot.x, INST.ms.depot.y);
+        printf("\t%d\t( %2.2f, %2.2f)\n", msSoln.ms.depot.ID, msSoln.ms.depot.x, msSoln.ms.depot.y);
 		for (const auto& stop : msSoln.launchPts) { 
             printf("\t%d\t( %.2f, %.2f)\n", stop->ID, stop->x, stop->y);
         } 
@@ -184,12 +184,12 @@ int findMinIdx(const vector<ClusterSoln*>& clusters) {    //find min ID of all c
     return min_ID;
 }
 
-double clusterCentroidNearestNeighbour(MSSoln& msSoln, bool print = true) {
+double clusterCentroidNearestNeighbour(MSSoln& msSoln, pair<double, double> weights, bool print = true) {
     const vector<ClusterSoln*> clusters = msSoln.clusters;
     vector<ClusterSoln*> nearestCentroids(clusters.size(), nullptr);// Initialize the result vector
     vector<bool> visited(clusters.size(), 0);
     int u = 0;                                                  // initialise current index
-    const vector<vector<double>> centroidMatrix = calc_centMatrix(clusters, findMinIdx(clusters));
+    const vector<vector<double>> centroidMatrix = calc_centMatrix(msSoln.ms.depot, clusters, findMinIdx(clusters));
     if (print) { printf("\n");
 		for (int i = 0; i < centroidMatrix.size(); i++) {
 			for (int j = 0; j < centroidMatrix[i].size(); j++) { printf("\t%.2f", centroidMatrix[i][j]); }
@@ -212,13 +212,13 @@ double clusterCentroidNearestNeighbour(MSSoln& msSoln, bool print = true) {
         if (print) printf("\t%d\t%.2f\n", v, min);
     }//for(cluster)
     msSoln.clusters = nearestCentroids;				// Update clustSoln.clusters    
-    setLaunchPts(msSoln, print);                           // Update msSoln.launchPts
+    setLaunchPts(msSoln, weights, print);                           // Update msSoln.launchPts
     double msDist = msSoln.getDist();               // Calc msSoln.dist from depot to launchPts!
     printf("  =?=\t%.2f\n", msDist);
     return msDist;
 }//nearestNeighbour
 
-double greedyMSCluster(MSSoln& msSoln, bool print = true) {
+double greedyMSCluster(MSSoln& msSoln, pair<double, double> weights, bool print = true) {
     if (print) printf("\n---- GREEDY M/S CLUSTERS ----\n");
     printf("%.2f\n", msSoln.getDist());
     const vector<ClusterSoln*> clusters = msSoln.clusters;
@@ -227,7 +227,7 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
 
     int min_clust_idx = findMinIdx(clusters);
 
-    const vector<vector<double>> centroidMatrix = calc_centMatrix(clusters, min_clust_idx, true);
+    const vector<vector<double>> centroidMatrix = calc_centMatrix(msSoln.ms.depot, clusters, min_clust_idx, true);
     //const vector<vector<double>> launchPtMatrix = setLaunchPts(msSoln, print);
     // print centroidMatrix
     if (print) {
@@ -293,7 +293,7 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
         msSoln.clusters = temp_clust;                        // UPDATE CLUSTER ORDER
     } else if (print) { printf("\tNO IMPROVEMENT\n"); }//else
 
-    setLaunchPts(msSoln, print);
+    setLaunchPts(msSoln, weights, print);
     double msDist = msSoln.getDist();
     printf("\n%.2f\n", msDist);
     return msDist;
@@ -307,21 +307,21 @@ double greedyMSCluster(MSSoln& msSoln, bool print = true) {
 /// <param name="msSoln"></param>
 /// <param name="csv_print"></param>
 /// <returns></returns>
-vector<pair<double, MSSoln>> initMsSoln(const vector<ClusterSoln*>& clusters, MSSoln& msSoln, bool print_detail=0) {
+vector<pair<double, MSSoln>> initMsSoln(const vector<ClusterSoln*>& clusters, MSSoln& msSoln, pair<double, double> weights, bool print_detail = 0) {
 	vector<pair<double, MSSoln>> msSolns;
     double msDist=DBL_MAX;                      // No launchPts initialised yet
     msSolns.push_back(make_pair(msDist, msSoln));
 
-    msDist = clusterCentroidNearestNeighbour(msSoln, print_detail);		// clusters ordered by NN
+    msDist = clusterCentroidNearestNeighbour(msSoln, weights, print_detail);		// clusters ordered by NN
     msSolns.push_back(make_pair(msDist, msSoln));
-    msDist = greedyMSCluster(msSoln, print_detail);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
+    msDist = greedyMSCluster(msSoln, weights, print_detail);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
     msSolns.push_back(make_pair(msDist, msSoln));
     if (!print_detail) {
         printf("\tMS LaunchPts\n");
         for (const auto& launchPt : msSolns.back().second.launchPts) {
             printf("\t%d\t(%.2f, %.2f)\n", launchPt->ID, launchPt->x, launchPt->y);
         }
-        printf("\tDepot:\t(%.2f, %.2f)\tTOTAL MS DIST: %.2f\t-->  WEIGHTED == %.2f\n", INST.ms.depot.x, INST.ms.depot.y, msSolns.back().first, INST.weights.first*msSolns.back().first);
+        printf("\tDepot:\t(%.2f, %.2f)\tTOTAL MS DIST: %.2f\t-->  WEIGHTED == %.2f\n", msSoln.ms.depot.x, msSoln.ms.depot.y, msSolns.back().first, weights.first*msSolns.back().first);
     }
 	return msSolns;
 }

@@ -83,13 +83,24 @@ private:
 		return string(output);
 	}
 
+	pair<double, double> normaliseWeights(pair<double, double> weights) {
+		double totalWeight = weights.first + weights.second; // Assuming weights is a pair<double, double>
+
+		// Check if totalWeight is not zero to avoid division by zero
+		if (totalWeight != 0.0) {
+			weights.first /= totalWeight;
+			weights.second /= totalWeight;
+		}
+		return weights;
+	}
+
 public:
 	Problem(vector<Pt> reefs, int noClust, Pt depot, int noDrones, int dCap, pair<double, double> weights, int kMeansIters) :
 		reefs(move(reefs)),
 		noClust(noClust), 
 		depot(depot), 
 		noDrones(noDrones), dCap(dCap),
-		weights(weights), kMeansIters(kMeansIters),
+		weights(normaliseWeights(weights)), kMeansIters(kMeansIters),
 		time(getCurrentTime()) 
 	{
 		//auto now = chrono::system_clock::now();
@@ -103,7 +114,7 @@ public:
 	const vector<Pt> reefs;
 	const MS ms					= this->setMS(noClust, depot);
 	const vector<Drone> drones	= this->setDrones(noDrones, dCap);
-	const pair<double, double> weights;
+	pair<double, double> weights;// = this->normaliseWeights(weights);
 	const string time;
 	const int kMeansIters;//1000
 

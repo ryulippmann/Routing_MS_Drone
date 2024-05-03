@@ -31,7 +31,7 @@ FullSoln BaseSwapRun(Problem inst, FullSoln soln_current, vector<double>& best_d
 	//double temp_diff = pow(10, -4);
 	//double final_temp = init_temp * temp_diff;//pow(10, -5);
 	//double cooling_rate = pow((temp_diff), 1 / num_iter);  //0.995;
-	double cooling_rate = 0.9995;//0.99975;//
+	double cooling_rate = 0.999;//0.99975;//
 
 	//\\//\\//\\//  Randomly run IN/OUT Swaps   //\\//\\//\\//
 	FullSoln best = SwapRandomly(inst, soln_current, SAparams(num_iter, init_temp, cooling_rate), run_iteration, 

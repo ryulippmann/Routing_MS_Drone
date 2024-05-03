@@ -80,7 +80,7 @@ vector<Pt*> UpdateLaunchPts(const vector<ClusterSoln*> clusters, Pt depot, pair<
 /// <param name="iteration"></param>
 /// <param name="swap_print"></param>
 /// <returns></returns>
-/*pair<DroneSoln, DroneSoln> */void random_d_out_Swap(DroneSoln& drone_a, DroneSoln& drone_b,/*pair<DroneSoln, DroneSoln> drones, */
+void random_d_out_Swap(DroneSoln& drone_a, DroneSoln& drone_b,/*pair<DroneSoln, DroneSoln> drones, */
     bool swap_print = false) {//, int iteration) { // d_route = ; tours = d_tours in this cluster
     /* RANDOMLY CHOOSE WHICH d_route TO SWAP */
     pair<int, int> s = randSwapChoice(  drone_a.routes.size(), //iteration, 

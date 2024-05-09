@@ -200,7 +200,7 @@ void printSetup(Problem inst) {
 	printf("Number of clusters:\t%d\n", inst.getnumClusters());
 	printf("Number of drones:\t%d\n", inst.getnumDrones());
 	printf("Drone capacity:\t\t%d\n", inst.get_dCap());
-	printf("\t\t\tWeighting:\n\t\t\tMS: %.1f\t\tDrone %.1f\n", inst.weights.first, inst.weights.second);
+	printf("\t\t\tWeighting:\n\t\t\tMS: %.3f\t\tDrone %.3f\n", inst.weights.first, inst.weights.second);
 	printf("Time initialised: \t");
 }
 

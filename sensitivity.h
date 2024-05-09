@@ -26,12 +26,12 @@ void sensitivity() {
 /// <returns></returns>
 FullSoln BaseSwapRun(Problem inst, FullSoln soln_current, vector<double>& best_dists, int run_iteration) {
 	//SAparams                  (num_iter, init_temp, cooling_rate)
-	int num_iter = 10000;//50000;//100000;//25000;               // fixed at 10000
-	double init_temp = 0.2 * soln_current.getTotalDist(inst.weights);
+	int num_iter = 10000;		//1000;		// 100000;		// 5000;	// 
+	double init_temp =	0.2 * soln_current.getTotalDist(inst.weights);
 	//double temp_diff = pow(10, -4);
 	//double final_temp = init_temp * temp_diff;//pow(10, -5);
 	//double cooling_rate = pow((temp_diff), 1 / num_iter);  //0.995;
-	double cooling_rate = 0.999;//0.99975;//
+	double cooling_rate = 0.999;// 0.99;	// 0.9999;		// 0.998;	// 
 
 	//\\//\\//\\//  Randomly run IN/OUT Swaps   //\\//\\//\\//
 	FullSoln best = SwapRandomly(inst, soln_current, SAparams(num_iter, init_temp, cooling_rate), run_iteration, 

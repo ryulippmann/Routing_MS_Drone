@@ -37,8 +37,8 @@ string createFolder(Problem inst, const string& folder_name = "", const string& 
         return folderPath;
     }
     // Create the folder
-    if (createDirectory(folderPath)) { cout << "Folder '" << folderPath << "' created successfully." << endl; }
-    else { cerr << "Failed to create folder '" << folderPath << "'." << endl; }
+    if (!createDirectory(folderPath)) //{ cout << "Folder '" << folderPath << "' created successfully." << endl; }
+    /*else*/ { cerr << "Failed to create folder '" << folderPath << "'." << endl; }
 }
 
 void createRunFolder(Problem inst, int iter) {

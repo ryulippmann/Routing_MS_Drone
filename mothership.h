@@ -82,6 +82,13 @@ int findClusterByID(int targetID, const vector<ClusterSoln*>& myList) {
     return -1;  // Return a special value (e.g., -1) to indicate that the ID was not found
 }
 
+/// <summary>
+/// 
+/// </summary>
+/// <param name="centroids"></param>
+/// <param name="depot"></param>
+/// <param name="weights"> normalised</param>
+/// <returns></returns>
 vector<Pt*> SetWeightedLaunchPts(const vector<Pt>& centroids, Pt depot, pair<double, double> weights) {
     /*ALT CALCS*/
     ////double w_ms_d = INST.weights.first / (INST.weights.first + INST.weights.second);
@@ -112,9 +119,14 @@ vector<Pt*> SetWeightedLaunchPts(const vector<Pt>& centroids, Pt depot, pair<dou
     //    w_ms_d * (INST.ms.depot.x + launchPts.back()->x),
     //    w_ms_d * (INST.ms.depot.y + launchPts.back()->y)));
     
-    double w_ms = weights.first;// / (weights.first + 2 * weights.second);
-    double w_d = weights.second;// / (weights.first + 2 * weights.second);
+    pair<double, double> launchpt_weighting = make_pair(1, 2);
+    pair<double, double> weights_launchpts = make_pair(weights.first*launchpt_weighting.first, weights.second*launchpt_weighting.second);
+    weights_launchpts = normaliseWeights(weights_launchpts);
+
+    double w_ms = weights_launchpts.first;// / (weights.first + 2 * weights.second);
+    double w_d = weights_launchpts.second;// / (weights.first + 2 * weights.second);
     // this formulation takes into account the following destination, and the 'gravity' towards that point
+
     vector<Pt*> launchPts;
     launchPts.push_back(new Pt(
         w_ms * depot.x + 2 * w_d * centroids[0].x,

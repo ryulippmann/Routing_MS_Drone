@@ -54,6 +54,17 @@ private:
 	static int count;
 };
 
+pair<double, double> normaliseWeights(pair<double, double> weights) {
+	double totalWeight = weights.first + weights.second; // Assuming weights is a pair<double, double>
+	// Check if totalWeight is not zero to avoid division by zero
+	if (totalWeight != 0.0) {
+		weights.first /= totalWeight;
+		weights.second /= totalWeight;
+	}
+	else (weights = make_pair(0.5, 0.5)); // Default weights (0.5, 0.5)
+	return weights;
+}
+
 const struct Problem {
 private:
 	const int noClust;
@@ -81,17 +92,6 @@ private:
 		//string output;
 		strftime(output, sizeof(output), "%y-%m-%d_%H-%M-%S", &localTime);
 		return string(output);
-	}
-
-	pair<double, double> normaliseWeights(pair<double, double> weights) {
-		double totalWeight = weights.first + weights.second; // Assuming weights is a pair<double, double>
-		// Check if totalWeight is not zero to avoid division by zero
-		if (totalWeight != 0.0) {
-			weights.first /= totalWeight;
-			weights.second /= totalWeight;
-		}
-		else (weights = make_pair(0.5, 0.5)); // Default weights (0.5, 0.5)
-		return weights;
 	}
 
 public:

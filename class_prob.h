@@ -54,6 +54,17 @@ private:
 	static int count;
 };
 
+pair<double, double> normaliseWeights(pair<double, double> weights) {
+	double totalWeight = weights.first + weights.second; // Assuming weights is a pair<double, double>
+	// Check if totalWeight is not zero to avoid division by zero
+	if (totalWeight != 0.0) {
+		weights.first /= totalWeight;
+		weights.second /= totalWeight;
+	}
+	else (weights = make_pair(0.5, 0.5)); // Default weights (0.5, 0.5)
+	return weights;
+}
+
 const struct Problem {
 private:
 	const int noClust;
@@ -83,26 +94,16 @@ private:
 		return string(output);
 	}
 
-	pair<double, double> normaliseWeights(pair<double, double> weights) {
-		double totalWeight = weights.first + weights.second; // Assuming weights is a pair<double, double>
-
-		// Check if totalWeight is not zero to avoid division by zero
-		if (totalWeight != 0.0) {
-			weights.first /= totalWeight;
-			weights.second /= totalWeight;
-		}
-		return weights;
-	}
-
 public:
-	Problem(vector<Pt> reefs, int noClust, Pt depot, int noDrones, int dCap, pair<double, double> weights, int kMeansIters) :
+	Problem(vector<Pt> reefs, int noClust, int noDrones, int dCap, pair<double, double> weights, Pt depot, int kMeansIters) :
 		reefs(move(reefs)),
 		noClust(noClust), 
 		depot(depot), 
 		noDrones(noDrones), dCap(dCap),
-		weights(normaliseWeights(weights)), kMeansIters(kMeansIters),
+		weights(normaliseWeights(weights)), // kMeansIters(kMeansIters),
 		time(getCurrentTime()) 
 	{
+		if (kMeansIters ==0) this->kMeansIters = 1;
 		//auto now = chrono::system_clock::now();
 		//time_t time = chrono::system_clock::to_time_t(now);
 		//tm localTime;                       // Convert time to local time
@@ -116,7 +117,7 @@ public:
 	const vector<Drone> drones	= this->setDrones(noDrones, dCap);
 	pair<double, double> weights;// = this->normaliseWeights(weights);
 	const string time;
-	const int kMeansIters;//1000
+	/*const*/ int kMeansIters;//1000
 
 	vector<Pt*> getReefPointers() const { 
 		vector<Pt*> reefPtrs;
@@ -178,17 +179,17 @@ Problem CreateInst(	int no_pts = 48,/*100;*/int noClust = 4, /*5;*/
 					int noDrones = 4,		int dCap = 3,
 					pair<double, double> weights = make_pair(1,1), //= make_pair(1,1)
 					Pt depot = Pt(0,0),		int kMeansIters = pow(10,2))	{
-		Problem inst = Problem(initReefs(no_pts), noClust, depot, noDrones, dCap, weights, kMeansIters);
+		Problem inst = Problem(initReefs(no_pts), noClust, noDrones, dCap, weights, depot, kMeansIters);
 		if (checkParameters(inst)) return inst;
 }
 
 Problem CreateInst(Problem inst_ex, int noClust, int noDrones, int dCap) {
-	Problem inst = Problem(inst_ex.reefs, noClust, inst_ex.getDepot(), noDrones, dCap, inst_ex.weights, inst_ex.kMeansIters);
+	Problem inst = Problem(inst_ex.reefs, noClust, noDrones, dCap, inst_ex.weights, inst_ex.getDepot(), inst_ex.kMeansIters);
 		if (checkParameters(inst)) return inst;
 }
 
 Problem CreateInst(Problem inst_ex, pair<double, double> weights) {
-	Problem inst = Problem(inst_ex.reefs, inst_ex.getnumClusters(), inst_ex.getDepot(), inst_ex.getnumDrones(), inst_ex.get_dCap(), weights, inst_ex.kMeansIters);
+	Problem inst = Problem(inst_ex.reefs, inst_ex.getnumClusters(), inst_ex.getnumDrones(), inst_ex.get_dCap(), weights, inst_ex.getDepot(), inst_ex.kMeansIters);
 		if (checkParameters(inst)) return inst;
 }
 
@@ -199,7 +200,7 @@ void printSetup(Problem inst) {
 	printf("Number of clusters:\t%d\n", inst.getnumClusters());
 	printf("Number of drones:\t%d\n", inst.getnumDrones());
 	printf("Drone capacity:\t\t%d\n", inst.get_dCap());
-	printf("\t\t\tWeighting:\n\t\t\tMS: %.1f\t\tDrone %.1f\n", inst.weights.first, inst.weights.second);
+	printf("\t\t\tWeighting:\n\t\t\tMS: %.3f\t\tDrone %.3f\n", inst.weights.first, inst.weights.second);
 	printf("Time initialised: \t");
 }
 

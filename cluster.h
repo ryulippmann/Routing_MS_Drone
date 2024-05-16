@@ -35,9 +35,10 @@ vector<ClusterSoln*> kMeansConstrained(int maxIterations, vector<Pt*> points, co
     if (clusterPrint) printf("\n---- kMEANS CONSTRAINED ----\n");
     int numPoints = points.size();
 
-    vector<ClusterSoln*> clusterss;// = vector<Cluster*>(numClusters);
+    vector<ClusterSoln*> clusters_vec;// = vector<Cluster*>(numClusters);
     // Check if desired cluster size is feasible
-    if (numPoints % numClusters != 0) { throw invalid_argument("Clusters don't divide evenly..."); return clusterss; }
+    if (numPoints % numClusters != 0) { throw invalid_argument("Clusters don't divide evenly..."); return clusters_vec; }
+    if (maxIterations < 1) { throw invalid_argument("maxIterations must be > 0..."); return clusters_vec; }
     int cluster_size = numPoints / numClusters;
     
     vector<vector<Pt*>> clusters(numClusters);
@@ -80,9 +81,9 @@ vector<ClusterSoln*> kMeansConstrained(int maxIterations, vector<Pt*> points, co
     }
 
     for (auto& cluster : clusters) {
-        clusterss.push_back(new ClusterSoln(cluster));     // initialise clusterss with clusters (vector of ReefPt pointers
+        clusters_vec.push_back(new ClusterSoln(cluster));     // initialise clusters_vec with clusters (vector of ReefPt pointers
 	}
-    return clusterss;
+    return clusters_vec;
 }
 
 //ClusterSoln clusterAndCentroid(Problem problem) {

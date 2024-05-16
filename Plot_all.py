@@ -5,10 +5,10 @@ import datetime
 import os
 import re
 
-path = 'outputs/24-04-05_14-28-43/'
+path = 'outputs/24-05-09_12-02-37/'
 
-print_plt = True
-save_plt = False
+print_plt = 1
+save_plt = 0
 
 def plot_clusters(csv_file, print_plt, save_plt):
     # Read CSV file and extract data
@@ -17,8 +17,8 @@ def plot_clusters(csv_file, print_plt, save_plt):
         data = list(reader)
 
     kmeans_iters = int(reader._fieldnames[6])
-    w_ms = int(reader._fieldnames[9])
-    w_d = int(reader._fieldnames[12])
+    w_ms = float(reader._fieldnames[9])
+    w_d = float(reader._fieldnames[12])
 
     # Extract x, y, cluster ID from the data
     x = [float(row['X']) for row in data]
@@ -107,9 +107,9 @@ def plot_MS_route(csv_file, print_plt, save_plt, w_ms, color = 'k'):
     # Extract x, y coordinates from the data
     x = [float(row['X']) for row in data]
     y = [float(row['Y']) for row in data]
-    if (dist==0): 
-        for i in range(len(x)-1): 
-            dist += w_ms * Dist([x[i], y[i]], [x[i+1], y[i+1]])  # ((x[i]-x[i+1])**2 + (y[i]-y[i+1])**2)**0.5
+    # if (dist==0): 
+    #     for i in range(len(x)-1): 
+    #         dist += w_ms * Dist([x[i], y[i]], [x[i+1], y[i+1]])  # ((x[i]-x[i+1])**2 + (y[i]-y[i+1])**2)**0.5
         # dist = round(sum([((x[i]-x[i-1])**2 + (y[i]-y[i-1])**2)**0.5 for i in range(1,len(x))]),2)
     
     # Annotate the plot with the coordinates of the first point as "depot"
@@ -172,25 +172,28 @@ def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, w_d, color = 'r
     colors = plt.cm.get_cmap('tab10', num_clusters)
     # launchpt_set = set(launchpts.keys())
     
-    for route in routes_node:
+    for r, route in enumerate(routes_node):
         dist_route = 0
         route_coords = []
-        x, y = launchpts[route[0]]
-        route_coords.append([route[0], x, y])
+        # x, y = launchpts[route[r]]
+        # route_coords.append([route[r], x, y])
 
-        for pt in range(1,len(route)-2):
-            x, y = nodes[route[pt]-1][0], nodes[route[pt]-1][1]
+        for pt in range(0,len(route)-2):
+            if pt == 0: x, y = launchpts[route[pt]]
+            else: x, y = nodes[route[pt]-1][0], nodes[route[pt]-1][1]
             route_coords.append([route[pt], x, y])
-            dist_leg = w_d * Dist(route_coords[-1][1:], route_coords[-2][1:])
-            print(dist_leg)
-            dist_route += dist_leg
+            if len(route_coords)>1: 
+                dist_leg = Dist(route_coords[-1][1:], route_coords[-2][1:])
+                print(dist_leg)
+                dist_route += dist_leg
         x, y = launchpts[route[-2]]
         route_coords.append([route[-2], x, y])
-        dist_leg = w_d * Dist(route_coords[-1][1:], route_coords[-2][1:])
+        dist_leg = Dist(route_coords[-1][1:], route_coords[-2][1:])
         print(dist_leg)
         dist_route += dist_leg
         print(f"Drone dist: {dist_route:.2f}\n")
         dist_d_total += dist_route
+        # if (len(routes_node)%num_clusters==0): print(f"Cluster dist: {dist_route:.2f}\n")
         # # # # ignore return to launch point # x, y = launchpts[route[-1]] # route_coords.append([route[-1], x, y])
         routes_pt.append(route_coords)
         # print(get_index_of_id(launchpts, route_coords[0][0]))
@@ -199,7 +202,7 @@ def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, w_d, color = 'r
     print(f"\nTotal drone distance travelled: {dist_d_total:.2f}\n")
     print(f"\nTotal MS distance travelled: {dist_total:.2f}\n")
     plt.annotate(f'D_dist = {dist_d_total:.2f}\n@w_d = {w_d}', xy=(0.3, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
-    plt.annotate(f'TOTAL =\n{(dist_d_total+dist_total):.2f}', xy=(0.65, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = 'b', fontweight='bold')
+    plt.annotate(f'WEIGHTED TOTAL =\n{(w_d*dist_d_total+w_ms*dist_total):.2f}', xy=(0.65, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = 'b', fontweight='bold')
     print(f"\nTotal ms+d distance travelled: {(dist_d_total+dist_total):.2f}\n")
 
     for i,I in enumerate(routes_pt):
@@ -253,7 +256,7 @@ for folder in os.listdir(path):
                 nodes, w_ms, w_d = plot_clusters(      cluster_path, print_plt, save_plt)
                 print("\nNo clusters: "+str(max([sublist[-1] for sublist in nodes])+1))
                 if (max([sublist[-1] for sublist in nodes])>0): launchpts = get_launchpts(launchpts_path)
-                dist_total +=       w_ms *  plot_MS_route(ms_path, print_plt, save_plt, w_ms)
-                dist_total +=       w_d *   plot_drones(d_path, nodes, launchpts, print_plt, save_plt, w_d)
+                dist_total +=         plot_MS_route(ms_path, print_plt, save_plt, w_ms)
+                dist_total +=         plot_drones(d_path, nodes, launchpts, print_plt, save_plt, w_d)
 
 print("End of Plot_clusters.py")

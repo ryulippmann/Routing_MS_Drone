@@ -111,11 +111,14 @@ vector<int> Factors(int num) {
 /// <returns>
 /// vector of pairs: (number of clusters and drones, and total_dist of solution)
 /// </returns>
-vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_droneXclust(const Problem& inst) {
+vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_clustXdrone(const Problem& inst) {
 	vector<vector<FullSoln>> fullSolns;
-	int total_drone_routes = inst.reefs.size()/ inst.get_dCap();
-	vector<int> factors = Factors(total_drone_routes);
 	vector<pair<int,int>> factors_pairs;
+	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
+
+	int total_drone_routes = inst.reefs.size() / inst.get_dCap();
+	vector<int> factors = Factors(total_drone_routes);
+
 	for (int f : factors) {
 		factors_pairs.push_back(make_pair(f, total_drone_routes / f));
 	}
@@ -125,7 +128,6 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_droneXclust(con
 		Problem sens_inst = CreateInst(inst, num_clust, num_drone, inst.get_dCap());
 		fullSolns.push_back(FullRun(i, sens_inst));
 	}
-	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
 	for (int i = 0; i < fullSolns.size(); i++) {
 		double dist = fullSolns[i].back().getTotalDist(inst.weights);
 		results.push_back(make_pair(factors_pairs[i], make_pair(dist, fullSolns[i].back())));
@@ -181,6 +183,7 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryWeights(double w_ms
 	vector<pair<int, int>> weighting_pairs;
 	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
 
+	// perform sensitivty analysis based on more acceptable range of values
 	double w_ms_min = w_ms * pow(2, -1	* (sens_iter));		// w_ms * (1 - 0.1 * sens_iter);
 	double w_ms_max = w_ms * pow(2, 1	* (sens_iter));		// w_ms * (1 + 0.1 * sens_iter);
 	double w_d_min = w_d *	pow	(2, -1	* (sens_iter));		// w_d * (1 - 0.1 * sens_iter);
@@ -205,28 +208,18 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryWeights(double w_ms
 
 ///////////////////////////////////
 ///////////////////////////////////
-
-Problem VaryInstSize(int inst_size) {
-	return CreateInst(inst_size);
-}
-
-void VaryInst() {
-	return;
-}
-
-///////////////////////////////////
-///////////////////////////////////
 ///////////////////////////////////
 ///////////////////////////////////
 
-void VaryClusterBunching() {
-	return;
-}
+//Problem VaryInstSize(int inst_size) {return CreateInst(inst_size);}
+
+//void VaryClusterBunching() {return;}
 
 ///////////////////////////////////
 //// clust_based
 
 //void VarySwapIters() {
+
 //	//FullSoln best = SwapRandomly(fullSolns.back(), print_detail, csv_print);
 //	//printf("\nPrev Dist: \t\t%.2f", best_dist.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
 //	//best_dist.push_back(best.getTotalDist());
@@ -238,7 +231,5 @@ void VaryClusterBunching() {
 //	return;
 //}
 
-//void VarySwapTypeProb() {
-//	return;
-//}
+//void VarySwapTypeProb() {return;}
 

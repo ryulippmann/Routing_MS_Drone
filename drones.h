@@ -7,7 +7,7 @@
 /// <param name="launchPts"></param>
 /// <param name="printStops"></param>
 /// <returns></returns>
-vector<vector<Pt*>> DroneWithinClusterNearestNeighbour(vector<Drone> drones, int d_cap,
+vector<vector<Pt*>> DroneWithinClusterNearestNeighbour(const vector<Drone>& drones, const int& d_cap,
     const ClusterSoln* cluster, const pair<Pt*, Pt*>& launchPts, bool printStops = false) {
     int u = -1;                                         // initialise current reef index
     vector <double> route_dists(drones.size()+2,0.0);   // list of route dist for each vehicle
@@ -125,7 +125,7 @@ vector<vector<Pt*>> greedyDroneCluster(const DroneSoln& clustDroneSoln, const ve
 /// <param name="msSoln"></param>
 /// <param name="print"></param>
 /// <returns></returns>
-vector<DroneSoln> initDroneSoln(Problem inst, const MSSoln& msSoln, bool print=false) {   /*const vector<ClusterSoln*>& clusters, */
+vector<DroneSoln> initDroneSoln(const Problem& inst, const MSSoln& msSoln, bool print=false) {   /*const vector<ClusterSoln*>& clusters, */
     vector<DroneSoln> droneSolns;
     cout << string(30, '-') << "\n";
     printf("INITIALISE TENDER SOLUTIONS\n");

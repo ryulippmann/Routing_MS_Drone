@@ -19,22 +19,25 @@ void sensitivity() {
 ///////////////////////////////////
 
 /// <summary>
-///
+/// 
 /// </summary>
+/// <param name="inst"></param>
 /// <param name="soln_current"></param>
 /// <param name="best_dists"></param>
+/// <param name="run_iteration"></param>
+/// <param name="folder_path"></param>
+/// <param name="sa_it_cr"></param>
 /// <returns></returns>
-FullSoln BaseSwapRun(Problem inst, FullSoln soln_current, vector<double>& best_dists, int run_iteration, const string& folder_path ="") {
+FullSoln BaseSwapRun(const Problem& inst, FullSoln soln_current, vector<double>& best_dists, int run_iteration, const string& folder_path ="", pair<int, double> sa_it_cr = make_pair(0, 0)) {
 	//SAparams                  (num_iter, init_temp, cooling_rate)
-	int num_iter = 1000;		//10000;		// 100000;		// 5000;	// 
 	double init_temp =	0.2 * soln_current.getTotalDist(inst.weights);
+	if (sa_it_cr == make_pair(0, 0)) { sa_it_cr = make_pair(pow(10, 4), 0.999); }	// pow(10,3), 0.99); } //	  (5*pow(10,3), 0.998);	// (pow(10,5), 0.9999);	//
 	//double temp_diff = pow(10, -4);
 	//double final_temp = init_temp * temp_diff;//pow(10, -5);
-	//double cooling_rate = pow((temp_diff), 1 / num_iter);  //0.995;
-	double cooling_rate = 0.99;	//0.999;//  0.9999;		// 0.998;	// 
+	//double cooling_rate = pow((temp_diff), 1 / num_iter);
 
 	//\\//\\//\\//  Randomly run IN/OUT Swaps   //\\//\\//\\//
-	FullSoln best = SwapRandomly(inst, soln_current, SAparams(num_iter, init_temp, cooling_rate), folder_path+"/"+to_string(run_iteration),
+	FullSoln best = SwapRandomly(inst, soln_current, SAparams(sa_it_cr.first, init_temp, sa_it_cr.second), folder_path+"/"+to_string(run_iteration),
 								print_detail, csv_print);
 	printf("\nPrev Dist: \t\t%.2f", best_dists.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
 	best_dists.push_back(best.getTotalDist(inst.weights));
@@ -51,7 +54,7 @@ FullSoln BaseSwapRun(Problem inst, FullSoln soln_current, vector<double>& best_d
 /// <param name="iter"></param>
 /// <param name="INST"></param> GLOBAL VARIABLE included to allow for sensitivity changes
 /// <returns></returns>
-vector<FullSoln> FullRun(const int& iter, const Problem& inst, const string& batch="", const string& sens_run_name = "") {
+vector<FullSoln> FullRun(const int& iter, const Problem& inst, const string& batch="", const string& sens_run_name = "", pair<int, double> sa_param_it_cr = make_pair(0, 0)) {
 	//\\//\\//\\//\\  ClusterSoln Construction  //\\//\\//\\//
 	vector<ClusterSoln*> clusters = kMeansConstrained(inst.kMeansIters, inst.getReefPointers(), inst.ms.cap);
 	string folder_path;
@@ -84,7 +87,7 @@ vector<FullSoln> FullRun(const int& iter, const Problem& inst, const string& bat
 	vector<double> best_dist{ fullSolns.back().getTotalDist(inst.weights) };			// initialise best_dist as vector with best solution distance	
 
 	fullSolns.push_back(
-		BaseSwapRun(inst, fullSolns.back(), best_dist, iter, folder_path)
+		BaseSwapRun(inst, fullSolns.back(), best_dist, iter, folder_path, sa_param_it_cr)
 	);
 
 	return fullSolns;
@@ -124,7 +127,7 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_clustXdrone(con
 		int num_clust = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
 		Problem sens_inst = CreateInst(inst, num_clust, num_drone, inst.get_dCap());
-		fullSolns.push_back(FullRun(i, sens_inst, inst.time, "varyClusts"));
+		fullSolns.push_back(FullRun(i, sens_inst, inst.time, "varyClusts", make_pair(pow(10, 3), 0.99)));
 	}
 	for (int i = 0; i < fullSolns.size(); i++) {
 		double dist = fullSolns[i].back().getTotalDist(inst.weights);
@@ -156,7 +159,7 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryDrones(const Proble
 		int dCap = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
 		Problem sens_inst = CreateInst(inst, inst.getnumClusters(), num_drone, dCap);
-		fullSolns.push_back(FullRun(i, sens_inst, inst.time, "varyDroneCap"));
+		fullSolns.push_back(FullRun(i, sens_inst, inst.time, "varyDroneCap", make_pair(pow(10, 3), 0.99)));
 	}
 	for (int i = 0; i < fullSolns.size(); i++) {
 		double dist = fullSolns[i].back().getTotalDist(inst.weights);
@@ -192,7 +195,7 @@ vector <pair < pair<double, double>, pair<double, FullSoln> >> VaryWeights(pair<
 	}
 	for (int i = 0; i < weighting_pairs.size(); i++) {
 		Problem sens_inst = CreateInst(inst, weighting_pairs[i]);
-		fullSolns.push_back(FullRun(i, sens_inst, inst.time, "sens_weights"));
+		fullSolns.push_back(FullRun(i, sens_inst, inst.time, "sens_weights", make_pair(pow(10, 3), 0.99)));
 	}
 	for (int i = 0; i < fullSolns.size(); i++) {
 		double dist = fullSolns[i].back().getTotalDist(inst.weights);

@@ -4,6 +4,8 @@
 
 #ifdef _WIN32
 #include <direct.h>   // For mkdir on Windows
+//#else
+//#include <unistd.h>
 #endif
 
 bool directoryExists(const string& path) {
@@ -11,45 +13,74 @@ bool directoryExists(const string& path) {
     return stat(path.c_str(), &info) == 0 && (info.st_mode & S_IFDIR);
 }
 
+//bool createDirectory(const string& path) {
+//#ifdef _WIN32
+//    return _mkdir(path.c_str()) == 0;
+//#else
+//    return mkdir(path.c_str(), 0777) == 0; // Note: 0777 sets full access permissions
+//#endif
+//}
 bool createDirectory(const string& path) {
+    stringstream ss(path);
+    string item;
+    string currentPath = "";
+
+    while (getline(ss, item, '/')) {
+        if (!item.empty()) {  // Avoid empty tokens
+            currentPath += item + "/";
+            if (!directoryExists(currentPath)) {
 #ifdef _WIN32
-    return _mkdir(path.c_str()) == 0;
+                if (_mkdir(currentPath.c_str()) != 0) {
 #else
-    return mkdir(path.c_str(), 0777) == 0; // Note: 0777 sets full access permissions
+                if (mkdir(currentPath.c_str(), 0777) != 0) { // Note: 0777 sets full access permissions
 #endif
+                    cerr << "Failed to create folder '" << currentPath << "'." << endl;
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
 }
 
 //string inFolder(const string& in_folder = "") {
-//	string folderPath = "outputs/" + INST.time;    // Define the path of the folder
-//	if (!in_folder.empty()) folderPath += "/" + in_folder;
-//	return folderPath;
+//	string folder_path = "outputs/" + INST.time;    // Define the path of the folder
+//	if (!in_folder.empty()) folder_path += "/" + in_folder;
+//	return folder_path;
 //}
 
-string createFolder(Problem inst, const string& folder_name = "", const string& sub_folder ="") {
-    string folderPath = "outputs/" + inst.time;    // Define the path of the folder
-    if (!folder_name.empty()) 
-        folderPath += "/" + folder_name;
-        if (!sub_folder.empty())
-            folderPath += "/" + sub_folder;
+string createFolder(const string& name, const string& folder_name = "", const string& sub_folder ="") {
+    string folder_path;
+    // if name doesn't starts with "outputs/", add it
+    if (name.substr(0, 8) != "outputs/") {
+        folder_path = "outputs/" + name;    // Define the path of the folder
+	}
+    else {
+		folder_path = name;
+	}
 
-    if (directoryExists(folderPath)) {    // Check if the folder already exists
-        cout << "Folder '" << folderPath << "' already exists." << endl;
-        return folderPath;
+    if (!folder_name.empty()) folder_path += "/" + folder_name;
+    if (!sub_folder.empty()) folder_path += "/" + sub_folder;
+
+    if (directoryExists(folder_path)) {    // Check if the folder already exists
+        cout << "Folder '" << folder_path << "' already exists." << endl;
+        return folder_path;
     }
     // Create the folder
-    if (!createDirectory(folderPath)) //{ cout << "Folder '" << folderPath << "' created successfully." << endl; }
-    /*else*/ { cerr << "Failed to create folder '" << folderPath << "'." << endl; }
+    if (!createDirectory(folder_path)) //{ cout << "Folder '" << folder_path << "' created successfully." << endl; }
+    /*else*/ { cerr << "Failed to create folder '" << folder_path << "'." << endl; }
+    return folder_path;
 }
 
-void createRunFolder(Problem inst, int iter) {
-    string folderPath = "outputs/" + inst.time + "/" + to_string(iter);    // Define the path of the folder
-    if (directoryExists(folderPath)) {    // Check if the folder already exists
-        cout << "Folder '" << folderPath << "' already exists." << endl;
+void createRunFolder(const string& folder_name, string run_name) {
+    string folder_path = "outputs/" + folder_name + "/" + run_name;    // Define the path of the folder
+    if (directoryExists(folder_path)) {    // Check if the folder already exists
+        cout << "Folder '" << folder_path << "' already exists." << endl;
         return;
     }
     // Create the folder
-    if (createDirectory(folderPath)) { cout << "Folder '" << folderPath << "' created successfully." << endl; }
-    else { cerr << "Failed to create folder '" << folderPath << "'." << endl; }
+    if (createDirectory(folder_path)) { cout << "Folder '" << folder_path << "' created successfully." << endl; }
+    else { cerr << "Failed to create folder '" << folder_path << "'." << endl; }
     return;
 }
 
@@ -78,8 +109,8 @@ string addTimeToFilename(string file_name) {
 	return file_name;
 }
 
-void csvPrintStops(Problem inst, const string& file_name) {
-    ofstream outputFile("outputs/" + inst.time + "/" + file_name + ".csv");    // create .csv file from string name
+void csvPrintStops(const Problem& inst, const string& folder_name, const string& file_name) {
+    ofstream outputFile("outputs/" + folder_name + "/" + file_name + ".csv");    // create .csv file from string name
     if (outputFile.is_open()) {
         outputFile << "ClusterID" << "," << "PtID" << "," << "X" << "," << "Y" << "\n";
         for (const auto& reef : inst.reefs) {
@@ -111,7 +142,7 @@ void printDroneRoutes(const DroneSoln* drone) {
 /// <param name="clusters"></param>
 /// <param name="file_name"></param>
 /// <param name="kMeansIters"></param>
-void csvPrintClusters(const vector<ClusterSoln*>& clusters, Problem inst, string file_name="clusters", const string& in_folder = "") {
+void csvPrintClusters(const vector<ClusterSoln*>& clusters, const Problem& inst, string file_name="clusters", const string& in_folder = "") {
     ofstream outfile(in_folder + "/" + file_name + ".csv");
 
     if (!outfile.is_open()) {
@@ -193,14 +224,8 @@ void csvPrintDroneRoutes(vector<vector<Pt*>> routes, string file_name, const str
     return;
 }
 
-string csvPrintSA(SAlog log, string file_name, const string& in_folder = "") {
-    size_t last_slash_pos = in_folder.find_last_of('/');     // Find the position of the last '/'
-    string new_path;
-    if (last_slash_pos != string::npos) {
-        new_path = in_folder.substr(0, last_slash_pos);         // Extract the substring up to the position of the second-to-last '/'
-    }
-    else { cerr << "Invalid path format." << endl; }
-    ofstream outputFile(new_path + "/" + file_name + ".csv");
+string csvPrintSA(SAlog log, string file_name, const string& in_folder) {
+    ofstream outputFile(in_folder + "/" + file_name + ".csv");
 
     if (outputFile.is_open()) {
         outputFile << "iter8,temp,current_dist,new_dist,best_dist,,cooling rate," << log.params.cooling_rate << "\n";
@@ -217,20 +242,26 @@ string csvPrintSA(SAlog log, string file_name, const string& in_folder = "") {
 /// <param name="best_new"></param>
 /// <param name="file_suffix"></param>
 /// <param name="path"></param>
-void csvPrints(FullSoln best_new, Problem inst, string file_suffix, int run_iteration = NULL) { // csv output of the full solution - INIT and FINAL
+void csvPrints(FullSoln best_new, Problem inst, string file_suffix, int run_iteration = NULL, string batch = NULL) { // csv output of the full solution - INIT and FINAL
     string mod_time = getCurrentTime() + "_Full_" + file_suffix;
-    string folderPath = createFolder(inst, to_string(run_iteration), mod_time);
+    string folder_path;
+    if (!batch.empty()) {
+        folder_path = createFolder(batch, to_string(run_iteration), mod_time);
+    }
+    else {
+        folder_path = createFolder(inst.time, to_string(run_iteration), mod_time);
+    }
 
     //csvPrintStops(/*best_new.msSoln.clusters, */"reef_set");
     vector<vector<Pt*>> total_routes;// = in_out ? best_new.droneSolns : best_new.droneSolns_out;
     for (const auto& vehicle : best_new.droneSolns) {
         for (const auto& route : vehicle->routes) { total_routes.push_back(route); }
 	}
-    csvPrintClusters(best_new.msSoln.clusters, inst, "clusters", folderPath);
-    csvPrintLaunchPts(best_new.msSoln.launchPts, "launchPts", folderPath);//"launchPts_fullSoln_" + boolToString(in_out));
-    csvPrintMSRoutes(best_new.msSoln.launchPts, best_new.msSoln.ms.depot, "ms_route", best_new.msSoln.getDist(), folderPath);//_"+boolToString(in_out));
-    csvPrintDroneRoutes(total_routes, "drone_routes", folderPath, true);
-    if (best_new.sa_log.best_dist.size()>1) csvPrintSA(best_new.sa_log, "sa_log", folderPath);
+    csvPrintClusters(best_new.msSoln.clusters, inst, "clusters", folder_path);
+    csvPrintLaunchPts(best_new.msSoln.launchPts, "launchPts", folder_path);//"launchPts_fullSoln_" + boolToString(in_out));
+    csvPrintMSRoutes(best_new.msSoln.launchPts, best_new.msSoln.ms.depot, "ms_route", best_new.msSoln.getDist(), folder_path);//_"+boolToString(in_out));
+    csvPrintDroneRoutes(total_routes, "drone_routes", folder_path, true);
+    if (best_new.sa_log.best_dist.size()>1) csvPrintSA(best_new.sa_log, "sa_log", batch + "/" + to_string(run_iteration));
     //csvPrintSA_Time(filename_SA, fn_elapsed_time);
     return;
 }
@@ -242,20 +273,20 @@ void csvPrints(FullSoln best_new, Problem inst, string file_suffix, int run_iter
 /// <param name="in_out"></param>
 /// <param name="numUpdate"></param>
 /// <param name="folder"></param>
-void csvUpdate(FullSoln best_new, Problem inst, bool in_out, int numUpdate, int run_iteration=NULL) {     // csv output of the full solution - on the fly every swap update
+void csvUpdate(FullSoln best_new, Problem inst, bool in_out, int numUpdate, string folder_path = "") {     // csv output of the full solution - on the fly every swap update
     //string mod_time = getCurrentTime();// +"_OUT";
     string mod_time = to_string(numUpdate);
     if (in_out) { mod_time += "_IN"; }
     else { mod_time += "_OUT"; }
-    string folderPath = createFolder(inst, to_string(run_iteration), mod_time);
+    folder_path = createFolder(folder_path, mod_time);
     vector<vector<Pt*>> total_routes;// = in_out ? best_new.droneSolns : best_new.droneSolns_out;
     for (const auto& vehicle : best_new.droneSolns) {
         for (const auto& route : vehicle->routes) { total_routes.push_back(route); }
     }
-    csvPrintClusters(best_new.msSoln.clusters, inst, "clusters", folderPath);
-    csvPrintLaunchPts(best_new.msSoln.launchPts, "launchPts", folderPath, false);//"launchPts_fullSoln_" + boolToString(in_out));
-    csvPrintMSRoutes(best_new.msSoln.launchPts, best_new.msSoln.ms.depot, "ms_route", best_new.msSoln.getDist(), folderPath, false);//_"+boolToString(in_out));
-    csvPrintDroneRoutes(total_routes, "drone_routes", folderPath);
+    csvPrintClusters(best_new.msSoln.clusters, inst, "clusters", folder_path);
+    csvPrintLaunchPts(best_new.msSoln.launchPts, "launchPts", folder_path, false);//"launchPts_fullSoln_" + boolToString(in_out));
+    csvPrintMSRoutes(best_new.msSoln.launchPts, best_new.msSoln.ms.depot, "ms_route", best_new.msSoln.getDist(), folder_path, false);//_"+boolToString(in_out));
+    csvPrintDroneRoutes(total_routes, "drone_routes", folder_path);
     return;
 }
 

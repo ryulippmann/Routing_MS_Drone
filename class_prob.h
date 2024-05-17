@@ -100,10 +100,10 @@ public:
 		noClust(noClust), 
 		depot(depot), 
 		noDrones(noDrones), dCap(dCap),
-		weights(normaliseWeights(weights)), // kMeansIters(kMeansIters),
+		weights(normaliseWeights(weights)), kMeansIters(kMeansIters),
 		time(getCurrentTime()) 
 	{
-		if (kMeansIters ==0) this->kMeansIters = 1;
+		if (this->kMeansIters <= 0) this->kMeansIters = 1;
 		//auto now = chrono::system_clock::now();
 		//time_t time = chrono::system_clock::to_time_t(now);
 		//tm localTime;                       // Convert time to local time

@@ -5,7 +5,7 @@ using namespace std;
 #include <utility>
 #include "class_prob.h"
 
-bool csv_print = 0;
+bool csv_print = 1;
 bool print_detail = 0;
 
 int Pt::count = 0;
@@ -64,14 +64,15 @@ int main()
 	if (checkParameters(inst) == false) return 0;		// check if parameters are valid
 	printSetup(inst);		// print problem setup
 
-	vector<vector<FullSoln>> fullSolns;
-	int iter = 1;
-	for (int i = 0; i < iter; i++) {
-		fullSolns.push_back(
-			FullRun(i, inst)
-		);
-	}
-	
+	//vector<vector<FullSoln>> fullSolns;
+	//int iter = 1;
+	//for (int i = 0; i < iter; i++) {
+	//	fullSolns.push_back(
+	//		FullRun(i, inst)
+	//	);
+	//}
+	vector <pair < pair<double, double>, pair<double, FullSoln> >> weight_results = VaryWeights(make_pair(1, 10), make_pair(0.1, 1), inst, 3);
+
 	//\\//\\//\\//\\//\\       FIN        //\\//\\//\\//\\//\\
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//	
 	printf("\n\n");

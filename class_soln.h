@@ -289,6 +289,13 @@ public:
 		}
 		return route_dist;
 	}
+	double getDroneDist() const {
+		double dist = 0;
+		for (auto& route : routes) {
+			dist += getDroneRouteDist(route);
+		}
+		return dist;
+	}
 	
 	// Copy assignment operator for deep copy
 	DroneSoln& operator=(const DroneSoln& other) {

@@ -84,10 +84,13 @@ int main()
 	//		4);
 	//for (int i = 0; i < weight_results.size(); i++) { fullSolns_best.push_back( (weight_results[i].second.second) ); }
 
-	vector <pair < pair<int, int>, pair<double, FullSoln> >> noclust_results =
-		VaryNum_clustXdrone(inst, sens_run);
-	
-	for (int i = 0; i < noclust_results.size(); i++) { fullSolns_best.push_back( (noclust_results[i].second.second) ); }
+	//vector <pair < pair<int, int>, pair<double, FullSoln> >> noclust_results =
+	//	VaryNum_clustXdrone(inst, sens_run);	
+	//for (int i = 0; i < noclust_results.size(); i++) { fullSolns_best.push_back( (noclust_results[i].second.second) ); }
+
+	vector <pair < pair<int, int>, pair<double, FullSoln> >> dCap_results =
+		Vary_dCap(inst, sens_run);
+	for (int i = 0; i < dCap_results.size(); i++) { fullSolns_best.push_back( (dCap_results[i].second.second) ); }
 
 	printOpts(inst, fullSolns_best, sens_run);
 

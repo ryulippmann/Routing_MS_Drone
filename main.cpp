@@ -65,23 +65,23 @@ int main()
 	printSetup(inst);		// print problem setup
 	vector<FullSoln> fullSolns_best;
 
-	vector<vector<FullSoln>> fullSolns;
-	int iter = 10;
-	for (int i = 0; i < iter; i++) {
-		fullSolns.push_back(
-			FullRun(i, inst)
-		);
-	}
-	for (int i = 0; i < fullSolns.size(); i++) { fullSolns_best.push_back( (fullSolns[i].back()) ); }
-	printOpts(inst, fullSolns_best);
+	//vector<vector<FullSoln>> fullSolns;
+	//int iter = 10;
+	//for (int i = 0; i < iter; i++) {
+	//	fullSolns.push_back(
+	//		FullRun(i, inst)
+	//	);
+	//}
+	//for (int i = 0; i < fullSolns.size(); i++) { fullSolns_best.push_back( (fullSolns[i].back()) ); }
+	//printOpts(inst, fullSolns_best, inst.time+"_FullRuns");
 
-	//vector <pair < pair<double, double>, pair<double, FullSoln> >> weight_results = 
-	//	VaryWeights(
-	//		inst, 
-	//		make_pair(1, 10), 
-	//		make_pair(0.1, 1),
-	//		3);
-	//for (int i = 0; i < weight_results.size(); i++) { fullSolns_best.push_back( (weight_results[i].second.second) ); }
+	vector <pair < pair<double, double>, pair<double, FullSoln> >> weight_results = 
+		VaryWeights(
+			inst, 
+			make_pair(1, 10), 
+			make_pair(0.1, 1),
+			4);
+	for (int i = 0; i < weight_results.size(); i++) { fullSolns_best.push_back( (weight_results[i].second.second) ); }
 
 	printOpts(inst, fullSolns_best);
 

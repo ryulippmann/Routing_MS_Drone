@@ -37,11 +37,11 @@ FullSoln SwapShell(const Problem& inst, FullSoln soln_current, vector<double>& b
 /// <param name="iter"></param>
 /// <param name="INST"></param> GLOBAL VARIABLE included to allow for sensitivity changes
 /// <returns></returns>
-vector<FullSoln> FullRun(const int& iter, const Problem& inst, const string& batch="", const string& sens_run_name = "", pair<int, double> sa_param_it_cr = make_pair(0, 0)) {
+vector<FullSoln> FullRun(const int& iter, const Problem& inst, const string& batch="", pair<int, double> sa_param_it_cr = make_pair(0, 0)) {
 	string folder_path;
 	if (csv_print) {
-		if (batch == "") folder_path = createFolder(inst.time, sens_run_name);
-		else folder_path = createFolder(batch, sens_run_name);
+		if (batch == "") folder_path = createFolder(inst.time);
+		else folder_path = createFolder(batch);
 	}
 	auto start_time = chrono::high_resolution_clock::now();  // Start timing
 
@@ -155,7 +155,7 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_clustXdrone(con
 		int num_clust = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
 		Problem sens_inst = CreateInst(inst, num_clust, num_drone, inst.get_dCap());
-		fullSolns.push_back(FullRun(i, sens_inst, inst.time, "varyClusts", make_pair(pow(10, 3), 0.99)));
+		fullSolns.push_back(FullRun(i, sens_inst, inst.time + "_vary_Clusts", make_pair(pow(10, 3), 0.99)));
 	}
 	return sensitivityResults(inst, fullSolns, factors_pairs);
 }
@@ -177,7 +177,7 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> Vary_dCap(const Problem
 		int dCap = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
 		Problem sens_inst = CreateInst(inst, inst.getnumClusters(), num_drone, dCap);
-		fullSolns.push_back(FullRun(i, sens_inst, inst.time, "varyDroneCap", make_pair(pow(10, 3), 0.99)));
+		fullSolns.push_back(FullRun(i, sens_inst, inst.time + "_vary_dCap", make_pair(pow(10, 3), 0.99)));
 	}
 	return sensitivityResults(inst, fullSolns, factors_pairs);
 }
@@ -204,12 +204,12 @@ vector <pair < pair<double, double>, pair<double, FullSoln> >> VaryWeights(const
 
 	for (double ms = bounds_w_ms.first; ms <= bounds_w_ms.second; ms += var_w_ms) {
 		for (double d = bounds_w_d.first; d <= bounds_w_d.second; d += var_w_d) {
-			weighting_pairs.push_back(make_pair(static_cast<double>(ms), static_cast<double>(d)));
+			weighting_pairs.push_back(make_pair(ms, d));
 		}
 	}
 	for (int i = 0; i < weighting_pairs.size(); i++) {
 		Problem sens_inst = CreateInst(inst, weighting_pairs[i]);
-		fullSolns.push_back(FullRun(i, sens_inst, inst.time, "sens_weights", make_pair(pow(10, 3), 0.99)));
+		fullSolns.push_back(FullRun(i, sens_inst, inst.time + "_vary_weights", make_pair(pow(10, 3), 0.99)));
 	}
 	return sensitivityResults(inst, fullSolns, weighting_pairs);
 }

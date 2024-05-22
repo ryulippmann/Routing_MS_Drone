@@ -1,6 +1,7 @@
 #pragma once
 #include <sstream>
 #include <fstream>
+#include <filesystem> // For checking file existence
 
 #ifdef _WIN32
 #include <direct.h>   // For mkdir on Windows
@@ -13,13 +14,23 @@ bool directoryExists(const string& path) {
     return stat(path.c_str(), &info) == 0 && (info.st_mode & S_IFDIR);
 }
 
-//bool createDirectory(const string& path) {
-//#ifdef _WIN32
-//    return _mkdir(path.c_str()) == 0;
-//#else
-//    return mkdir(path.c_str(), 0777) == 0; // Note: 0777 sets full access permissions
-//#endif
-//}
+void writeRuntimeToFile(const string& filename, int iter, const chrono::duration<double>& elapsed) {
+    int minutes = static_cast<int>(elapsed.count()) / 60;
+    int seconds = round(fmod(elapsed.count(), 60));
+
+    ofstream outfile(filename + ".csv", std::ios::app); // Open the file in append mode
+    if (outfile.is_open()) {
+        //if (outfile.tellp() == 0) { // Check if the file is empty
+        //    outfile << "Iteration, Run time (min), Run time (sec)\n"; // If empty, write header
+        //}
+        outfile << iter << ", " << minutes << ", " << seconds << "\n"; // Add runtime information
+        outfile.close();
+    }
+    else {
+        cerr << "Unable to open file " << filename << ".csv" << endl;
+    }
+}
+
 bool createDirectory(const string& path) {
     stringstream ss(path);
     string item;
@@ -42,12 +53,6 @@ bool createDirectory(const string& path) {
     }
     return true;
 }
-
-//string inFolder(const string& in_folder = "") {
-//	string folder_path = "outputs/" + INST.time;    // Define the path of the folder
-//	if (!in_folder.empty()) folder_path += "/" + in_folder;
-//	return folder_path;
-//}
 
 string createFolder(const string& name, const string& folder_name = "", const string& sub_folder ="") {
     string folder_path;
@@ -110,7 +115,7 @@ string addTimeToFilename(string file_name) {
 }
 
 void csvPrintStops(const Problem& inst, const string& folder_name, const string& file_name) {
-    ofstream outputFile("outputs/" + folder_name + "/" + file_name + ".csv");    // create .csv file from string name
+    ofstream outputFile(folder_name + "/" + file_name + ".csv");    // create .csv file from string name
     if (outputFile.is_open()) {
         outputFile << "ClusterID" << "," << "PtID" << "," << "X" << "," << "Y" << "\n";
         for (const auto& reef : inst.reefs) {
@@ -242,7 +247,7 @@ string csvPrintSA(SAlog log, string file_name, const string& in_folder) {
 /// <param name="best_new"></param>
 /// <param name="file_suffix"></param>
 /// <param name="path"></param>
-void csvPrints(FullSoln best_new, Problem inst, string file_suffix, int run_iteration = NULL, string batch = NULL) { // csv output of the full solution - INIT and FINAL
+void csvPrints(FullSoln best_new, const Problem& inst, string file_suffix, int run_iteration = NULL, string batch = NULL) { // csv output of the full solution - INIT and FINAL
     string mod_time = getCurrentTime() + "_Full_" + file_suffix;
     string folder_path;
     if (!batch.empty()) {
@@ -273,7 +278,7 @@ void csvPrints(FullSoln best_new, Problem inst, string file_suffix, int run_iter
 /// <param name="in_out"></param>
 /// <param name="numUpdate"></param>
 /// <param name="folder"></param>
-void csvUpdate(FullSoln best_new, Problem inst, bool in_out, int numUpdate, string folder_path = "") {     // csv output of the full solution - on the fly every swap update
+void csvUpdate(FullSoln best_new, const Problem& inst, bool in_out, int numUpdate, string folder_path = "") {     // csv output of the full solution - on the fly every swap update
     //string mod_time = getCurrentTime();// +"_OUT";
     string mod_time = to_string(numUpdate);
     if (in_out) { mod_time += "_IN"; }
@@ -300,4 +305,36 @@ void printClusters(vector<ClusterSoln*> clusters) {
     } // for each cluster
 
     return;
+}
+
+void printOpts(const Problem& inst, const vector<FullSoln>& fullSolns) {
+    string folder_name = createFolder(inst.time);
+    ofstream outputFile(folder_name + "/opts.csv");
+    if (outputFile.is_open()) {
+		outputFile << "Run,MS dist,Drone dist,WEIGHTED Total dist\n";
+        for (int i = 0; i < fullSolns.size(); i++) {
+			double msDist = fullSolns[i].msSoln.getDist();
+
+            double droneDist=0;
+            for (int d = 0; d < fullSolns[i].droneSolns.size(); d++) {
+				droneDist += fullSolns[i].droneSolns[d]->getDroneDist();
+			}
+
+            double totalDist = fullSolns[i].getTotalDist(inst.weights);// msDist + droneDist;
+			
+            outputFile << i << "," << msDist << "," << droneDist << "," << totalDist << "\n";
+		}
+		outputFile.close();
+		cout << "Optimal solutions saved to: " << folder_name << "/opts.csv\n";
+	}
+	else { cerr << "Failed to open the output file.\n"; }   
+    //if (outputFile.is_open()) {
+    //    outputFile << "ClusterID" << "," << "PtID" << "," << "X" << "," << "Y" << "\n";
+    //    for (const auto& reef : inst.reefs) {
+    //        outputFile << "," << reef.ID << "," << reef.x << "," << reef.y << "\n";
+    //    }
+    //    outputFile.close();
+    //    cout << "\nReef stop points saved to: " << file_name << ".csv\n";
+    //}
+    //else { cerr << "Failed to open the output file.\n"; }
 }

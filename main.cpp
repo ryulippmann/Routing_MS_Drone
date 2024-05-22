@@ -60,7 +60,7 @@ int main()
 		CreateInst(48, 4, 4, 3, make_pair(2, 1), Pt(0, 0), 0); //  Base case instance!
 	//	no_pts, noClust, noDrones, dCap, make_pair(w_ms, w_d));
 
-	
+
 	if (checkParameters(inst) == false) return 0;		// check if parameters are valid
 	printSetup(inst);		// print problem setup
 	vector<FullSoln> fullSolns_best;
@@ -75,15 +75,21 @@ int main()
 	//for (int i = 0; i < fullSolns.size(); i++) { fullSolns_best.push_back( (fullSolns[i].back()) ); }
 	//printOpts(inst, fullSolns_best, inst.time+"_FullRuns");
 
-	vector <pair < pair<double, double>, pair<double, FullSoln> >> weight_results = 
-		VaryWeights(
-			inst, 
-			make_pair(1, 10), 
-			make_pair(0.1, 1),
-			4);
-	for (int i = 0; i < weight_results.size(); i++) { fullSolns_best.push_back( (weight_results[i].second.second) ); }
+	string sens_run;
+	//vector <pair < pair<double, double>, pair<double, FullSoln> >> weight_results = 
+	//	VaryWeights(
+	//		inst, sens_run, 
+	//		make_pair(1, 10), 
+	//		make_pair(0.1, 1),
+	//		4);
+	//for (int i = 0; i < weight_results.size(); i++) { fullSolns_best.push_back( (weight_results[i].second.second) ); }
 
-	printOpts(inst, fullSolns_best);
+	vector <pair < pair<int, int>, pair<double, FullSoln> >> noclust_results =
+		VaryNum_clustXdrone(inst, sens_run);
+	
+	for (int i = 0; i < noclust_results.size(); i++) { fullSolns_best.push_back( (noclust_results[i].second.second) ); }
+
+	printOpts(inst, fullSolns_best, sens_run);
 
 	//\\//\\//\\//\\//\\       FIN        //\\//\\//\\//\\//\\
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//	

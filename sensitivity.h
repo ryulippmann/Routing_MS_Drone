@@ -146,7 +146,8 @@ vector <pair < pair<double, double>, pair<double, FullSoln> >> sensitivityResult
 /// <returns>
 /// vector of pairs: (number of clusters and drones, and total_dist of solution)
 /// </returns>
-vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_clustXdrone(const Problem& inst) {
+vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_clustXdrone(const Problem& inst, string& sens_run) {
+	sens_run = "_vary_Clusts";
 	int total_drone_routes = inst.reefs.size() / inst.get_dCap();
 	vector<vector<FullSoln>> fullSolns;
 	vector<pair<int,int>> factors_pairs = GenerateFactorPairs(total_drone_routes);
@@ -155,7 +156,7 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_clustXdrone(con
 		int num_clust = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
 		Problem sens_inst = CreateInst(inst, num_clust, num_drone, inst.get_dCap());
-		fullSolns.push_back(FullRun(i, sens_inst, inst.time + "_vary_Clusts", make_pair(pow(10, 3), 0.99)));
+		fullSolns.push_back(FullRun(i, sens_inst, inst.time + sens_run, make_pair(pow(10, 3), 0.99)));
 	}
 	return sensitivityResults(inst, fullSolns, factors_pairs);
 }
@@ -168,7 +169,8 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_clustXdrone(con
 /// <returns>
 /// vector of pairs: (dCap and number of drones, and total_dist of solution)
 /// </returns>
-vector <pair < pair<int, int>, pair<double, FullSoln> >> Vary_dCap(const Problem& inst) {
+vector <pair < pair<int, int>, pair<double, FullSoln> >> Vary_dCap(const Problem& inst, string& sens_run) {
+	sens_run = "_vary_dCap";
 	int pts_in_clust = inst.reefs.size() / inst.getnumClusters();
 	vector<vector<FullSoln>> fullSolns;
 	vector<pair<int, int>> factors_pairs = GenerateFactorPairs(pts_in_clust);
@@ -177,7 +179,7 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> Vary_dCap(const Problem
 		int dCap = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
 		Problem sens_inst = CreateInst(inst, inst.getnumClusters(), num_drone, dCap);
-		fullSolns.push_back(FullRun(i, sens_inst, inst.time + "_vary_dCap", make_pair(pow(10, 3), 0.99)));
+		fullSolns.push_back(FullRun(i, sens_inst, inst.time + sens_run, make_pair(pow(10, 3), 0.99)));
 	}
 	return sensitivityResults(inst, fullSolns, factors_pairs);
 }
@@ -193,8 +195,9 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> Vary_dCap(const Problem
 /// <returns>
 /// results of varying weights as vector of pairs: (ms weight and d weight, and total_dist of solution)
 /// </returns>
-vector <pair < pair<double, double>, pair<double, FullSoln> >> VaryWeights(const Problem& inst, pair<double, double> bounds_w_ms, pair<double, double> bounds_w_d, int sens_incr=10) {
+vector <pair < pair<double, double>, pair<double, FullSoln> >> VaryWeights(const Problem& inst, string& sens_run, pair<double, double> bounds_w_ms, pair<double, double> bounds_w_d, int sens_incr=10) {
 	// update weighting pair to int's to match other sensitivity weightings? Just un-normalised...
+	sens_run = "_vary_weights";
 	vector<vector<FullSoln>> fullSolns;
 	vector<pair<double, double>> weighting_pairs;
 
@@ -209,7 +212,7 @@ vector <pair < pair<double, double>, pair<double, FullSoln> >> VaryWeights(const
 	}
 	for (int i = 0; i < weighting_pairs.size(); i++) {
 		Problem sens_inst = CreateInst(inst, weighting_pairs[i]);
-		fullSolns.push_back(FullRun(i, sens_inst, inst.time + "_vary_weights", make_pair(pow(10, 3), 0.99)));
+		fullSolns.push_back(FullRun(i, sens_inst, inst.time + sens_run, make_pair(pow(10, 3), 0.99)));
 	}
 	return sensitivityResults(inst, fullSolns, weighting_pairs);
 }
@@ -227,7 +230,6 @@ vector <pair < pair<double, double>, pair<double, FullSoln> >> VaryWeights(const
 //// clust_based
 
 //void VarySwapIters() {
-
 //	//FullSoln best = SwapRandomly(fullSolns.back(), print_detail, csv_print);
 //	//printf("\nPrev Dist: \t\t%.2f", best_dist.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
 //	//best_dist.push_back(best.getTotalDist());

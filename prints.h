@@ -307,8 +307,8 @@ void printClusters(vector<ClusterSoln*> clusters) {
     return;
 }
 
-void printOpts(const Problem& inst, const vector<FullSoln>& fullSolns) {
-    string folder_name = createFolder(inst.time);
+void printOpts(const Problem& inst, const vector<FullSoln>& fullSolns, string sens_run) {
+    string folder_name = createFolder(inst.time + sens_run);
     ofstream outputFile(folder_name + "/opts.csv");
     if (outputFile.is_open()) {
 		outputFile << "Run,MS dist,Drone dist,WEIGHTED Total dist\n";

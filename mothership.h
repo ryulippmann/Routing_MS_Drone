@@ -154,41 +154,40 @@ vector<Pt*> SetWeightedLaunchPts(const vector<Pt>& centroids, Pt depot, pair<dou
 /// <param name="msSoln"></param>
 /// <param name="print"></param>
 /// <returns></returns>
-vector<vector<double>> setLaunchPts(MSSoln& msSoln, pair<double, double> weights, bool print = false) {
+void /*vector<vector<double>>*/ setLaunchPts(MSSoln& msSoln, pair<double, double> weights) {
     const vector<ClusterSoln*> clusters = msSoln.clusters;
-    if (print) printf("\n---- SET LAUNCH POINTS ----\n");
     vector<Pt> cluster_centroids;
     for (const auto& clust : clusters) { cluster_centroids.push_back(clust->getCentroid()); }
     vector<Pt*> launchPts = SetWeightedLaunchPts(cluster_centroids, msSoln.ms.depot, weights);
 
     msSoln.launchPts = launchPts;
-    vector<vector<double>> dMatrix_launchpt = msSoln.launchPt_dMatrix();
-	if (print) {
-        printf("\tID\t(  x  ,  y  )\n");
-        cout << string(30, '-') << "\n";
-        printf("\t%d\t( %2.2f, %2.2f)\n", msSoln.ms.depot.ID, msSoln.ms.depot.x, msSoln.ms.depot.y);
-		for (const auto& stop : msSoln.launchPts) { 
-            printf("\t%d\t( %.2f, %.2f)\n", stop->ID, stop->x, stop->y);
-        } 
-        printf("\n");
-        for (int i = 0; i < dMatrix_launchpt.size(); i++) {
-            for (int j = 0; j < dMatrix_launchpt[i].size(); j++) {
-                printf("\t%.2f", dMatrix_launchpt[i][j]);
-            }
-            printf("\n");
-        } 
-        printf("\n");
-        cout << string(30, '-') << "\n";
-        
-        double total_dist = dMatrix_launchpt.back()[0];
-        printf("\t%.2f ", total_dist);
-        for (int i = 0; i < dMatrix_launchpt.size()-1; i++) {
-			printf("+\t%.2f ", dMatrix_launchpt[i][i+1]);
-            total_dist += dMatrix_launchpt[i][i+1];
-		}
-        printf("\n\t\t= %.2f", total_dist);
-	}    
-	return dMatrix_launchpt;
+ //   vector<vector<double>> dMatrix_launchpt = msSoln.launchPt_dMatrix();
+	//if (print) {
+ //       printf("\tID\t(  x  ,  y  )\n");
+ //       cout << string(30, '-') << "\n";
+ //       printf("\t%d\t( %2.2f, %2.2f)\n", msSoln.ms.depot.ID, msSoln.ms.depot.x, msSoln.ms.depot.y);
+	//	for (const auto& stop : msSoln.launchPts) { 
+ //           printf("\t%d\t( %.2f, %.2f)\n", stop->ID, stop->x, stop->y);
+ //       } 
+ //       printf("\n");
+ //       for (int i = 0; i < dMatrix_launchpt.size(); i++) {
+ //           for (int j = 0; j < dMatrix_launchpt[i].size(); j++) {
+ //               printf("\t%.2f", dMatrix_launchpt[i][j]);
+ //           }
+ //           printf("\n");
+ //       } 
+ //       printf("\n");
+ //       cout << string(30, '-') << "\n";
+ //       
+ //       double total_dist = dMatrix_launchpt.back()[0];
+ //       printf("\t%.2f ", total_dist);
+ //       for (int i = 0; i < dMatrix_launchpt.size()-1; i++) {
+	//		printf("+\t%.2f ", dMatrix_launchpt[i][i+1]);
+ //           total_dist += dMatrix_launchpt[i][i+1];
+	//	}
+ //       printf("\n\t\t= %.2f", total_dist);
+	//}    
+    return; //dMatrix_launchpt;
 }
 
 int findMinIdx(const vector<ClusterSoln*>& clusters) {    //find min ID of all clusters
@@ -225,7 +224,7 @@ double clusterCentroidNearestNeighbour(MSSoln& msSoln, pair<double, double> weig
         if (print) printf("\t%d\t%.2f\n", v, min);
     }//for(cluster)
     msSoln.clusters = nearestCentroids;				// Update clustSoln.clusters    
-    setLaunchPts(msSoln, weights, print);                           // Update msSoln.launchPts
+    setLaunchPts(msSoln, weights);                           // Update msSoln.launchPts
     double msDist = msSoln.getDist();               // Calc msSoln.dist from depot to launchPts!
     printf("  =?=\t%.2f\n", msDist);
     return msDist;
@@ -304,7 +303,7 @@ double greedyMSCluster(MSSoln& msSoln, pair<double, double> weights, bool print 
         msSoln.clusters = temp_clust;                        // UPDATE CLUSTER ORDER
     } else if (print) { printf("\tNO IMPROVEMENT\n"); }//else
 
-    setLaunchPts(msSoln, weights, print);
+    setLaunchPts(msSoln, weights);
     double msDist = msSoln.getDist();
     printf("\n%.2f\n", msDist);
     return msDist;

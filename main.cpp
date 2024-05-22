@@ -63,15 +63,27 @@ int main()
 	
 	if (checkParameters(inst) == false) return 0;		// check if parameters are valid
 	printSetup(inst);		// print problem setup
+	vector<FullSoln> fullSolns_best;
 
-	//vector<vector<FullSoln>> fullSolns;
-	//int iter = 1;
-	//for (int i = 0; i < iter; i++) {
-	//	fullSolns.push_back(
-	//		FullRun(i, inst)
-	//	);
-	//}
-	vector <pair < pair<double, double>, pair<double, FullSoln> >> weight_results = VaryWeights(make_pair(1, 10), make_pair(0.1, 1), inst, 3);
+	vector<vector<FullSoln>> fullSolns;
+	int iter = 10;
+	for (int i = 0; i < iter; i++) {
+		fullSolns.push_back(
+			FullRun(i, inst)
+		);
+	}
+	for (int i = 0; i < fullSolns.size(); i++) { fullSolns_best.push_back( (fullSolns[i].back()) ); }
+	printOpts(inst, fullSolns_best);
+
+	//vector <pair < pair<double, double>, pair<double, FullSoln> >> weight_results = 
+	//	VaryWeights(
+	//		inst, 
+	//		make_pair(1, 10), 
+	//		make_pair(0.1, 1),
+	//		3);
+	//for (int i = 0; i < weight_results.size(); i++) { fullSolns_best.push_back( (weight_results[i].second.second) ); }
+
+	printOpts(inst, fullSolns_best);
 
 	//\\//\\//\\//\\//\\       FIN        //\\//\\//\\//\\//\\
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//	

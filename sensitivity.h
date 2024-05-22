@@ -3,19 +3,18 @@
 ///////////////////////////////////
 
 /// <summary>
-/// 
 /// </summary>
 /// <param name="inst"></param>
 /// <param name="soln_current"></param>
 /// <param name="best_dists"></param>
 /// <param name="run_iteration"></param>
 /// <param name="folder_path"></param>
-/// <param name="sa_it_cr"></param>
-/// <returns></returns>
-FullSoln BaseSwapRun(const Problem& inst, FullSoln soln_current, vector<double>& best_dists, int run_iteration, const string& folder_path ="", pair<int, double> sa_it_cr = make_pair(0, 0)) {
+/// <param name="sa_it_cr"> = pair(iterations, cooling rate)</param>
+/// <returns>FullSoln best</returns>
+FullSoln SwapShell(const Problem& inst, FullSoln soln_current, vector<double>& best_dists, int run_iteration, const string& folder_path ="", pair<int, double> sa_it_cr = make_pair(0, 0)) {
 	//SAparams                  (num_iter, init_temp, cooling_rate)
 	double init_temp =	0.2 * soln_current.getTotalDist(inst.weights);
-	if (sa_it_cr == make_pair(0, 0)) { sa_it_cr = make_pair(pow(10, 4), 0.999); }	// pow(10,3), 0.99); } //	  (5*pow(10,3), 0.998);	// (pow(10,5), 0.9999);	//
+	if (sa_it_cr == make_pair(0, 0)) { sa_it_cr = make_pair(pow(10, 4), 0.999); }	//pow(10,3), 0.99); } // 	  (5*pow(10,3), 0.998);	// (pow(10,5), 0.9999);	//
 	//double temp_diff = pow(10, -4);
 	//double final_temp = init_temp * temp_diff;//pow(10, -5);
 	//double cooling_rate = pow((temp_diff), 1 / num_iter);
@@ -39,15 +38,16 @@ FullSoln BaseSwapRun(const Problem& inst, FullSoln soln_current, vector<double>&
 /// <param name="INST"></param> GLOBAL VARIABLE included to allow for sensitivity changes
 /// <returns></returns>
 vector<FullSoln> FullRun(const int& iter, const Problem& inst, const string& batch="", const string& sens_run_name = "", pair<int, double> sa_param_it_cr = make_pair(0, 0)) {
-	//\\//\\//\\//\\  ClusterSoln Construction  //\\//\\//\\//
-	vector<ClusterSoln*> clusters = kMeansConstrained(inst.kMeansIters, inst.getReefPointers(), inst.ms.cap);
 	string folder_path;
-	if (print_detail) printClusters(clusters);		// PRINT clusters //
-
 	if (csv_print) {
 		if (batch == "") folder_path = createFolder(inst.time, sens_run_name);
 		else folder_path = createFolder(batch, sens_run_name);
 	}
+	auto start_time = chrono::high_resolution_clock::now();  // Start timing
+
+	//\\//\\//\\//\\  ClusterSoln Construction  //\\//\\//\\//
+	vector<ClusterSoln*> clusters = kMeansConstrained(inst.kMeansIters, inst.getReefPointers(), inst.ms.cap);
+	if (print_detail) printClusters(clusters);		// PRINT clusters //
 
 	//\\//\\//\\//\\//  MsSoln Construction //\\//\\//\\//\\//
 	MSSoln msSoln(clusters, inst.ms);				// No launchPts initialised yet
@@ -62,7 +62,7 @@ vector<FullSoln> FullRun(const int& iter, const Problem& inst, const string& bat
 	FullSoln full_init(msSoln, ptr_droneSolns);
 	printf("Full Soln Dist:\t%.2f", full_init.getTotalDist(inst.weights, print_detail));
 	if (csv_print) {
-		csvPrintStops(inst, batch, "reef_set");
+		csvPrintStops(inst, folder_path, "reef_set");
 		csvPrints(full_init, inst, "INIT", iter, folder_path);
 	}
 	////////////////////////////////
@@ -71,9 +71,14 @@ vector<FullSoln> FullRun(const int& iter, const Problem& inst, const string& bat
 	vector<double> best_dist{ fullSolns.back().getTotalDist(inst.weights) };			// initialise best_dist as vector with best solution distance	
 
 	fullSolns.push_back(
-		BaseSwapRun(inst, fullSolns.back(), best_dist, iter, folder_path, sa_param_it_cr)
+		SwapShell(inst, fullSolns.back(), best_dist, iter, folder_path, sa_param_it_cr)
 	);
 
+	auto end_time = chrono::high_resolution_clock::now();
+	chrono::duration<double> elapsed = end_time - start_time;
+	writeRuntimeToFile(folder_path + "/runtime", iter, elapsed);
+	//printf("Run time: %d minutes %.2f seconds\n", static_cast<int>(elapsed.count()) / 60, fmod(elapsed.count(), 60));
+	
 	return fullSolns;
 }
 

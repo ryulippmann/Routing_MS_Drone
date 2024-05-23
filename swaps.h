@@ -256,7 +256,7 @@ FullSoln IN_ClusterSwaps(Problem inst, FullSoln soln, /*int iteration, *//*vecto
 /// <returns></returns>
 FullSoln SwapRandomly(Problem inst, const FullSoln soln_prev_best, SAparams sa_params, const string& folder_path = "",
     //int num_iterations = 10000, double initial_temperature = 200, double cooling_rate = 0.999,
-    bool print_stats = false, bool csv_print = false) {   //in_out = 1; // 0 = OUT, 1 = IN
+    bool print_stats = false, bool csv_print = false, bool csv_update = false) {   //in_out = 1; // 0 = OUT, 1 = IN
     printf("\n\n---------- RANDOM IN/OUT Cluster Swaps - Simulated Annealing ----------\n");
     FullSoln best(soln_prev_best);
     double dist_best = best.getTotalDist(inst.weights);
@@ -293,7 +293,7 @@ FullSoln SwapRandomly(Problem inst, const FullSoln soln_prev_best, SAparams sa_p
                 best = proposed;
                 dist_best = best.getTotalDist(inst.weights);
                 printf("\n\t!!IMPROVED!! Proposed soln\t\t%.3f", dist_best);
-                if (csv_print) {
+                if (csv_print && csv_update) {
                     csvUpdate(best, inst, in_out, iter_num/*in_swaps+out_swaps*/, folder_path);
                 }
             }

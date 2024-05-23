@@ -195,21 +195,19 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> Vary_dCap(const Problem
 /// <returns>
 /// results of varying weights as vector of pairs: (ms weight and d weight, and total_dist of solution)
 /// </returns>
-vector <pair < pair<double, double>, pair<double, FullSoln> >> VaryWeights(const Problem& inst, string& sens_run, pair<double, double> bounds_w_ms, pair<double, double> bounds_w_d, int sens_incr=10) {
+vector <pair < pair<double, double>, pair<double, FullSoln> >> VaryWeights(const Problem& inst, string& sens_run, pair<double, double> bounds_ratio, int sens_incr=10) {
 	// update weighting pair to int's to match other sensitivity weightings? Just un-normalised...
 	sens_run = "_vary_weights";
 	vector<vector<FullSoln>> fullSolns;
 	vector<pair<double, double>> weighting_pairs;
 
 	// perform sensitivty analysis based on more acceptable range of values
-	double var_w_ms = (bounds_w_ms.second - bounds_w_ms.first)/(sens_incr-1);
-	double var_w_d = (bounds_w_d.second - bounds_w_d.first)/(sens_incr-1);
+	double var_ratio = (bounds_ratio.second - bounds_ratio.first)/(sens_incr-1);
 
-	for (double ms = bounds_w_ms.first; ms <= bounds_w_ms.second; ms += var_w_ms) {
-		for (double d = bounds_w_d.first; d <= bounds_w_d.second; d += var_w_d) {
+		for (double r = bounds_ratio.first; r <= bounds_ratio.second; r += var_ratio) {
+			double ms = r, d = 1;
 			weighting_pairs.push_back(make_pair(ms, d));
 		}
-	}
 	for (int i = 0; i < weighting_pairs.size(); i++) {
 		Problem sens_inst = CreateInst(inst, weighting_pairs[i]);
 		fullSolns.push_back(FullRun(i, sens_inst, inst.time + sens_run, make_pair(pow(10, 3), 0.99)));

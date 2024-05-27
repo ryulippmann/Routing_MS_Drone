@@ -128,8 +128,11 @@ public:
 		}
 	}
 	MSSoln(vector<ClusterSoln*> clustSolns, vector<Pt*> launchPts, MS ms) :
-		ID(count++), clusters(clustSolns), launchPts(), ms(ms) {
+		ID(count++), clusters(), launchPts(), ms(ms) {
 		// Create new DroneSoln objects with new memory locations for pointers
+		for (auto* cluster : clustSolns) {
+			this->clusters.push_back(new ClusterSoln(*cluster));
+		}
 		for (auto* pt : launchPts) {
 			this->launchPts.push_back(new Pt(*pt));
 		}

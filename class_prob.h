@@ -159,7 +159,7 @@ public:
 /// </summary>
 /// <param name="instance"></param>
 /// <returns></returns>
-bool checkParameters(Problem instance) {
+bool checkParameters(const Problem& instance) {
 	try { if (instance.getnumClusters() * instance.getnumDrones() * instance.get_dCap() != instance.getReefPointers().size()) throw invalid_argument("noClust * noDrones * dCap != no_pts"); }
 	catch (const invalid_argument& e) { cout << endl << e.what() << endl; return false; }
 	return true;
@@ -183,17 +183,17 @@ Problem CreateInst(	int no_pts = 48,/*100;*/int noClust = 4, /*5;*/
 		if (checkParameters(inst)) return inst;
 }
 
-Problem CreateInst(Problem inst_ex, int noClust, int noDrones, int dCap) {
+Problem CreateInst(const Problem& inst_ex, int noClust, int noDrones, int dCap) {
 	Problem inst = Problem(inst_ex.reefs, noClust, noDrones, dCap, inst_ex.weights, inst_ex.getDepot(), inst_ex.kMeansIters);
 		if (checkParameters(inst)) return inst;
 }
 
-Problem CreateInst(Problem inst_ex, pair<double, double> weights) {
+Problem CreateInst(const Problem& inst_ex, pair<double, double> weights) {
 	Problem inst = Problem(inst_ex.reefs, inst_ex.getnumClusters(), inst_ex.getnumDrones(), inst_ex.get_dCap(), weights, inst_ex.getDepot(), inst_ex.kMeansIters);
 		if (checkParameters(inst)) return inst;
 }
 
-void printSetup(Problem inst) {
+void printSetup(const Problem& inst) {
 	printf("Problem inst:\n");
 	printf("Depot:\t\t\t(%.2f, %.2f)\n", inst.getDepot().x, inst.getDepot().y);
 	printf("Number of reefs: \t%d\n", inst.reefs.size());
@@ -203,6 +203,5 @@ void printSetup(Problem inst) {
 	printf("\t\t\tWeighting:\n\t\t\tMS: %.3f\t\tDrone %.3f\n", inst.weights.first, inst.weights.second);
 	printf("Time initialised: \t");
 }
-
 
 ////////////////////////////////////////////////////////////////////////////

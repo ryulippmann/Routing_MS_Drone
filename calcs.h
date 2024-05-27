@@ -4,7 +4,7 @@
 random_device rd;       // Seed for the random number generator
 mt19937 gen(rd());      // Mersenne Twister engine
 
-double sum(vector<double>& vec_to_sum) {
+double sum(const vector<double>& vec_to_sum) {
     double sum_of_elems = 0.0;
     for (const auto& n : vec_to_sum) {
         sum_of_elems += n;
@@ -45,14 +45,14 @@ double calculatePtDistance(const Pt* a, const Pt* b) {
     return sqrt(pow(a->x - b->x, 2) + pow(a->y - b->y, 2));
 }//calculatePtDistance
 
-double CalcCentroidDist(const vector<Pt> cluster, const Pt centroid) {
+double CalcCentroidDist(const vector<Pt>& cluster, const Pt& centroid) {
     double summing_centroid_dist = 0;
     for (int i = 0; i < cluster.size(); ++i) {  // i = node id in cluster
         summing_centroid_dist += calculatePtDistance(cluster[i], centroid);
     }
     return summing_centroid_dist;
 }
-double CalcCentroidDist(const vector<Pt*> cluster, const Pt& centroid) {
+double CalcCentroidDist(const vector<Pt*>& cluster, const Pt& centroid) {
     double summing_centroid_dist = 0;
     for (const auto& node : cluster) {
         summing_centroid_dist += calculatePtDistance(*node, centroid);

@@ -179,7 +179,7 @@ void csvPrintClusters(const vector<ClusterSoln*>& clusters, const Problem& inst,
 /// <param name="routes"></param>
 /// <param name="file_name">=true</param>
 /// <param name="in_out"></param>
-void csvPrintLaunchPts(vector<Pt*> launch_route, string file_name, const string& in_folder = "", bool print=true) {
+void csvPrintLaunchPts(const vector<Pt*>& launch_route, string file_name, const string& in_folder = "", bool print=true) {
     ofstream outputFile(in_folder + "/" + file_name + ".csv");
 
     if (outputFile.is_open()) {
@@ -194,7 +194,7 @@ void csvPrintLaunchPts(vector<Pt*> launch_route, string file_name, const string&
 	return;
 }
 
-void csvPrintMSRoutes(vector<Pt*> launch_route, Pt depot, string file_name, double msDist, const string& in_folder, bool print=true) {
+void csvPrintMSRoutes(const vector<Pt*>& launch_route, const Pt& depot, string file_name, double msDist, const string& in_folder, bool print=true) {
     ofstream outputFile(in_folder + "/" + file_name + ".csv");
     if (outputFile.is_open()) {
         outputFile << "X,Y,msDist," << msDist << "\n";                                 // skip header row
@@ -211,7 +211,7 @@ void csvPrintMSRoutes(vector<Pt*> launch_route, Pt depot, string file_name, doub
     return;
 }
 
-void csvPrintDroneRoutes(vector<vector<Pt*>> routes, string file_name, const string& in_folder, bool print=false) {
+void csvPrintDroneRoutes(const vector<vector<Pt*>>& routes, string file_name, const string& in_folder, bool print=false) {
     ofstream outputFile(in_folder + "/" + file_name + ".csv");
 
     if (outputFile.is_open()) {
@@ -247,7 +247,7 @@ string csvPrintSA(SAlog log, string file_name, const string& in_folder) {
 /// <param name="best_new"></param>
 /// <param name="file_suffix"></param>
 /// <param name="path"></param>
-void csvPrints(FullSoln best_new, const Problem& inst, string file_suffix, int run_iteration = NULL, string batch = NULL) { // csv output of the full solution - INIT and FINAL
+void csvPrints(const FullSoln& best_new, const Problem& inst, string file_suffix, int run_iteration = NULL, string batch = NULL) { // csv output of the full solution - INIT and FINAL
     string mod_time = getCurrentTime() + "_Full_" + file_suffix;
     string folder_path;
     if (!batch.empty()) {
@@ -278,7 +278,7 @@ void csvPrints(FullSoln best_new, const Problem& inst, string file_suffix, int r
 /// <param name="in_out"></param>
 /// <param name="numUpdate"></param>
 /// <param name="folder"></param>
-void csvUpdate(FullSoln best_new, const Problem& inst, bool in_out, int numUpdate, string folder_path = "") {     // csv output of the full solution - on the fly every swap update
+void csvUpdate(const FullSoln& best_new, const Problem& inst, bool in_out, int numUpdate, string folder_path = "") {     // csv output of the full solution - on the fly every swap update
     //string mod_time = getCurrentTime();// +"_OUT";
     string mod_time = to_string(numUpdate);
     if (in_out) { mod_time += "_IN"; }
@@ -295,7 +295,7 @@ void csvUpdate(FullSoln best_new, const Problem& inst, bool in_out, int numUpdat
     return;
 }
 
-void printClusters(vector<ClusterSoln*> clusters) {
+void printClusters(const vector<ClusterSoln*>& clusters) {
     for (int i = 0; i < clusters.size(); i++) {
         printf("\tCluster: %d\n", i);					// Print clusters
         for (int j = 0; j < clusters[i]->reefs.size(); j++) {	// for reefs in cluster

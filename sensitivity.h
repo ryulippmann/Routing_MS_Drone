@@ -11,10 +11,10 @@
 /// <param name="folder_path"></param>
 /// <param name="sa_it_cr"> = pair(iterations, cooling rate)</param>
 /// <returns>FullSoln best</returns>
-FullSoln SwapShell(const Problem& inst, FullSoln soln_current, vector<double>& best_dists, int run_iteration, const string& folder_path ="", pair<int, double> sa_it_cr = make_pair(0, 0)) {
+FullSoln SwapShell(const Problem& inst, const FullSoln& soln_current, vector<double>& best_dists, int run_iteration, const string& folder_path ="", pair<int, double> sa_it_cr = make_pair(0, 0)) {
 	//SAparams                  (num_iter, init_temp, cooling_rate)
 	double init_temp =	0.2 * soln_current.getTotalDist(inst.weights);
-	if (sa_it_cr == make_pair(0, 0)) { sa_it_cr = make_pair(pow(10, 4), 0.999); }	//pow(10,3), 0.99); } // 	  (5*pow(10,3), 0.998);	// (pow(10,5), 0.9999);	//
+	if (sa_it_cr == make_pair(0, 0)) { sa_it_cr = make_pair(3 * pow(10, 4), 0.9995); }	//pow(10, 4), 0.999); }		//pow(10,3), 0.99); }	// 	   (pow(10,5), 0.9999); }	//
 	//double temp_diff = pow(10, -4);
 	//double final_temp = init_temp * temp_diff;//pow(10, -5);
 	//double cooling_rate = pow((temp_diff), 1 / num_iter);
@@ -51,15 +51,15 @@ vector<FullSoln> FullRun(const int& iter, const Problem& inst, const string& bat
 
 	//\\//\\//\\//\\//  MsSoln Construction //\\//\\//\\//\\//
 	MSSoln msSoln(clusters, inst.ms);				// No launchPts initialised yet
-	vector<pair<double, MSSoln>> msSolns = initMsSoln(clusters, msSoln, inst.weights, print_detail);
+		vector<pair<double, MSSoln>> msSolns = initMsSoln(clusters, msSoln, inst.weights, print_detail);
 
 	//\\//\\//\\//\\  DroneSoln Construction  \\//\\//\\//\\/
 	vector<DroneSoln> droneSolns = initDroneSoln(inst, msSoln, print_detail);
-	vector<DroneSoln*> ptr_droneSolns;
-	for (const auto& soln : droneSolns) { ptr_droneSolns.push_back(new DroneSoln(soln)); } // Assuming DroneSoln has a copy constructor
+	//vector<DroneSoln*> ptr_droneSolns;
+	//for (const auto& soln : droneSolns) { ptr_droneSolns.push_back(new DroneSoln(soln)); } // Assuming DroneSoln has a copy constructor
 
 	//\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
-	FullSoln full_init(msSoln, ptr_droneSolns);
+	FullSoln full_init(msSoln, droneSolns);
 	printf("Full Soln Dist:\t%.2f", full_init.getTotalDist(inst.weights, print_detail));
 	if (csv_print) {
 		csvPrintStops(inst, folder_path, "reef_set");
@@ -83,9 +83,8 @@ vector<FullSoln> FullRun(const int& iter, const Problem& inst, const string& bat
 }
 
 ///////////////////////////////////
-//// inst_based
 
-vector<int> Factors(int num) {
+vector<int> Factors(const int& num) {
 	vector<int> factors;
 	for (int i = 2; i <= num/2; ++i) {
 		if (num % i == 0) {
@@ -95,7 +94,7 @@ vector<int> Factors(int num) {
 	return factors;
 }
 
-vector<pair<int, int>> GenerateFactorPairs(int num) {
+vector<pair<int, int>> GenerateFactorPairs(const int& num) {
 	vector<int> factors = Factors(num);
 	vector<pair<int, int>> factor_pairs;
 	for (int f : factors) {
@@ -104,26 +103,7 @@ vector<pair<int, int>> GenerateFactorPairs(int num) {
 	return factor_pairs;
 }
 
-//vector<pair<pair<int, int>, pair<double, FullSoln>>> VaryDrones(const Problem& inst, int varied_param, int non_varied_param, const string& mode) {
-//	int infered_param = inst.reefs.size() / non_varied_param;
-//	vector<vector<FullSoln>> fullSolns;
-//	vector<pair<int, int>> factors_pairs = GenerateFactorPairs(infered_param);
-//	vector<pair<pair<int, int>, pair<double, FullSoln>>> results;
-//
-//	for (int i = 0; i < factors_pairs.size(); i++) {
-//		int val1 = factors_pairs[i].first;
-//		int val2 = factors_pairs[i].second;
-//		Problem sens_inst = CreateInst(inst, param1, val2, val1);  // Adjust the parameters as needed
-//		fullSolns.push_back(FullRun(i, sens_inst, inst.time, mode, make_pair(pow(10, 3), 0.99)));
-//	}
-//	for (int i = 0; i < fullSolns.size(); i++) {
-//		double dist = fullSolns[i].back().getTotalDist(inst.weights);
-//		results.push_back(make_pair(factors_pairs[i], make_pair(dist, fullSolns[i].back())));
-//	}
-//	return results;
-//}
-
-vector <pair < pair<int, int>, pair<double, FullSoln> >> sensitivityResults(const Problem& inst, const vector<vector<FullSoln>>& fullSolns, const vector<pair<int, int>>& factors_pairs) {
+vector <pair < pair<int, int>,		pair<double, FullSoln> >>	sensitivityResults(const Problem& inst, const vector<vector<FullSoln>>& fullSolns, const vector<pair<int, int>>& factors_pairs) {
 	vector <pair < pair<int, int>, pair<double, FullSoln> >> results;
 	for (int i = 0; i < fullSolns.size(); i++) {
 		double dist = fullSolns[i].back().getTotalDist(inst.weights);
@@ -131,7 +111,7 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> sensitivityResults(cons
 	}
 	return results;
 }
-vector <pair < pair<double, double>, pair<double, FullSoln> >> sensitivityResults(const Problem& inst, const vector<vector<FullSoln>>& fullSolns, const vector<pair<double, double>>& weight_pairs) {
+vector <pair < pair<double, double>, pair<double, FullSoln> >>	sensitivityResults(const Problem& inst, const vector<vector<FullSoln>>& fullSolns, const vector<pair<double, double>>& weight_pairs) {
 	vector <pair < pair<double, double>, pair<double, FullSoln> >> results;
 	for (int i = 0; i < fullSolns.size(); i++) {
 		double dist = fullSolns[i].back().getTotalDist(inst.weights);
@@ -140,13 +120,15 @@ vector <pair < pair<double, double>, pair<double, FullSoln> >> sensitivityResult
 	return results;
 }
 
+///////////////////////////////////
+//// clust_based
 /// <summary>
 /// given number of pts and dCap
 /// </summary>
 /// <returns>
 /// vector of pairs: (number of clusters and drones, and total_dist of solution)
 /// </returns>
-vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_clustXdrone(const Problem& inst, string& sens_run) {
+vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryClusters(const Problem& inst, string& sens_run, int runs = 1) {
 	sens_run = "_vary_Clusts";
 	int total_drone_routes = inst.reefs.size() / inst.get_dCap();
 	vector<vector<FullSoln>> fullSolns;
@@ -156,20 +138,23 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryNum_clustXdrone(con
 		int num_clust = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
 		Problem sens_inst = CreateInst(inst, num_clust, num_drone, inst.get_dCap());
-		fullSolns.push_back(FullRun(i, sens_inst, inst.time + sens_run, make_pair(pow(10, 3), 0.99)));
+		for (int j = 0; j < runs; j++) {
+			fullSolns.push_back(FullRun(i, sens_inst, inst.time + sens_run, make_pair(pow(10, 3), 0.99)));
+		}
 	}
 	return sensitivityResults(inst, fullSolns, factors_pairs);
 }
 
 ///////////////////////////////////
 
+//// inst_based
 /// <summary>
 /// given number of pts and num_clust
 /// </summary>
 /// <returns>
 /// vector of pairs: (dCap and number of drones, and total_dist of solution)
 /// </returns>
-vector <pair < pair<int, int>, pair<double, FullSoln> >> Vary_dCap(const Problem& inst, string& sens_run) {
+vector <pair < pair<int, int>, pair<double, FullSoln> >> VaryDrones(const Problem& inst, string& sens_run, int runs = 1) {
 	sens_run = "_vary_dCap";
 	int pts_in_clust = inst.reefs.size() / inst.getnumClusters();
 	vector<vector<FullSoln>> fullSolns;
@@ -179,7 +164,9 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> Vary_dCap(const Problem
 		int dCap = factors_pairs[i].first;
 		int num_drone = factors_pairs[i].second;
 		Problem sens_inst = CreateInst(inst, inst.getnumClusters(), num_drone, dCap);
-		fullSolns.push_back(FullRun(i, sens_inst, inst.time + sens_run, make_pair(pow(10, 3), 0.99)));
+		for (int j = 0; j < runs; j++) {
+			fullSolns.push_back(FullRun(i, sens_inst, inst.time + sens_run, make_pair(pow(10, 3), 0.99)));
+		}
 	}
 	return sensitivityResults(inst, fullSolns, factors_pairs);
 }
@@ -187,57 +174,33 @@ vector <pair < pair<int, int>, pair<double, FullSoln> >> Vary_dCap(const Problem
 ///////////////////////////////////
 
 /// <summary>
-/// vary weights by a sens_incr times between min and max values
+/// vary weight ratio by a sens_incr times between min and max values
 /// </summary>
-/// <param name="w_ms"></param>
-/// <param name="w_d"></param>
-/// <param name="sens_incr"></param> number of variation iterations below & above base weights
-/// <returns>
-/// results of varying weights as vector of pairs: (ms weight and d weight, and total_dist of solution)
-/// </returns>
-vector <pair < pair<double, double>, pair<double, FullSoln> >> VaryWeights(const Problem& inst, string& sens_run, pair<double, double> bounds_ratio, int sens_incr=10) {
+/// <param name="inst"></param>
+/// <param name="sens_run"></param>
+/// <param name="bounds_ratio"></param>
+/// <param name="sens_incr"></param>
+/// <returns></returns>
+vector <pair < pair<double, double>, pair<double, FullSoln> >> VaryWeights(const Problem& inst, string& sens_run, const pair<double, double>& bounds_ratio, int sens_incr=10, int runs=1) {
 	// update weighting pair to int's to match other sensitivity weightings? Just un-normalised...
 	sens_run = "_vary_weights";
 	vector<vector<FullSoln>> fullSolns;
 	vector<pair<double, double>> weighting_pairs;
 
 	// perform sensitivty analysis based on more acceptable range of values
-	double var_ratio = (bounds_ratio.second - bounds_ratio.first)/(sens_incr-1);
+	double var_ratio = abs(bounds_ratio.second - bounds_ratio.first)/(sens_incr-1);
 
-		for (double r = bounds_ratio.first; r <= bounds_ratio.second; r += var_ratio) {
-			double ms = r, d = 1;
-			weighting_pairs.push_back(make_pair(ms, d));
-		}
+	for (double r = bounds_ratio.first; r <= bounds_ratio.second; r += var_ratio) {
+		double ms = r, d = 1;
+		weighting_pairs.push_back(make_pair(ms, d));
+	}
 	for (int i = 0; i < weighting_pairs.size(); i++) {
 		Problem sens_inst = CreateInst(inst, weighting_pairs[i]);
-		fullSolns.push_back(FullRun(i, sens_inst, inst.time + sens_run, make_pair(pow(10, 3), 0.99)));
+		for (int j = 0; j < runs; j++) {
+			fullSolns.push_back(FullRun(i, sens_inst, inst.time + sens_run, make_pair(pow(10, 4), 0.999)));
+		}
 	}
 	return sensitivityResults(inst, fullSolns, weighting_pairs);
 }
 
 ///////////////////////////////////
-///////////////////////////////////
-///////////////////////////////////
-///////////////////////////////////
-
-//Problem VaryInstSize(int inst_size) {return CreateInst(inst_size);}
-
-//void VaryClusterBunching() {return;}
-
-///////////////////////////////////
-//// clust_based
-
-//void VarySwapIters() {
-//	//FullSoln best = SwapRandomly(fullSolns.back(), print_detail, csv_print);
-//	//printf("\nPrev Dist: \t\t%.2f", best_dist.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
-//	//best_dist.push_back(best.getTotalDist());
-//	//printf("\n\t\tNEW_Swap distance:\t%.2f\n", best_dist.back());
-//	//// vv fullSolns is not creating new fullSoln objects, but rather just pointing to the same object
-//	//fullSolns.push_back(best);
-//	//// csv print if solution updated
-//	//if (csv_print && best_dist.back() != best_dist.at(best_dist.size() - 2)) { csvPrints(best, "FINAL"); }
-//	return;
-//}
-
-//void VarySwapTypeProb() {return;}
-

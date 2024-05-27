@@ -13,9 +13,10 @@ public:
 	const int ID;
 	const double x;
 	const double y;
-	//pair<double, double> getXY() const { return make_pair(x, y); }
+
+	//destructor
+	~Pt() {}
 	
-	//static Pt* getPtByID(int targetID);
 private:
 	static int count;
 };

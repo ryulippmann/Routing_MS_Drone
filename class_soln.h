@@ -9,11 +9,18 @@ public:
 	
 	// Copy constructor for deep copy
 	ClusterSoln(const ClusterSoln& other) :
-		ID(other.ID), /*INST(other.INST), */reefs() {
+		ID(other.ID), reefs(/*other.reefs*/) {
 		// Copy new Pt objects in the reefs vector
 		for (auto& reef : other.reefs) {
 			this->reefs.push_back(new Pt(*reef));
 		}
+	}
+
+	~ClusterSoln() {
+		for (auto& reef : reefs) {
+			delete reef;
+		}
+		reefs.clear();
 	}
 
 	const int ID;
@@ -128,6 +135,17 @@ public:
 		}
 	}
 
+	//~MSSoln() {
+	//	for (auto& cluster : clusters) {
+	//		delete cluster;
+	//	}
+	//	clusters.clear();
+	//	//for (auto& pt : launchPts) {
+	//	//	delete pt;
+	//	//}
+	//	//launchPts.clear();
+	//}
+
 	const int ID;
 	vector<ClusterSoln*> clusters;
 	vector<Pt*> launchPts;
@@ -221,8 +239,28 @@ public:
 			}
 
 			launchPts = other.launchPts;
+			//for (auto& pt : launchPts) {
+			//	delete pt;
+			//}
+			//launchPts.clear();
+			////launchPts = other.launchPts;
+			//for (auto* pt : other.launchPts) {
+			//	launchPts.push_back(pt);
+			//}
 		}
 		return *this;
+	}
+
+	// Destructor
+	~MSSoln() {
+		for (auto& cluster : clusters) {
+			delete cluster;
+		}
+		clusters.clear();
+		//for (auto& pt : launchPts) {
+		//	delete pt;
+		//}
+		launchPts.clear();
 	}
 
 private:
@@ -238,12 +276,6 @@ public:
 	// Copy constructor for deep copy
 	DroneSoln(const DroneSoln& other, bool reef_copy = false) :
 		ID(other.ID), cluster(other.cluster), routes(), launchPts(other.launchPts) {
-		//if (!reef_copy) { 
-		//	this->cluster = other.cluster; 
-		//}
-		//else {
-		//	this->cluster = nullptr;
-		//}
 		// Copy new route vectors		
 		if (!reef_copy) {
 			for (auto& route : other.routes) {
@@ -252,6 +284,19 @@ public:
 				this->routes.push_back(newRoute);
 			}
 		}
+	}
+
+	~DroneSoln() {
+		for (auto& route : routes) {
+			//for (auto& pt : route) {
+			//	try { delete pt; }
+			//	catch (exception e) {
+			//		cout << "Error deleting pt in DroneSoln destructor: " << e.what() << endl;
+			//	}
+			//}
+			route.clear();
+		}
+		routes.clear();
 	}
 
 	const int ID;
@@ -338,6 +383,15 @@ public:
 			this->droneSolns.push_back(new DroneSoln(*drone));
 		}
 	}
+
+	FullSoln(const MSSoln& msSoln, const vector<DroneSoln>& droneSolns) :
+		ID(count++), msSoln(msSoln), droneSolns() {
+		// Create new DroneSoln objects with new memory locations for pointers
+		for (const auto& soln : droneSolns) {
+			this->droneSolns.push_back(new DroneSoln(soln));
+		}
+	}
+
 	FullSoln(const MSSoln msSoln) :
 		ID(count++), msSoln(msSoln)
 	{}
@@ -352,9 +406,7 @@ public:
 	}
 	// IN_SWAPS: Copy constructor with additional routes parameter
 	FullSoln(const FullSoln& other, const vector<vector<Pt*>>& routes, int c) :
-		ID(count++), msSoln(other.msSoln), // Deep copy
-		droneSolns()
-		//, greedy(other.greedy), without_clust(other.without_clust), within_clust(other.within_clust), greedy_again(other.greedy_again) 
+		ID(count++), msSoln(other.msSoln), droneSolns()
 		{
 		// Copy new DroneSoln objects with updated routes
 		for (int i = 0; i < other.droneSolns.size(); ++i) {
@@ -363,7 +415,7 @@ public:
 				// Modify the route for the specified index (c)
 				DroneSoln* modifiedDroneSoln = new DroneSoln(*other.droneSolns[i]);
 				modifiedDroneSoln->routes = routes;
-				this->droneSolns.push_back(modifiedDroneSoln);
+				this->droneSolns.push_back(new DroneSoln(*modifiedDroneSoln));
 			}
 			else {
 				// Use the original route if no replacement is provided
@@ -372,12 +424,16 @@ public:
 		}
 	}
 	
-	//// NEW -- OUT_SWAPS: Copy constructor with additional routes parameters
-	//FullSoln(const MSSoln& msSoln, const vector<DroneSoln*>& droneSolns) :
-	//	ID(count++), msSoln(msSoln), droneSolns(droneSolns) {}
+	// Destructor
+	~FullSoln() {
+		for (auto& droneSoln : droneSolns) {
+			delete droneSoln;
+		}
+		droneSolns.clear();
+	}
 
 	const int ID;
-	/*const*/ MSSoln msSoln;
+	MSSoln msSoln;
 	vector<DroneSoln*> droneSolns;
 	//SAparams sa_params;
 	SAlog sa_log;
@@ -425,7 +481,7 @@ public:
 
 			// Copy new DroneSoln objects
 			for (auto& dronesoln : other.droneSolns) {
-				droneSolns.push_back(new DroneSoln(*dronesoln/*, true*/)); // Pass 'true' to avoid copying launchPts
+				droneSolns.push_back(/*dronesoln*/new DroneSoln(*dronesoln));
 			}
 			//// Update other members accordingly
 			//msSoln = other.msSoln;		// Deep copy MSSoln

@@ -65,23 +65,23 @@ int main()
 	printSetup(inst);		// print problem setup
 	vector<FullSoln> fullSolns_best;
 
-	//vector<vector<FullSoln>> fullSolns;
-	//int iter = 10;
-	//for (int i = 0; i < iter; i++) {
-	//	fullSolns.push_back(
-	//		FullRun(i, inst)
-	//	);
-	//}
-	//for (int i = 0; i < fullSolns.size(); i++) { fullSolns_best.push_back( (fullSolns[i].back()) ); }
-	//printOpts(inst, fullSolns_best, inst.time+"_FullRuns");
+	vector<vector<FullSoln>> fullSolns;
+	int iter = 1;
+	for (int i = 0; i < iter; i++) {
+		fullSolns.push_back(
+			FullRun(i, inst)
+		);
+	}
+	for (int i = 0; i < fullSolns.size(); i++) { fullSolns_best.push_back( (fullSolns[i].back()) ); }
+	printOpts(inst, fullSolns_best, inst.time+"_FullRuns");
 
-	string sens_run;
-	vector <pair < pair<double, double>, pair<double, FullSoln> >> weight_results = 
-		VaryWeights(
-			inst, sens_run, 
-			make_pair(0.5, 2),
-			4);
-	for (int i = 0; i < weight_results.size(); i++) { fullSolns_best.push_back( (weight_results[i].second.second) ); }
+	//string sens_run;
+	//vector <pair < pair<double, double>, pair<double, FullSoln> >> weight_results = 
+	//	VaryWeights(
+	//		inst, sens_run, 
+	//		make_pair(0.5, 2),
+	//		4);
+	//for (int i = 0; i < weight_results.size(); i++) { fullSolns_best.push_back( (weight_results[i].second.second) ); }
 
 	//vector <pair < pair<int, int>, pair<double, FullSoln> >> noclust_results =
 	//	VaryNum_clustXdrone(inst, sens_run);	
@@ -91,7 +91,7 @@ int main()
 	//	Vary_dCap(inst, sens_run);
 	//for (int i = 0; i < dCap_results.size(); i++) { fullSolns_best.push_back( (dCap_results[i].second.second) ); }
 
-	printOpts(inst, fullSolns_best, sens_run);
+	//printOpts(inst, fullSolns_best, sens_run);
 
 	//\\//\\//\\//\\//\\       FIN        //\\//\\//\\//\\//\\
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//	

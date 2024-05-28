@@ -5,7 +5,7 @@ import datetime
 import os
 import re
 
-path = 'outputs/24-05-09_12-02-37/'
+path = 'outputs/24-05-28_15-40-02/'
 
 print_plt = 1
 save_plt = 0
@@ -27,7 +27,7 @@ def plot_clusters(csv_file, print_plt, save_plt):
     node_id = [int(row['ReefID']) for row in data]
 
     # Initialize nodes list with empty lists
-    nodes = [[] for _ in range(len(node_id))]    
+    nodes = [[] for _ in range(len(node_id))]
     for n,(i,j,k) in enumerate(zip(x,y,cluster_ids)):
         nodes[node_id[n]-1] = [i,j,k]
 
@@ -63,7 +63,7 @@ def plot_clusters(csv_file, print_plt, save_plt):
 
     date_time = re.search(r'(\d{2}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})', cluster_path)
     launchpts_path = f'launchPts/{date_time.group(1)} launchPts_init.csv'
-    if not ms_soln: 
+    if not ms_soln:
         if (max([sublist[-1] for sublist in nodes])>0):
             get_launchpts(launchpts_path)     # launchpts returns a dictionary of launch points by ID = (x, y)
 
@@ -107,16 +107,16 @@ def plot_MS_route(csv_file, print_plt, save_plt, w_ms, color = 'k'):
     # Extract x, y coordinates from the data
     x = [float(row['X']) for row in data]
     y = [float(row['Y']) for row in data]
-    # if (dist==0): 
-    #     for i in range(len(x)-1): 
+    # if (dist==0):
+    #     for i in range(len(x)-1):
     #         dist += w_ms * Dist([x[i], y[i]], [x[i+1], y[i+1]])  # ((x[i]-x[i+1])**2 + (y[i]-y[i+1])**2)**0.5
         # dist = round(sum([((x[i]-x[i-1])**2 + (y[i]-y[i-1])**2)**0.5 for i in range(1,len(x))]),2)
-    
+
     # Annotate the plot with the coordinates of the first point as "depot"
     plt.annotate(f'Depot: ({x[0]}, {y[0]})', xy=(x[0], y[0]), xycoords='data', ha='left', va='top', fontsize=10, color='black')
     # if (csv_file.find('NN')):   plt.annotate(f'MS_NN = {dist:.2f}\n@w_ms = {w_ms}',     xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
     # elif (csv_file.find('Gd')): plt.annotate(f'MS_Gd = {dist:.2f}\n@w_ms = {w_ms}',     xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
-    # else:                       
+    # else:
     plt.annotate(f'MS_dist = {dist:.2f}\n@w_ms = {w_ms}',   xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
     # Plot MS route on the existing plot
     plt.plot(x, y, color, linestyle='-', linewidth=2)  # You can adjust color, linestyle, and linewidth as needed
@@ -171,7 +171,7 @@ def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, w_d, color = 'r
     num_clusters = len(launchpts)-1
     colors = plt.cm.get_cmap('tab10', num_clusters)
     # launchpt_set = set(launchpts.keys())
-    
+
     for r, route in enumerate(routes_node):
         dist_route = 0
         route_coords = []
@@ -182,7 +182,7 @@ def plot_drones(csv_file, nodes, launchpts, print_plt, save_plt, w_d, color = 'r
             if pt == 0: x, y = launchpts[route[pt]]
             else: x, y = nodes[route[pt]-1][0], nodes[route[pt]-1][1]
             route_coords.append([route[pt], x, y])
-            if len(route_coords)>1: 
+            if len(route_coords)>1:
                 dist_leg = Dist(route_coords[-1][1:], route_coords[-2][1:])
                 print(dist_leg)
                 dist_route += dist_leg
@@ -242,15 +242,15 @@ for folder in os.listdir(path):
                 iterpath = os.path.join(folder_path, subfolder)
                 for file in os.listdir(iterpath):
                     if file.endswith(".csv"):
-                        if file.startswith('clusters'): 
+                        if file.startswith('clusters'):
                             cluster_path = os.path.join(iterpath, file)
                             cluster_soln = True
-                        if file.startswith('ms_route'): 
+                        if file.startswith('ms_route'):
                             ms_path = os.path.join(iterpath, file)
                             ms_soln = True
-                        elif file.startswith('launchPts'): 
+                        elif file.startswith('launchPts'):
                             launchpts_path = os.path.join(iterpath, file)
-                        elif file.startswith('drone_routes'): 
+                        elif file.startswith('drone_routes'):
                             d_path = os.path.join(iterpath, file)
                             drone_soln = True
                 nodes, w_ms, w_d = plot_clusters(      cluster_path, print_plt, save_plt)

@@ -82,27 +82,27 @@ vector<Pt*> UpdateLaunchPts(MSSoln msSoln, const pair<double, double>& weights, 
 /// <param name="iteration"></param>
 /// <param name="swap_print"></param>
 /// <returns></returns>
-pair<DroneSoln, DroneSoln> random_d_out_Swap(pair<DroneSoln, DroneSoln> drones, bool swap_print = false) {//, int iteration) { // d_route = ; tours = d_tours in this cluster
+pair<DroneSoln*, DroneSoln*> random_d_out_Swap(pair<DroneSoln*, DroneSoln*> drones, bool swap_print = false) {//, int iteration) { // d_route = ; tours = d_tours in this cluster
     /* RANDOMLY CHOOSE WHICH d_route TO SWAP */
-    pair<int, int> s = randSwapChoice(drones.first.routes.size(), //iteration, 
-        drones.second.routes.size(), false);   // RANDOMLY CHOOSE WHICH d_route TO SWAP
+    pair<int, int> s = randSwapChoice(drones.first->routes.size(), //iteration, 
+        drones.second->routes.size(), false);   // RANDOMLY CHOOSE WHICH d_route TO SWAP
     if (swap_print) printf("\nSwap between d_routes:\t%d\tand\t%d", s.first, s.second);
 
     // RANDOMLY CHOOSE WHICH d_route TO SWAP FROM
-    int from_stop = randChoice(drones.first.routes[s.first].size()/*, iteration*/);        // choose stop number to swap out from current d_routes
-    Pt* from_node = drones.first.routes[s.first][from_stop];
-    if (from_stop == 0 || from_stop > drones.first.routes[s.first].size() - 3) { throw runtime_error("Error: Invalid from_stop chosen"); }
+    int from_stop = randChoice(drones.first->routes[s.first].size()/*, iteration*/);        // choose stop number to swap out from current d_routes
+    Pt* from_node = drones.first->routes[s.first][from_stop];
+    if (from_stop == 0 || from_stop > drones.first->routes[s.first].size() - 3) { throw runtime_error("Error: Invalid from_stop chosen"); }
     // ^^ only true if drone route contains launchpts - this is to safeguard them being swapped...
 
     // RANDOMLY CHOOSE WHICH d_route TO SWAP TO
-    int to_stop = randChoice(drones.second.routes[s.second].size()/*, iteration*/);         // choose stop number to swap out from current d_routes
-    Pt* to_node = drones.second.routes[s.second][to_stop];
-    if (to_stop == 0 || to_stop > drones.second.routes[s.second].size() - 3) { throw runtime_error("Error: Invalid to_stop chosen"); }
+    int to_stop = randChoice(drones.second->routes[s.second].size()/*, iteration*/);         // choose stop number to swap out from current d_routes
+    Pt* to_node = drones.second->routes[s.second][to_stop];
+    if (to_stop == 0 || to_stop > drones.second->routes[s.second].size() - 3) { throw runtime_error("Error: Invalid to_stop chosen"); }
     // ^^ only true if drone route contains launchpts - this is to safeguard them being swapped...
 
-    swap(drones.first.cluster.reefs[findIndexByID(drones.first.routes[s.first][from_stop]->ID, drones.first.cluster.reefs) - 1],
-        drones.second.cluster.reefs[findIndexByID(drones.second.routes[s.second][to_stop]->ID, drones.second.cluster.reefs) - 1]);
-    swap(drones.first.routes[s.first][from_stop], drones.second.routes[s.second][to_stop]);
+    swap(drones.first->cluster.reefs[findIndexByID(drones.first->routes[s.first][from_stop]->ID, drones.first->cluster.reefs) - 1],
+        drones.second->cluster.reefs[findIndexByID(drones.second->routes[s.second][to_stop]->ID, drones.second->cluster.reefs) - 1]);
+    swap(drones.first->routes[s.first][from_stop], drones.second->routes[s.second][to_stop]);
 
     if (swap_print) {
         printf("\nSWAP:\td_routes\tindex\tnode\tReef_id\t\t(x,y)");
@@ -123,44 +123,39 @@ FullSoln OUT_ClusterSwaps(const Problem& inst, FullSoln soln/*, int iteration*//
     pair<int, int> c = randSwapChoice(soln.msSoln.clusters.size()/*, iteration*/);    // generate swap pair of clusters
     if (print) printf("\nSwap clusters:\t\t%d\tand\t%d", c.first, c.second);
 
-    pair<DroneSoln, DroneSoln>
-        drones = random_d_out_Swap(make_pair(*soln.droneSolns[c.first], *soln.droneSolns[c.second]));//,iteration, false);
+    pair<DroneSoln*, DroneSoln*>
+        drones = random_d_out_Swap(make_pair(soln.droneSolns[c.first], soln.droneSolns[c.second]));//,iteration, false);
 
-    vector<DroneSoln*> droneSolns;
-    for (int i = 0; i < soln.droneSolns.size(); i++) {
-        if (i == c.first) { droneSolns.push_back(&drones.first); }
-        else if (i == c.second) { droneSolns.push_back(&drones.second); }
-        else { droneSolns.push_back(soln.droneSolns[i]); }
-    }
-    vector<ClusterSoln*> clusters;
-    for (int i = 0; i < droneSolns.size(); i++) { clusters.push_back(&(droneSolns[i]->cluster)); }
+    soln.droneSolns[c.first] = drones.first;
+    soln.droneSolns[c.second] = drones.second;
+
+    soln.msSoln.clusters[c.first] = &soln.droneSolns[c.first]->cluster;
+    soln.msSoln.clusters[c.second] = &soln.droneSolns[c.second]->cluster;
 
     // update droneSolns with new launchPts & in routes
-    vector<Pt*>
-        launchPts = UpdateLaunchPts(soln.msSoln, inst.weights);
-    for (int d = 0; d < droneSolns.size(); d++) {
-        droneSolns[d]->launchPts = make_pair(launchPts[d], launchPts[d + 1]);
-        for (auto& route : droneSolns[d]->routes) {
-            route[0] = launchPts[d];
-            route[route.size() - 2] = launchPts[d + 1];
-            route[route.size() - 1] = launchPts[d];
+    soln.msSoln.launchPts = UpdateLaunchPts(soln.msSoln, inst.weights);
+    for (int d = 0; d < soln.droneSolns.size(); d++) {
+        soln.droneSolns[d]->launchPts = make_pair(soln.msSoln.launchPts[d], soln.msSoln.launchPts[d + 1]);
+        for (auto& route : soln.droneSolns[d]->routes) {
+            route[0] = soln.msSoln.launchPts[d];
+            route[route.size() - 2] = soln.msSoln.launchPts[d + 1];
+            route[route.size() - 1] = soln.msSoln.launchPts[d];
         }
     }
 
     //// UPDATE droneSolns with new routes ////
     pair <vector<vector<double>>, vector<vector<double>>>    // dMatrix feeds into routes
-        dMatrix = make_pair(droneSolns[c.first]->cluster.getdMatrix(make_pair(launchPts[c.first], launchPts[c.first + 1])),
-            droneSolns[c.second]->cluster.getdMatrix(make_pair(launchPts[c.second], launchPts[c.second + 1])));
+        dMatrix = make_pair(soln.droneSolns[c.first]->cluster.getdMatrix(make_pair(soln.msSoln.launchPts[c.first], soln.msSoln.launchPts[c.first + 1])),
+            soln.droneSolns[c.second]->cluster.getdMatrix(make_pair(soln.msSoln.launchPts[c.second], soln.msSoln.launchPts[c.second + 1])));
+    
     pair <vector<vector<Pt*>>, vector<vector<Pt*>>>         // update routes with Gd before assessing solution
-        routes = make_pair(greedyDroneCluster(drones.first, /*inst.get_dCap(), */dMatrix.first),
-            greedyDroneCluster(drones.second, /*inst.get_dCap(), */dMatrix.second));
-    droneSolns[c.first]->routes = routes.first;            // update clusters with new routes
-    droneSolns[c.second]->routes = routes.second;
+        routes = make_pair(greedyDroneCluster(*drones.first, dMatrix.first),
+            greedyDroneCluster(*drones.second, dMatrix.second));
+    soln.droneSolns[c.first]->routes = routes.first;            // update clusters with new routes
+    soln.droneSolns[c.second]->routes = routes.second;
 
-    MSSoln msSoln(clusters, launchPts, inst.ms);
-    FullSoln new_soln(msSoln, droneSolns);      // create new FullSoln with updated clusters and launchPts
     if (print) printf("-- ^^ OUT_Swap ^^ --");
-    return new_soln;
+    return soln;
 }
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////

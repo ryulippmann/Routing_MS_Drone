@@ -365,14 +365,6 @@ private:
 
 struct FullSoln {
 public:
-	FullSoln(const MSSoln& msSoln, const vector<DroneSoln*>& droneSolns) :
-		ID(count++), msSoln(msSoln), droneSolns() {
-		// Create new DroneSoln objects with new memory locations for pointers
-		for (auto* drone : droneSolns) {
-			this->droneSolns.push_back(new DroneSoln(*drone));
-		}
-	}
-
 	FullSoln(const MSSoln& msSoln, const vector<DroneSoln>& droneSolns) :
 		ID(count++), msSoln(msSoln), droneSolns() {
 		// Create new DroneSoln objects with new memory locations for pointers

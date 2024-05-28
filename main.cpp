@@ -9,28 +9,6 @@ bool csv_print = 1;
 bool print_detail = 0;
 
 int Pt::count = 0;
-//Pt depot = Pt(0, 0);		// depot must be first point initialised! ID = 0
-//// validity check later: (noClust * noDrones * dCap = no_pts)
-//int no_pts = 48; //100;
-//int noClust = 4;//5;
-//int noDrones = 4;//5;
-//int dCap = 3;//4;
-//
-////int no_pts = 12;
-////// validity check later: (noClust * noDrones * dCap = no_pts)
-////int noClust = 3;
-////int noDrones = 2;
-////int dCap = 2;
-//
-//double w_ms = 2;
-//double w_d = 1;
-//int kMeansIters = pow(10,7);//1000
-
-//// create GLOBAL instance of problem
-//const Problem INST =
-////CreateInst(100, 5, 5, 4, make_pair(2,1), Pt(0, 0), pow(10, 0));
-//	CreateInst(48, 4,  4, 3, make_pair(2, 1), Pt(0, 0), 0); //  Base case instance!
-//	//	no_pts, noClust, noDrones, dCap, make_pair(w_ms, w_d));
 
 ///////////////// Problem Initialised /////////////////
 
@@ -38,7 +16,6 @@ int Pt::count = 0;
 #include "class_soln.h"
 #include "cluster.h"
 #include "prints.h"
-//#include "opt.h"
 #include "mothership.h"
 #include "drones.h"
 #include "swaps.h"
@@ -65,33 +42,55 @@ int main()
 	printSetup(inst);		// print problem setup
 	vector<FullSoln> fullSolns_best;
 
-	//vector<vector<FullSoln>> fullSolns;
-	//int iter = 10;
-	//for (int i = 0; i < iter; i++) {
-	//	fullSolns.push_back(
-	//		FullRun(i, inst)
-	//	);
-	//}
-	//for (int i = 0; i < fullSolns.size(); i++) { fullSolns_best.push_back( (fullSolns[i].back()) ); }
-	//printOpts(inst, fullSolns_best, inst.time+"_FullRuns");
+	bool flag_full_run = 1;
+	bool flag_sens_weights = 0;
+	bool flag_sens_clusters = 0;
+	bool flag_sens_drones = 0;
+	int sens_iterations = 3;
+	if (flag_full_run+flag_sens_weights+flag_sens_clusters+flag_sens_drones != 1) {
+		cout << "Select exactly one sensitivity analysis option!" << endl;
+		return 0;
+	}
 
 	string sens_run;
-	vector <pair < pair<double, double>, pair<double, FullSoln> >> weight_results = 
-		VaryWeights(
-			inst, sens_run, 
-			make_pair(0.5, 2),
-			4);
-	for (int i = 0; i < weight_results.size(); i++) { fullSolns_best.push_back( (weight_results[i].second.second) ); }
-
-	//vector <pair < pair<int, int>, pair<double, FullSoln> >> noclust_results =
-	//	VaryNum_clustXdrone(inst, sens_run);	
-	//for (int i = 0; i < noclust_results.size(); i++) { fullSolns_best.push_back( (noclust_results[i].second.second) ); }
-
-	//vector <pair < pair<int, int>, pair<double, FullSoln> >> dCap_results =
-	//	Vary_dCap(inst, sens_run);
-	//for (int i = 0; i < dCap_results.size(); i++) { fullSolns_best.push_back( (dCap_results[i].second.second) ); }
-
-	printOpts(inst, fullSolns_best, sens_run);
+	vector<vector<FullSoln>> fullSolns;
+	if (flag_full_run) {
+		int iter = 3;
+		for (int i = 0; i < iter; i++) {
+			fullSolns.push_back(
+				FullRun(i, inst, inst.time + "_FullRuns")
+			);
+		}
+		
+		for (int i = 0; i < fullSolns.size(); i++) { fullSolns_best.push_back((fullSolns[i].back())); }
+		printOpts(inst, fullSolns_best, "_FullRuns");
+	}
+	else if (flag_sens_weights) {
+		vector <pair < pair<double, double>, pair<double, FullSoln> >> weight_results =
+			VaryWeights(
+				inst, sens_run,
+				make_pair(1,10),
+				10, sens_iterations);
+		
+		for (int i = 0; i < weight_results.size(); i++) { fullSolns_best.push_back((weight_results[i].second.second)); }
+		printOpts(inst, fullSolns_best, sens_run);
+	} 
+	else if (flag_sens_clusters) {
+		vector <pair < pair<int, int>, pair<double, FullSoln> >> noclust_results =
+			VaryClusters(
+				inst, sens_run, sens_iterations);
+		
+		for (int i = 0; i < noclust_results.size(); i++) { fullSolns_best.push_back((noclust_results[i].second.second)); }
+		printOpts(inst, fullSolns_best, sens_run);
+	}
+	else if (flag_sens_drones) {
+		vector <pair < pair<int, int>, pair<double, FullSoln> >> dCap_results =
+			VaryDrones(
+				inst, sens_run, sens_iterations);
+		
+		for (int i = 0; i < dCap_results.size(); i++) { fullSolns_best.push_back((dCap_results[i].second.second)); }
+		printOpts(inst, fullSolns_best, sens_run);
+	}
 
 	//\\//\\//\\//\\//\\       FIN        //\\//\\//\\//\\//\\
 	//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//	

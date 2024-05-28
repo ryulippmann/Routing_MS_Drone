@@ -34,7 +34,7 @@ int main()
 	//	VaryNum_droneXclust();
 	const Problem inst =
 		//CreateInst(100, 5, 5, 4, make_pair(2,1), Pt(0, 0), pow(10, 0));
-		CreateInst(48, 4, 4, 3, make_pair(2, 1), Pt(0, 0), 0); //  Base case instance!
+		CreateInst(48, 4, 4, 3, make_pair(2, 1), Pt(0, 0), 1000); //  Base case instance!
 	//	no_pts, noClust, noDrones, dCap, make_pair(w_ms, w_d));
 
 	if (checkParameters(inst) == false) return 0;		// check if parameters are valid

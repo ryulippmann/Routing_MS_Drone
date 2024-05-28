@@ -131,7 +131,7 @@ public:
 		ID(count++), clusters(clustSolns), launchPts(), ms(ms) {
 		// Create new DroneSoln objects with new memory locations for pointers
 		for (auto* pt : launchPts) {
-			this->launchPts.push_back(new Pt(*pt));
+			this->launchPts.push_back(new Pt(*pt));	// or : this->launchPts.push_back(pt); //??
 		}
 	}
 

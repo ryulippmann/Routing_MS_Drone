@@ -1,4 +1,3 @@
-//swaps.h NEW!!
 
 #pragma once
 #include <fstream>
@@ -46,22 +45,12 @@ int randChoice(size_t size/*, int randomSeed = 12345*/, bool clust_choice = fals
     else return getRandomNumber(size - 3/*, randomSeed*/) + 1;
 }
 
-vector<Pt*> UpdateLaunchPts(const vector<ClusterSoln*> clusters, Pt depot, bool print = false) {
+vector<Pt*> UpdateLaunchPts(MSSoln msSoln, const pair<double, double>& weights, bool print = false) {
     if (print) printf("\n---- SET LAUNCH POINTS ----\n\tID\t(  x  ,  y  )\n");
-    vector<Pt*> launchPts;
-    // add depot as first launch point
-    launchPts.push_back(new Pt(
-        (depot.x + clusters[0]->getCentroid().x) / 2,
-        (depot.y + clusters[0]->getCentroid().y) / 2));
-    for (int c = 0; c < clusters.size() - 1; c++) {
-        launchPts.push_back(new Pt(        // sum adjacent clusters x,y's to calc launchpts and 
-            (clusters[c]->getCentroid().x + clusters[c + 1]->getCentroid().x) / 2,
-            (clusters[c]->getCentroid().y + clusters[c + 1]->getCentroid().y) / 2));
-    }
-    launchPts.push_back(new Pt(
-        (depot.x + clusters.back()->getCentroid().x) / 2,
-        (depot.y + clusters.back()->getCentroid().y) / 2));
+    setLaunchPts(msSoln, weights);
     if (print) {
+        vector<Pt*> launchPts = msSoln.launchPts;
+        Pt depot = msSoln.ms.depot;
         printf("\tID\t(  x  ,  y  )\n");
         cout << string(30, '-') << "\n";
         printf("\t%d\t( %2.2f, %2.2f)\n", depot.ID, depot.x, depot.y);
@@ -80,7 +69,7 @@ vector<Pt*> UpdateLaunchPts(const vector<ClusterSoln*> clusters, Pt depot, bool 
         total_dist += calculatePtDistance(depot, launchPts.back());
         printf("\n\t\t= %.2f", total_dist);
     }
-    return launchPts;
+    return msSoln.launchPts;
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -129,7 +118,7 @@ pair<DroneSoln, DroneSoln> random_d_out_Swap(pair<DroneSoln, DroneSoln> drones, 
 /// <param name="iteration"></param>
 /// <param name="print">= False</param>
 /// <returns></returns>
-FullSoln OUT_ClusterSwaps(const Problem& inst, const FullSoln& soln, bool print = false) {
+FullSoln OUT_ClusterSwaps(const Problem& inst, FullSoln soln/*, int iteration*//*vector<int> randoms, */, bool print = false) {
     if (print) printf("---- OUT_Swap ----");
     pair<int, int> c = randSwapChoice(soln.msSoln.clusters.size()/*, iteration*/);    // generate swap pair of clusters
     if (print) printf("\nSwap clusters:\t\t%d\tand\t%d", c.first, c.second);
@@ -148,7 +137,7 @@ FullSoln OUT_ClusterSwaps(const Problem& inst, const FullSoln& soln, bool print 
 
     // update droneSolns with new launchPts & in routes
     vector<Pt*>
-        launchPts = UpdateLaunchPts(clusters, inst.ms.depot/*, true*/);
+        launchPts = UpdateLaunchPts(soln.msSoln, inst.weights);
     for (int d = 0; d < droneSolns.size(); d++) {
         droneSolns[d]->launchPts = make_pair(launchPts[d], launchPts[d + 1]);
         for (auto& route : droneSolns[d]->routes) {
@@ -168,8 +157,8 @@ FullSoln OUT_ClusterSwaps(const Problem& inst, const FullSoln& soln, bool print 
     droneSolns[c.first]->routes = routes.first;            // update clusters with new routes
     droneSolns[c.second]->routes = routes.second;
 
-    MSSoln msSoln = MSSoln(clusters, launchPts, inst.ms);
-    FullSoln new_soln = FullSoln(msSoln, droneSolns);   //     FullSoln new_soln(msSoln, droneSolns);      // create new FullSoln with updated clusters and launchPts      // create new FullSoln with updated clusters and launchPts
+    MSSoln msSoln(clusters, launchPts, inst.ms);
+    FullSoln new_soln(msSoln, droneSolns);      // create new FullSoln with updated clusters and launchPts
     if (print) printf("-- ^^ OUT_Swap ^^ --");
     return new_soln;
 }
@@ -212,7 +201,7 @@ void random_d_in_Swap(DroneSoln& drone, /*int iteration, */bool swap_print = fal
 /// <param name="iteration"></param>
 /// <param name="print"></param>
 /// <returns></returns>
-FullSoln IN_ClusterSwaps(const Problem& inst, FullSoln soln, bool print = false) {
+FullSoln IN_ClusterSwaps(const Problem& inst, FullSoln soln, /*int iteration, *//*vector<int> randoms, */bool print = false) {
     vector<vector<Pt*>> routes;
     int c;
 
@@ -233,7 +222,7 @@ FullSoln IN_ClusterSwaps(const Problem& inst, FullSoln soln, bool print = false)
         vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
         routes = greedyDroneCluster(*soln.droneSolns[c], dMatrix);                // Run greedy 2-Opt on routes
     }
-    FullSoln new_soln = FullSoln(soln, routes, c);      //     FullSoln new_soln(soln, routes, c);
+    FullSoln new_soln(soln, routes, c);
     if (print) {
         printf("\nOriginal route:\t%.2f\n", soln.getTotalDist(inst.weights));
         for (const auto& drone : new_soln.droneSolns) { printDroneRoutes(drone); }
@@ -254,7 +243,7 @@ FullSoln IN_ClusterSwaps(const Problem& inst, FullSoln soln, bool print = false)
 /// <param name="csv_print"></param>
 /// <param name="SA_print"></param>
 /// <returns></returns>
-FullSoln SwapRandomly(const Problem& inst, const FullSoln& soln_prev_best, SAparams sa_params, const string& folder_path = "",
+FullSoln SwapRandomly(const Problem& inst, const FullSoln soln_prev_best, SAparams sa_params, const string& folder_path = "",
     bool print_stats = false, bool csv_print = false, bool csv_update = false) {   //in_out = 1; // 0 = OUT, 1 = IN
     printf("\n\n---------- RANDOM IN/OUT Cluster Swaps - Simulated Annealing ----------\n");
     FullSoln best(soln_prev_best);
@@ -262,6 +251,7 @@ FullSoln SwapRandomly(const Problem& inst, const FullSoln& soln_prev_best, SApar
     FullSoln incumbent = soln_prev_best;
     double dist_initial = dist_best;
     bool print_zero = 1;
+
     double temp = sa_params.initial_temp;           // is this redundant? - temp is updated in SAlog
 
     srand(42);      // set random seed

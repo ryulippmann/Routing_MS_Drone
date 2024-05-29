@@ -290,13 +290,13 @@ public:
 	}
 
 	~DroneSoln() {
-		for (auto& route : routes) {
-			//for (auto& pt : route) {
-			//	try { delete pt; }
-			//	catch (exception e) {
-			//		cout << "Error deleting pt in DroneSoln destructor: " << e.what() << endl;
-			//	}
-			//}
+		//delete launchPts.first;
+		//delete launchPts.second;
+		for (vector<Pt*> route : routes) {
+			for (int p = 0; p < route.size(); p++) {
+				Pt* delpt = route[p];
+				delete delpt;
+			}
 			route.clear();
 		}
 		routes.clear();

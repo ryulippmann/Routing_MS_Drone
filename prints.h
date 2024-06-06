@@ -1,7 +1,8 @@
 #pragma once
 #include <sstream>
 #include <fstream>
-#include <filesystem> // For checking file existence
+#include <filesystem>
+#include <unordered_set>
 
 #ifdef _WIN32
 #include <direct.h>   // For mkdir on Windows
@@ -262,8 +263,24 @@ void csvPrints(const FullSoln& best_new, const Problem& inst, string file_suffix
     for (const auto& vehicle : best_new.droneSolns) {
         for (const auto& route : vehicle->routes) { total_routes.push_back(route); }
 	}
+
+    vector<Pt*> launchPts = best_new.msSoln.launchPts;
+    unordered_set<int> uniqueIDs;
+    for (const auto& point : launchPts) { uniqueIDs.insert(point->ID); }
+
+    for (const auto& drone : best_new.droneSolns) {
+        if (uniqueIDs.find(drone->launchPts.first->ID) == uniqueIDs.end()) {
+            launchPts.push_back(drone->launchPts.first);
+            uniqueIDs.insert(drone->launchPts.first->ID);
+        }
+        if (uniqueIDs.find(drone->launchPts.second->ID) == uniqueIDs.end()) {
+            launchPts.push_back(drone->launchPts.second);
+            uniqueIDs.insert(drone->launchPts.second->ID);
+        }
+    }
+
     csvPrintClusters(best_new.msSoln.clusters, inst, "clusters", folder_path);
-    csvPrintLaunchPts(best_new.msSoln.launchPts, "launchPts", folder_path);//"launchPts_fullSoln_" + boolToString(in_out));
+    csvPrintLaunchPts(/*best_new.msSoln.*/launchPts, "launchPts", folder_path);//"launchPts_fullSoln_" + boolToString(in_out));
     csvPrintMSRoutes(best_new.msSoln.launchPts, best_new.msSoln.ms.depot, "ms_route", best_new.msSoln.getDist(), folder_path);//_"+boolToString(in_out));
     csvPrintDroneRoutes(total_routes, "drone_routes", folder_path, true);
     if (best_new.sa_log.best_dist.size()>1) csvPrintSA(best_new.sa_log, "sa_log", batch + "/" + to_string(run_iteration));

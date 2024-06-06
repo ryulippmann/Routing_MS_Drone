@@ -88,7 +88,7 @@ vector<vector<Pt*>> greedyDroneCluster(const DroneSoln& clustDroneSoln, const ve
     vector<vector<Pt*>> routes = clustDroneSoln.routes;
     pair<Pt*, Pt*> launchPts = clustDroneSoln.launchPts;
     double gd_2opt_dists;
-    //int dCap = INST.get_dCap();
+
     if (print) printf("\n---- GREEDY TENDER CLUSTERS ----\n\tVehicle\t\tInitial\t\tGreedy 2-Opt\n");
     for (int d = 0; d < routes.size(); d++) {       // for each drone in cluster
         vector<int> i_tour;                         // ai_tour = city_index for each tour -> nearest neighbour
@@ -106,15 +106,17 @@ vector<vector<Pt*>> greedyDroneCluster(const DroneSoln& clustDroneSoln, const ve
         if (improvement > 0.0001 * route_dist) {                //if greedy solution is better than current
             if (print) { printf("\t%.2f%%\tIMPROVEMENT\t\n", improvement * 100 / route_dist); }
             vector<Pt*> route_new;
-            route_new.push_back(launchPts.first);                       // add launchPt to route
+            route_new.push_back(new Pt(*launchPts.first));                       // add launchPt to route
             for (int i = 1; i < gd_route_id.size() - 2; i++) {          // for each stop in gd_route_id
                 route_new.push_back(cluster.reefs[gd_route_id[i] - 1]); // add reef to route
             }
-            route_new.push_back(launchPts.second);                      // add retrievePt to route
-            route_new.push_back(launchPts.first);					    // return to launchPt
+            route_new.push_back(new Pt(*launchPts.second));                      // add retrievePt to route
+            route_new.push_back(new Pt(*launchPts.first));					    // return to launchPt
             routes[d] = route_new;									    // update route
+            //for (Pt* pt : routes[d]) { delete pt; }                     // avoid memory leak!
         }
     }//for(d=vehicles)
+
     return routes;
 }
 
@@ -148,7 +150,7 @@ vector<DroneSoln> initDroneSoln(const Problem& inst, const MSSoln& msSoln, bool 
 
         // Dronesoln Greedy 2-Opt update
         droneSoln.routes = greedyDroneCluster(droneSoln, clusterMatrix, print);
-        droneSolns.emplace_back(droneSoln);
+        droneSolns.push_back(droneSoln);
         // print routes
         //if (print) {
         printf("CLUSTER %d:\tID: %d\t\t\t\tCluster dist: %.2f\n", c, droneSoln.cluster.ID, droneSoln.getDroneRouteDist(-1));

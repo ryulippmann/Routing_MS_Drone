@@ -5,7 +5,7 @@ using namespace std;
 #include <utility>
 #include "class_prob.h"
 
-bool csv_print = 1;
+bool csv_print = 0;
 bool print_detail = 0;
 
 int Pt::count = 0;
@@ -34,8 +34,9 @@ int main()
 	//	VaryNum_droneXclust();
 	const Problem inst =
 		//CreateInst(100, 5, 5, 4, make_pair(2,1), Pt(0, 0), pow(10, 0));
-		CreateInst(48, 4, 4, 3, make_pair(2, 1), Pt(0, 0), 1000); //  Base case instance!
+		CreateInst(48, 4, 4, 3, make_pair(2, 1), Pt(0, 0), 0); //  Base case instance!
 	//	no_pts, noClust, noDrones, dCap, make_pair(w_ms, w_d));
+
 
 	if (checkParameters(inst) == false) return 0;		// check if parameters are valid
 	printSetup(inst);		// print problem setup
@@ -45,7 +46,6 @@ int main()
 	bool flag_sens_weights = 0;
 	bool flag_sens_clusters = 0;
 	bool flag_sens_drones = 0;
-
 	int sens_iterations = 3;
 	if (flag_full_run + flag_sens_weights + flag_sens_clusters + flag_sens_drones != 1) {
 		cout << "Select exactly one sensitivity analysis option!" << endl;

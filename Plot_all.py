@@ -5,10 +5,10 @@ import datetime
 import os
 import re
 
-path = 'outputs/24-05-28_18-11-07_FullRuns/'
+path = 'outputs/24-06-06_12-42-57_FullRuns'
 
 print_plt = 1
-save_plt = 1
+save_plt = 0
 
 def plot_clusters(csv_file, print_plt, save_plt):
     # Read CSV file and extract data

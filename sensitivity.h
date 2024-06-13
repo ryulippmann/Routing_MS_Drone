@@ -14,7 +14,7 @@
 FullSoln SwapShell(const Problem& inst, const FullSoln& soln_current, vector<double>& best_dists, int run_iteration, const string& folder_path = "", pair<int, double> sa_it_cr = make_pair(0, 0)) {
 	//SAparams                  (num_iter, init_temp, cooling_rate)
 	double init_temp = 0.2 * soln_current.getTotalDist(inst.weights);
-	if (sa_it_cr == make_pair(0, 0)) { sa_it_cr = make_pair(3 * pow(10, 4), 0.9995); }	//pow(10, 4), 0.999); }		//pow(10,3), 0.99); }	// 	   (pow(10,5), 0.9999); }	//
+	if (sa_it_cr == make_pair(0, 0)) { sa_it_cr = make_pair(3 * pow(10, 4), 0.9995)/*8 * pow(10, 4), 0.9998)*//*5 * pow(10, 4), 0.9997)*/; }	//pow(10, 4), 0.999); }		//pow(10,3), 0.99); }	// 	   (pow(10,5), 0.9999); }	//
 
 	//\\//\\//\\//  Randomly run IN/OUT Swaps   //\\//\\//\\//
 	FullSoln best = SwapRandomly(inst, soln_current, SAparams(sa_it_cr.first, init_temp, sa_it_cr.second), folder_path + "/" + to_string(run_iteration),

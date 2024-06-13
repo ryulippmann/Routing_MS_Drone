@@ -4,15 +4,15 @@
 
 struct Pt {
 public:
+	const int ID;
+	double x;
+	double y;
+
 	Pt(double x = 0.0, double y = 0.0) : ID(count++), x(x), y(y) {}	// Default constructor
 	Pt(pair<double, double> coords) : ID(count++), x(coords.first), y(coords.second) {}
 
 	// Copy constructor
 	Pt(const Pt& other) : ID(other.ID), x(other.x), y(other.y) {}
-
-	const int ID;
-	const double x;
-	const double y;
 
 	//destructor
 	~Pt() {}
@@ -21,44 +21,42 @@ private:
 	static int count;
 };
 
-vector<Pt> initReefs(int no_pts = 100, int sol_space = 100) {
+vector<Pt> initReefs(int no_pts, int sol_space = 100) {
 	vector<Pt> reefs;
 	for (int i = 0; i < no_pts; i++) {
 		Pt pt = Pt(rand() % sol_space, rand() % sol_space);
 		reefs.push_back(pt);
-	}//for(pts) //cout << "\n";
+	}
 	return reefs;
 }
 
 struct MS {
 public:
-	MS() : ID(count++), cap(NULL) {}
-	MS(Pt depot) : ID(count++), /*cap(cap), */depot(depot) {}
-	MS(int cap) : ID(count++), cap(cap) {}
-	MS(int cap, Pt depot) : ID(count++), cap(cap), depot(depot) {}
-
 	const int ID;
 	const int cap = NULL;
 	Pt depot;
 
+	MS() : ID(count++), cap(NULL) {}
+	MS(Pt depot) : ID(count++), depot(depot) {}
+	MS(int cap) : ID(count++), cap(cap) {}
+	MS(int cap, Pt depot) : ID(count++), cap(cap), depot(depot) {}
 private:
 	static int count;
 };
 
 struct Drone {
 public:
-	Drone(int cap) : ID(count++), cap(cap)/*, route(route)*/ {}
-
 	const int ID;
 	const int cap;
+
+	Drone(int cap) : ID(count++), cap(cap)/*, route(route)*/ {}
 private:
 	static int count;
 };
 
 pair<double, double> normaliseWeights(pair<double, double> weights) {
 	double totalWeight = weights.first + weights.second; // Assuming weights is a pair<double, double>
-	// Check if totalWeight is not zero to avoid division by zero
-	if (totalWeight != 0.0) {
+	if (totalWeight != 0.0) {	// Avoid division by zero
 		weights.first /= totalWeight;
 		weights.second /= totalWeight;
 	}
@@ -77,13 +75,11 @@ private:
 		MS ms(msCap, depot);
 		return ms;
 	}
-
 	vector<Drone> setDrones(int noDrones, int dCap) {
 		vector<Drone> drones;
 		for (int i = 0; i < noDrones; ++i) { drones.push_back(Drone(dCap)); }
 		return drones;
 	}
-
 	string getCurrentTime() const {
 		auto now = chrono::system_clock::now();
 		time_t time = chrono::system_clock::to_time_t(now);
@@ -96,6 +92,13 @@ private:
 	}
 
 public:
+	const vector<Pt> reefs;
+	const MS ms = this->setMS(noClust, depot);
+	const vector<Drone> drones = this->setDrones(noDrones, dCap);
+	pair<double, double> weights;
+	const string time;
+	int kMeansIters;
+
 	Problem(vector<Pt> reefs, int noClust, int noDrones, int dCap, pair<double, double> weights, Pt depot, int kMeansIters) :
 		reefs(move(reefs)),
 		noClust(noClust),
@@ -105,20 +108,7 @@ public:
 		time(getCurrentTime())
 	{
 		if (this->kMeansIters <= 0) this->kMeansIters = 1;
-		//auto now = chrono::system_clock::now();
-		//time_t time = chrono::system_clock::to_time_t(now);
-		//tm localTime;                       // Convert time to local time
-		//char output[80];
-		//strftime(output, sizeof(output), "%y-%m-%d_%H-%M-%S", &localTime);
-		//time = output;
 	}
-
-	const vector<Pt> reefs;
-	const MS ms = this->setMS(noClust, depot);
-	const vector<Drone> drones = this->setDrones(noDrones, dCap);
-	pair<double, double> weights;// = this->normaliseWeights(weights);
-	const string time;
-	/*const*/ int kMeansIters;//1000
 
 	vector<Pt*> getReefPointers() const {
 		vector<Pt*> reefPtrs;
@@ -131,7 +121,7 @@ public:
 	int getnumDrones() const { return noDrones; }
 	int get_dCap() const { return dCap; }
 	Pt getDepot() const { return depot; }
-	vector<vector<double>> getDMatrix(/*vector<Pt> reefs, Pt depot*/) {
+	vector<vector<double>> getDMatrix() {
 		vector<vector<double>> dMatrix;
 		vector<double> depotDists;
 		depotDists.push_back(0.0);					// depot to itself = 0
@@ -176,9 +166,9 @@ bool checkParameters(const Problem& instance) {
 /// <param name="weights">= (1,1)</param>
 /// <param name="depot">= Pt(0,0)</param>
 /// <param name="kMeansIters">= 100</param>
-Problem CreateInst(int no_pts = 48,/*100;*/int noClust = 4, /*5;*/
+Problem CreateInst(int no_pts = 48,/*100;*/int noClust = 4,
 	int noDrones = 4, int dCap = 3,
-	pair<double, double> weights = make_pair(1, 1), //= make_pair(1,1)
+	pair<double, double> weights = make_pair(1, 1),
 	Pt depot = Pt(0, 0), int kMeansIters = pow(10, 2)) {
 	Problem inst = Problem(initReefs(no_pts), noClust, noDrones, dCap, weights, depot, kMeansIters);
 	if (checkParameters(inst)) return inst;
@@ -188,7 +178,6 @@ Problem CreateInst(const Problem& inst_ex, int noClust, int noDrones, int dCap) 
 	Problem inst = Problem(inst_ex.reefs, noClust, noDrones, dCap, inst_ex.weights, inst_ex.getDepot(), inst_ex.kMeansIters);
 	if (checkParameters(inst)) return inst;
 }
-
 Problem CreateInst(const Problem& inst_ex, pair<double, double> weights) {
 	Problem inst = Problem(inst_ex.reefs, inst_ex.getnumClusters(), inst_ex.getnumDrones(), inst_ex.get_dCap(), weights, inst_ex.getDepot(), inst_ex.kMeansIters);
 	if (checkParameters(inst)) return inst;
@@ -204,5 +193,3 @@ void printSetup(const Problem& inst) {
 	printf("\t\t\tWeighting:\n\t\t\tMS: %.3f\t\tDrone %.3f\n", inst.weights.first, inst.weights.second);
 	printf("Time initialised: \t");
 }
-
-////////////////////////////////////////////////////////////////////////////

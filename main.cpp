@@ -30,13 +30,10 @@ int FullSoln::count = 0;
 
 int main()
 {
-	//vector <pair < pair<int, int>, pair<double, FullSoln> >> results  =
-	//	VaryNum_droneXclust();
 	const Problem inst =
 		//CreateInst(100, 5, 5, 4, make_pair(2,1), Pt(0, 0), pow(10, 0));
 		CreateInst(48, 4, 4, 3, make_pair(2, 1), Pt(0, 0), 0); //  Base case instance!
-	//	no_pts, noClust, noDrones, dCap, make_pair(w_ms, w_d));
-
+		// noPt, noCl, noDr, dCap, make_pair(w_ms, w_d));
 
 	if (checkParameters(inst) == false) return 0;		// check if parameters are valid
 	printSetup(inst);		// print problem setup
@@ -54,6 +51,7 @@ int main()
 
 	string sens_run;
 	vector<vector<FullSoln>> fullSolns;
+
 	if (flag_full_run) {
 		int iter = 3;
 		for (int i = 0; i < iter; i++) {

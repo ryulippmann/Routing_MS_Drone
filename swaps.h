@@ -1,3 +1,4 @@
+//swaps.h NEW!!
 
 #pragma once
 #include <fstream>
@@ -45,31 +46,37 @@ int randChoice(size_t size/*, int randomSeed = 12345*/, bool clust_choice = fals
     else return getRandomNumber(size - 3/*, randomSeed*/) + 1;
 }
 
-vector<Pt*> UpdateLaunchPts(MSSoln msSoln, const pair<double, double>& weights, bool print = false) {
+void UpdateLaunchPts(FullSoln& soln, Pt depot, bool print = false) {
     if (print) printf("\n---- SET LAUNCH POINTS ----\n\tID\t(  x  ,  y  )\n");
-    setLaunchPts(msSoln, weights);
+    // add depot as first launch point
+    soln.msSoln.launchPts[0]->x = (depot.x + soln.msSoln.clusters[0]->getCentroid().x) / 2.0;
+    soln.msSoln.launchPts[0]->y = (depot.y + soln.msSoln.clusters[0]->getCentroid().y) / 2.0;
+    for (int c = 0; c < soln.msSoln.clusters.size() - 1; c++) {
+        // sum adjacent clusters x,y's to calc launchpts 
+        soln.msSoln.launchPts[c+1]->x = (soln.msSoln.clusters[c]->getCentroid().x + soln.msSoln.clusters[c + 1]->getCentroid().x) / 2.0;
+        soln.msSoln.launchPts[c+1]->y = (soln.msSoln.clusters[c]->getCentroid().y + soln.msSoln.clusters[c + 1]->getCentroid().y) / 2.0;
+    }
+    soln.msSoln.launchPts.back()->x = (depot.x + soln.msSoln.clusters.back()->getCentroid().x) / 2.0;
+    soln.msSoln.launchPts.back()->y = (depot.y + soln.msSoln.clusters.back()->getCentroid().y) / 2.0;
     if (print) {
-        vector<Pt*> launchPts = msSoln.launchPts;
-        Pt depot = msSoln.ms.depot;
         printf("\tID\t(  x  ,  y  )\n");
         cout << string(30, '-') << "\n";
         printf("\t%d\t( %2.2f, %2.2f)\n", depot.ID, depot.x, depot.y);
-        for (const auto& stop : launchPts) {
+        for (const auto& stop : soln.msSoln.launchPts) {
             printf("\t%d\t( %.2f, %.2f)\n", stop->ID, stop->x, stop->y);
         } printf("\n");
         cout << string(30, '-') << "\n";
-        double total_dist = calculatePtDistance(depot, launchPts[0]);
+        double total_dist = calculatePtDistance(depot, soln.msSoln.launchPts[0]);
         printf("\t%.2f ", total_dist);
-        for (int i = 0; i < launchPts.size() - 1; i++) {
-            double leg_dist = calculatePtDistance(launchPts[i], launchPts[i + 1]);
+        for (int i = 0; i < soln.msSoln.launchPts.size() - 1; i++) {
+            double leg_dist = calculatePtDistance(soln.msSoln.launchPts[i], soln.msSoln.launchPts[i + 1]);
             printf("+\t%.2f ", leg_dist);
             total_dist += leg_dist;
         }
-        printf("+\t%.2f ", calculatePtDistance(depot, launchPts.back()));
-        total_dist += calculatePtDistance(depot, launchPts.back());
+        printf("+\t%.2f ", calculatePtDistance(depot, soln.msSoln.launchPts.back()));
+        total_dist += calculatePtDistance(depot, soln.msSoln.launchPts.back());
         printf("\n\t\t= %.2f", total_dist);
     }
-    return msSoln.launchPts;
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -82,34 +89,33 @@ vector<Pt*> UpdateLaunchPts(MSSoln msSoln, const pair<double, double>& weights, 
 /// <param name="iteration"></param>
 /// <param name="swap_print"></param>
 /// <returns></returns>
-pair<DroneSoln, DroneSoln> random_d_out_Swap(pair<DroneSoln, DroneSoln> drones, bool swap_print = false) {//, int iteration) { // d_route = ; tours = d_tours in this cluster
-    /* RANDOMLY CHOOSE WHICH d_route TO SWAP */
-    pair<int, int> s = randSwapChoice(drones.first.routes.size(), //iteration, 
-        drones.second.routes.size(), false);   // RANDOMLY CHOOSE WHICH d_route TO SWAP
+pair<int, int> random_d_out_Swap(pair<DroneSoln*, DroneSoln*> drones, bool swap_print = false) {//, int iteration) { // d_route = ; tours = d_tours in this cluster
+    pair<int, int> s = randSwapChoice(drones.first->routes.size(), //iteration, 
+        drones.second->routes.size(), false);   // RANDOMLY CHOOSE WHICH d_route TO SWAP
     if (swap_print) printf("\nSwap between d_routes:\t%d\tand\t%d", s.first, s.second);
 
     // RANDOMLY CHOOSE WHICH d_route TO SWAP FROM
-    int from_stop = randChoice(drones.first.routes[s.first].size()/*, iteration*/);        // choose stop number to swap out from current d_routes
-    Pt* from_node = drones.first.routes[s.first][from_stop];
-    if (from_stop == 0 || from_stop > drones.first.routes[s.first].size() - 3) { throw runtime_error("Error: Invalid from_stop chosen"); }
+    int from_stop = randChoice(drones.first->routes[s.first].size()/*, iteration*/);        // choose stop number to swap out from current d_routes
+    Pt* from_node = drones.first->routes[s.first][from_stop];
+    if (from_stop == 0 || from_stop > drones.first->routes[s.first].size() - 3) { throw runtime_error("Error: Invalid from_stop chosen"); }
     // ^^ only true if drone route contains launchpts - this is to safeguard them being swapped...
 
     // RANDOMLY CHOOSE WHICH d_route TO SWAP TO
-    int to_stop = randChoice(drones.second.routes[s.second].size()/*, iteration*/);         // choose stop number to swap out from current d_routes
-    Pt* to_node = drones.second.routes[s.second][to_stop];
-    if (to_stop == 0 || to_stop > drones.second.routes[s.second].size() - 3) { throw runtime_error("Error: Invalid to_stop chosen"); }
+    int to_stop = randChoice(drones.second->routes[s.second].size()/*, iteration*/);         // choose stop number to swap out from current d_routes
+    Pt* to_node = drones.second->routes[s.second][to_stop];
+    if (to_stop == 0 || to_stop > drones.second->routes[s.second].size() - 3) { throw runtime_error("Error: Invalid to_stop chosen"); }
     // ^^ only true if drone route contains launchpts - this is to safeguard them being swapped...
 
-    swap(drones.first.cluster.reefs[findIndexByID(drones.first.routes[s.first][from_stop]->ID, drones.first.cluster.reefs) - 1],
-        drones.second.cluster.reefs[findIndexByID(drones.second.routes[s.second][to_stop]->ID, drones.second.cluster.reefs) - 1]);
-    swap(drones.first.routes[s.first][from_stop], drones.second.routes[s.second][to_stop]);
+    swap(drones.first->cluster.reefs[findIndexByID(drones.first->routes[s.first][from_stop]->ID, drones.first->cluster.reefs)],
+        drones.second->cluster.reefs[findIndexByID(drones.second->routes[s.second][to_stop]->ID, drones.second->cluster.reefs)]);
+    swap(drones.first->routes[s.first][from_stop], drones.second->routes[s.second][to_stop]);
 
     if (swap_print) {
         printf("\nSWAP:\td_routes\tindex\tnode\tReef_id\t\t(x,y)");
         printf("\nc\t%d\t\t%d\t%d\t(%.1f,%.1f)", s.first, from_stop, from_node->ID, from_node->x, from_node->y);
         printf("\nd\t%d\t\t%d\t%d\t(%.1f,%.1f)", s.second, to_stop, to_node->ID, to_node->x, to_node->y);
     }
-    return drones;
+    return make_pair(from_node->ID, to_node->ID);
 }
 
 /// <summary>
@@ -118,49 +124,37 @@ pair<DroneSoln, DroneSoln> random_d_out_Swap(pair<DroneSoln, DroneSoln> drones, 
 /// <param name="iteration"></param>
 /// <param name="print">= False</param>
 /// <returns></returns>
-FullSoln OUT_ClusterSwaps(const Problem& inst, FullSoln soln/*, int iteration*//*vector<int> randoms, */, bool print = false) {
-    if (print) printf("---- OUT_Swap ----");
+void OUT_ClusterSwaps(const Problem& inst, FullSoln& soln, bool print = false) {
+    if (print) printf("\n---- OUT_Swap ----");
     pair<int, int> c = randSwapChoice(soln.msSoln.clusters.size()/*, iteration*/);    // generate swap pair of clusters
-    if (print) printf("\nSwap clusters:\t\t%d\tand\t%d", c.first, c.second);
+    if (print) printf("\tSwap clusters:\t\t%d\tand\t%d", c.first, c.second);
 
-    pair<DroneSoln, DroneSoln>
-        drones = random_d_out_Swap(make_pair(*soln.droneSolns[c.first], *soln.droneSolns[c.second]));//,iteration, false);
+    pair <int, int> s = random_d_out_Swap(make_pair(soln.droneSolns[c.first], soln.droneSolns[c.second]), print);//,iteration, false);
+    swap(soln.msSoln.clusters[c.first]->reefs[findIndexByID(s.first, soln.msSoln.clusters[c.first]->reefs)],
+        soln.msSoln.clusters[c.second]->reefs[findIndexByID(s.second, soln.msSoln.clusters[c.second]->reefs)]); // swap clusters
 
-    vector<DroneSoln*> droneSolns;
-    for (int i = 0; i < soln.droneSolns.size(); i++) {
-        if (i == c.first) { droneSolns.push_back(&drones.first); }
-        else if (i == c.second) { droneSolns.push_back(&drones.second); }
-        else { droneSolns.push_back(soln.droneSolns[i]); }
-    }
-    vector<ClusterSoln*> clusters;
-    for (int i = 0; i < droneSolns.size(); i++) { clusters.push_back(&(droneSolns[i]->cluster)); }
+    UpdateLaunchPts(soln, inst.ms.depot, print);
 
-    // update droneSolns with new launchPts & in routes
-    vector<Pt*>
-        launchPts = UpdateLaunchPts(soln.msSoln, inst.weights);
-    for (int d = 0; d < droneSolns.size(); d++) {
-        droneSolns[d]->launchPts = make_pair(launchPts[d], launchPts[d + 1]);
-        for (auto& route : droneSolns[d]->routes) {
-            route[0] = launchPts[d];
-            route[route.size() - 2] = launchPts[d + 1];
-            route[route.size() - 1] = launchPts[d];
+    // Gd update routes before assessing solution
+    //PC NOTE: recalculating entire distance matrix every time is very inefficient - most of them won't change, just the ones involving changed launch points
+    pair <vector<vector<double>>, vector<vector<double>>>    // dMatrix feeds into routes
+        dMatrix = make_pair(soln.droneSolns[c.first]->cluster.getdMatrix(make_pair(soln.msSoln.launchPts[c.first], soln.msSoln.launchPts[c.first + 1])),
+            soln.droneSolns[c.second]->cluster.getdMatrix(make_pair(soln.msSoln.launchPts[c.second], soln.msSoln.launchPts[c.second + 1])));
+    pair <vector<vector<Pt*>>, vector<vector<Pt*>>>
+        routes = make_pair(greedyDroneCluster(*soln.droneSolns[c.first],  dMatrix.first),
+            greedyDroneCluster(*soln.droneSolns[c.second], dMatrix.second));
+
+    for (int d = 0; d < soln.droneSolns.size(); d++) {
+        if ((soln.msSoln.launchPts[d]->ID != soln.droneSolns[d]->launchPts.first->ID) *
+            (soln.msSoln.launchPts[d + 1]->ID != soln.droneSolns[d]->launchPts.second->ID))
+            printf("MISMATCH!");
+        for (int c = 0; c < soln.droneSolns[d]->routes.size(); c++) {
+            if (soln.droneSolns[d]->launchPts.first->ID != soln.droneSolns[d]->routes[c][0]->ID)
+                //(new_soln.droneSolns[d]->launchPts.second->ID != new_soln.droneSolns[d]->routes[c][new_soln.droneSolns[d]->routes[route.size() - 2]]->ID))
+                printf("MISMATCH!");
         }
     }
-
-    //// UPDATE droneSolns with new routes ////
-    pair <vector<vector<double>>, vector<vector<double>>>    // dMatrix feeds into routes
-        dMatrix = make_pair(droneSolns[c.first]->cluster.getdMatrix(make_pair(launchPts[c.first], launchPts[c.first + 1])),
-            droneSolns[c.second]->cluster.getdMatrix(make_pair(launchPts[c.second], launchPts[c.second + 1])));
-    pair <vector<vector<Pt*>>, vector<vector<Pt*>>>         // update routes with Gd before assessing solution
-        routes = make_pair(greedyDroneCluster(drones.first, /*inst.get_dCap(), */dMatrix.first),
-            greedyDroneCluster(drones.second, /*inst.get_dCap(), */dMatrix.second));
-    droneSolns[c.first]->routes = routes.first;            // update clusters with new routes
-    droneSolns[c.second]->routes = routes.second;
-
-    MSSoln msSoln(clusters, launchPts, inst.ms);
-    FullSoln new_soln(msSoln, droneSolns);      // create new FullSoln with updated clusters and launchPts
-    if (print) printf("-- ^^ OUT_Swap ^^ --");
-    return new_soln;
+    if (print) printf("\t\t-- ^^ OUT_Swap ^^ --");
 }
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
@@ -171,63 +165,55 @@ FullSoln OUT_ClusterSwaps(const Problem& inst, FullSoln soln/*, int iteration*//
 /// </summary>
 /// <param name="drone"></param>
 /// <param name="swap_print"></param>
-void random_d_in_Swap(DroneSoln& drone, /*int iteration, */bool swap_print = false) { // d_route = ; tours = d_tours in this cluster
-    pair<int, int> s = randSwapChoice(drone.routes.size()/*, iteration*/);   // RANDOMLY CHOOSE WHICH d_routes TO SWAP
+void random_d_in_Swap(DroneSoln* drone, /*int iteration, */bool swap_print = false) { // d_route = ; tours = d_tours in this cluster
+    pair<int, int> s = randSwapChoice(drone->routes.size()/*, iteration*/);   // RANDOMLY CHOOSE WHICH d_routes TO SWAP
     if (swap_print) printf("\nSwap between d_routes:\t%d\tand\t%d", s.first, s.second);
 
-    int from_stop = randChoice(drone.routes[s.first].size()/*, iteration*/);     // randomly choose stop number to swap out from current/chosen d_routes
-    if (swap_print) printf("\nSwap From\tindex %d: node = %d\t", from_stop, drone.routes[s.first][from_stop]->ID);
-    if (from_stop == 0 || from_stop > drone.routes[s.first].size() - 3) { throw runtime_error("Error: Invalid from_stop chosen"); }
+    int from_stop = randChoice(drone->routes[s.first].size()/*, iteration*/);     // randomly choose stop number to swap out from current/chosen d_routes
+    if (swap_print) printf("\nSwap From\tindex %d: node = %d\t", from_stop, drone->routes[s.first][from_stop]->ID);
+    if (from_stop == 0 || from_stop > drone->routes[s.first].size() - 3) { throw runtime_error("Error: Invalid from_stop chosen"); }
 
-    int to_stop = randChoice(drone.routes[s.second].size()/*, iteration*/);      // randomly choose stop number to swap out from current d_routes
-    if (swap_print) printf("\nTo\t\tindex %d: node = %d\t", to_stop, drone.routes[s.second][to_stop]->ID);
-    if (to_stop == 0 || to_stop > drone.routes[s.second].size() - 3) { throw runtime_error("Error: Invalid to_stop chosen"); }
+    int to_stop = randChoice(drone->routes[s.second].size()/*, iteration*/);      // randomly choose stop number to swap out from current d_routes
+    if (swap_print) printf("\nTo\t\tindex %d: node = %d\t", to_stop, drone->routes[s.second][to_stop]->ID);
+    if (to_stop == 0 || to_stop > drone->routes[s.second].size() - 3) { throw runtime_error("Error: Invalid to_stop chosen"); }
 
-    swap(drone.routes[s.first][from_stop], drone.routes[s.second][to_stop]);
+    swap(drone->routes[s.first][from_stop], drone->routes[s.second][to_stop]);
 
     if (swap_print) {
-        for (const auto& d_route : drone.routes) {
+        for (const auto& d_route : drone->routes) {
             printf("\n\t");
-            for (const auto& node : d_route) { cout << node << "\t"; }
+            for (const auto& node : d_route) { printf("%d\t", node); }
         }
-    } //cout << "\n";
+    }
     return;
 }
 
 /// <summary>
-/// MODIFY Fullsoln soln (not ref) and return the swapped copy to save as proposed - mutated cluster_index c to swap within
+/// MODIFY Fullsoln soln and return as proposed - mutated cluster_index c to swap within
 /// </summary>
 /// <param name="soln"></param>
 /// <param name="iteration"></param>
 /// <param name="print"></param>
 /// <returns></returns>
-FullSoln IN_ClusterSwaps(const Problem& inst, FullSoln soln, /*int iteration, *//*vector<int> randoms, */bool print = false) {
+void IN_ClusterSwaps(const Problem& inst, FullSoln& soln, /*int iteration, *//*vector<int> randoms, */bool print = false) {
     vector<vector<Pt*>> routes;
-    int c;
-
-    int num_it = 1;                             // set number of swaps per iteration
-    for (int i = 0; i < num_it; i++) {
-        c = randChoice(soln.msSoln.clusters.size()/*, iteration*/, true);    // generate random CLUSTER to swap within
-        if (print) {
-            cout << "\n" << string(50, '~') << "\n";
-            printf("\nSwap cluster:\t\t%d\n", c);
-            printDroneRoutes(soln.droneSolns[c]);
-        }
-        random_d_in_Swap(*soln.droneSolns[c]/*, iteration*/);          // DONT CREATE COPY, as soln is NOT reference
-        if (print) { printDroneRoutes(soln.droneSolns[c]); }
-
-        // these are only created to feed into greedyDroneCluster
-        ClusterSoln* cluster = soln.msSoln.clusters[c];
-        pair<Pt*, Pt*> launchPts = make_pair(soln.msSoln.launchPts[c], soln.msSoln.launchPts[c + 1]);
-        vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);
-        routes = greedyDroneCluster(*soln.droneSolns[c], dMatrix);                // Run greedy 2-Opt on routes
+    int c = randChoice(soln.msSoln.clusters.size()/*, iteration*/, true);    // generate random CLUSTER to swap within
+    if (print) {
+        cout << "\n" << string(50, '~') << "\n";
+        printf("\nSwap cluster:\t\t%d\n", c);
+        printDroneRoutes(soln.droneSolns[c]);
     }
-    FullSoln new_soln(soln, routes, c);
+
+    random_d_in_Swap(soln.droneSolns[c]/*, iteration*/);          // DONT CREATE COPY, as soln is NOT reference
+    if (print) { printDroneRoutes(soln.droneSolns[c]); }
+
+    // these are only created to feed into greedyDroneCluster
+    soln.droneSolns[c]->routes = greedyDroneCluster(*soln.droneSolns[c], soln.msSoln.clusters[c]->getdMatrix(make_pair(soln.msSoln.launchPts[c], soln.msSoln.launchPts[c + 1])));                // Run greedy 2-Opt on routes
     if (print) {
         printf("\nOriginal route:\t%.2f\n", soln.getTotalDist(inst.weights));
-        for (const auto& drone : new_soln.droneSolns) { printDroneRoutes(drone); }
+        for (const auto& drone : soln.droneSolns) { printDroneRoutes(drone); }
     }
-    return new_soln;
+    return;
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -237,53 +223,64 @@ FullSoln IN_ClusterSwaps(const Problem& inst, FullSoln soln, /*int iteration, */
 /// Shell function setting up SA, and calling SA_fn with specified mutator 
 /// Randomly swapping by In/Out cluster with 50/50 probability
 /// </summary>
-/// <param name="soln_prev_best"></param>
+/// <param name="soln_init"></param>
 /// <param name="in_out"></param>
 /// <param name="print_stats"></param>
 /// <param name="csv_print"></param>
 /// <param name="SA_print"></param>
 /// <returns></returns>
-FullSoln SwapRandomly(const Problem& inst, const FullSoln soln_prev_best, SAparams sa_params, const string& folder_path = "",
+FullSoln SwapRandomly(Problem inst, const FullSoln& soln_init, SAparams sa_params, const string& folder_path = "",
     bool print_stats = false, bool csv_print = false, bool csv_update = false) {   //in_out = 1; // 0 = OUT, 1 = IN
     printf("\n\n---------- RANDOM IN/OUT Cluster Swaps - Simulated Annealing ----------\n");
-    FullSoln best(soln_prev_best);
-    double dist_best = best.getTotalDist(inst.weights);
-    FullSoln incumbent = soln_prev_best;
+    FullSoln* best_ptr = new FullSoln(soln_init);
+    double dist_best = best_ptr->getTotalDist(inst.weights);
+    FullSoln* incumbent_ptr = new FullSoln(soln_init);
+    FullSoln* proposed_ptr;
     double dist_initial = dist_best;
-    bool print_zero = 1;
-
     double temp = sa_params.initial_temp;           // is this redundant? - temp is updated in SAlog
 
     srand(42);      // set random seed
     vector<double> sa_new, sa_current, sa_best, sa_temp;
-    printf("\n\tBEST\t\t\tTEMP\t\t\tPROPOSED\t\tINCUMBENT");
+    printf("\nIT\tSW\tTEMP\t\tBEST\t\tINCUMB\t\tPROP\t\tNEW_INCUMB\t\tNEW_BEST");
 
     for (int iter_num = 0; iter_num < sa_params.num_iterations + 1; ++iter_num) {
-        if (best.msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); break; }
-        FullSoln proposed = incumbent;
-        bool in_out = rand() % 2;       // randomly choose IN or OUT cluster swap
+        if (best_ptr->msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); break; }
+        bool in_out = rand() % 2;
+        proposed_ptr = new FullSoln(*incumbent_ptr);
+        double dist_incumbent = incumbent_ptr->getTotalDist(inst.weights);
+        printf("\n%6d\t%s\t%.2e\t%5.2f\t\t%5.2f\t", iter_num, in_out == 1 ? "I" : "O", temp, dist_best, dist_incumbent);
         if (in_out) {
-            proposed = IN_ClusterSwaps(inst, incumbent, print_stats);
+            IN_ClusterSwaps(inst, *proposed_ptr, print_stats);
         }
         else {
-            proposed = OUT_ClusterSwaps(inst, incumbent, print_stats);
+            OUT_ClusterSwaps(inst, *proposed_ptr, print_stats);
         }
 
-        double dist_proposed = proposed.getTotalDist(inst.weights), dist_incumbent = incumbent.getTotalDist(inst.weights);
-        if (!print_zero) printf("\n%d\t%5.3f\t\t%.2e\t\t%5.3f\t\t%5.3f\t%s", iter_num, dist_best, temp, dist_proposed, dist_incumbent, in_out == 1 ? "IN" : "OUT");
+        for (int a = 0; a < proposed_ptr->msSoln.launchPts.size() - 1; a++) {
+            if (proposed_ptr->msSoln.launchPts[a]->ID != proposed_ptr->droneSolns[a]->launchPts.first->ID) {
+                printf("\n\tMISMATCH LAUNCH PTS: msSoln.launchPts[%d] != droneSolns[%d]->launchPts.first", a, a);
+            }
+        }
+        double dist_proposed = proposed_ptr->getTotalDist(inst.weights);
+        printf("\t%5.2f\t", dist_proposed);
         if (accept_new_solution(dist_incumbent, dist_proposed, temp)) {
-            incumbent = proposed;       // overwrite old solution, but have been set as const...
-            dist_incumbent = incumbent.getTotalDist(inst.weights);
-            if (!print_zero) printf("\tACCEPTED Proposed soln");
+            // update current incumbent solution with new proposed solution
+            delete incumbent_ptr;
+            incumbent_ptr = proposed_ptr;       
+            dist_incumbent = dist_proposed;
+            printf("\t%5.2f\t", dist_incumbent);
             if (dist_proposed < dist_best) {
-                best = proposed;
-                dist_best = best.getTotalDist(inst.weights);
-                if (!print_zero) printf("\n\t!!IMPROVED!! Proposed soln\t\t%.3f", dist_best);
+                // update current best solution with new proposed solution
+                delete best_ptr;
+                best_ptr = new FullSoln(*proposed_ptr);
+                dist_best = dist_proposed;
+                printf("\t%5.2f", dist_best);
                 if (csv_print && csv_update) {
-                    csvUpdate(best, inst, in_out, iter_num/*in_swaps+out_swaps*/, folder_path);
+                    csvUpdate(*best_ptr, inst, in_out, iter_num, folder_path);
                 }
             }
         }
+        else { delete proposed_ptr; }
 
         temp *= sa_params.cooling_rate;
         sa_new.push_back(dist_proposed);
@@ -291,11 +288,9 @@ FullSoln SwapRandomly(const Problem& inst, const FullSoln soln_prev_best, SApara
         sa_best.push_back(dist_best);
         sa_temp.push_back(temp);
     }
-    best.setSAlog(sa_new, sa_current, sa_best, sa_temp, sa_params);        //.sa_log = new SAlog(sa_new, sa_current, sa_best, sa_temp);
+    best_ptr->setSAlog(sa_new, sa_current, sa_best, sa_temp, sa_params);
     if (dist_best == dist_initial) printf("\n\n\tNO IMPROVEMENT MADE\n");
     else printf("\n\n\tBEST\t\t\tINITIAL\t\t\tTEMP\n\t%.3f\t\t%.3f\t\t%.2e", dist_best, dist_initial, temp);
-    FullSoln best_new = best;           // IS this line necessary?!
-
     printf("\n------------- ^^ CLUST_OPT_D_TOURS ^^ --------------\n");
-    return best_new;
+    return *best_ptr;
 }

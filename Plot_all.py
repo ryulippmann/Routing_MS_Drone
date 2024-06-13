@@ -5,7 +5,7 @@ import datetime
 import os
 import re
 
-path = 'outputs/24-05-28_18-11-07_FullRuns/'
+path = 'outputs/24-06-13_13-33-21_FullRuns'
 
 print_plt = 1
 save_plt = 1
@@ -32,8 +32,9 @@ def plot_clusters(csv_file, print_plt, save_plt):
         nodes[node_id[n]-1] = [i,j,k]
 
     # Get unique cluster IDs and assign colors
+    num_clusters = len(set(cluster_ids))
+    cluster_ids = [cluster_id - int(csv_file.split('\\')[1])*num_clusters for cluster_id in cluster_ids]
     unique_cluster_ids = list(OrderedDict.fromkeys(cluster_ids))
-    num_clusters = len(unique_cluster_ids)
     colors = plt.cm.get_cmap('tab10', num_clusters)
 
     # Plot points colored by cluster ID

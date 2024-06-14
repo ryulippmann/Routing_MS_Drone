@@ -175,11 +175,11 @@ public:
 	}
 	vector<Pt*> getRoute() {			//update/check this! use mp's of centroids...
 		vector<Pt*> route;
-		route.push_back(&(this->ms.depot)); // Assuming Pt has a copy/move constructor
+		route.push_back(&(this->ms.depot));
 		for (auto& pt : launchPts) {
 			route.push_back(pt);
 		}
-		route.push_back(new Pt(this->ms.depot)); // Assuming Pt has a copy/move constructor
+		route.push_back(new Pt(this->ms.depot));
 		return route;
 	}
 	vector<vector<double>> ordered_dMatrix() {

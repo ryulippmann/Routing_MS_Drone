@@ -46,39 +46,6 @@ int randChoice(size_t size/*, int randomSeed = 12345*/, bool clust_choice = fals
     else return getRandomNumber(size - 3/*, randomSeed*/) + 1;
 }
 
-void UpdateLaunchPts(FullSoln& soln, Pt depot, bool print = false) {
-    if (print) printf("\n---- SET LAUNCH POINTS ----\n\tID\t(  x  ,  y  )\n");
-    // add depot as first launch point
-    soln.msSoln.launchPts[0]->x = (depot.x + soln.msSoln.clusters[0]->getCentroid().x) / 2.0;
-    soln.msSoln.launchPts[0]->y = (depot.y + soln.msSoln.clusters[0]->getCentroid().y) / 2.0;
-    for (int c = 0; c < soln.msSoln.clusters.size() - 1; c++) {
-        // sum adjacent clusters x,y's to calc launchpts 
-        soln.msSoln.launchPts[c+1]->x = (soln.msSoln.clusters[c]->getCentroid().x + soln.msSoln.clusters[c + 1]->getCentroid().x) / 2.0;
-        soln.msSoln.launchPts[c+1]->y = (soln.msSoln.clusters[c]->getCentroid().y + soln.msSoln.clusters[c + 1]->getCentroid().y) / 2.0;
-    }
-    soln.msSoln.launchPts.back()->x = (depot.x + soln.msSoln.clusters.back()->getCentroid().x) / 2.0;
-    soln.msSoln.launchPts.back()->y = (depot.y + soln.msSoln.clusters.back()->getCentroid().y) / 2.0;
-    if (print) {
-        printf("\tID\t(  x  ,  y  )\n");
-        cout << string(30, '-') << "\n";
-        printf("\t%d\t( %2.2f, %2.2f)\n", depot.ID, depot.x, depot.y);
-        for (const auto& stop : soln.msSoln.launchPts) {
-            printf("\t%d\t( %.2f, %.2f)\n", stop->ID, stop->x, stop->y);
-        } printf("\n");
-        cout << string(30, '-') << "\n";
-        double total_dist = calculatePtDistance(depot, soln.msSoln.launchPts[0]);
-        printf("\t%.2f ", total_dist);
-        for (int i = 0; i < soln.msSoln.launchPts.size() - 1; i++) {
-            double leg_dist = calculatePtDistance(soln.msSoln.launchPts[i], soln.msSoln.launchPts[i + 1]);
-            printf("+\t%.2f ", leg_dist);
-            total_dist += leg_dist;
-        }
-        printf("+\t%.2f ", calculatePtDistance(depot, soln.msSoln.launchPts.back()));
-        total_dist += calculatePtDistance(depot, soln.msSoln.launchPts.back());
-        printf("\n\t\t= %.2f", total_dist);
-    }
-}
-
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 
@@ -118,6 +85,34 @@ pair<int, int> random_d_out_Swap(pair<DroneSoln*, DroneSoln*> drones, bool swap_
     return make_pair(from_node->ID, to_node->ID);
 }
 
+void match_ms_d_launchPts(MSSoln& msSoln, vector<DroneSoln*>& droneSolns, bool print = false) {
+	for (int d = 0; d < droneSolns.size(); d++) {
+		if (droneSolns[d]->launchPts.first->ID != msSoln.launchPts[d]->ID) {
+			if (print) printf("\n\tMISMATCH LAUNCH PTS: msSoln.launchPts[%d] != droneSolns[%d]->launchPts.first", d, d);
+			droneSolns[d]->launchPts.first = msSoln.launchPts[d];
+		}
+		if (droneSolns[d]->launchPts.second->ID != msSoln.launchPts[d + 1]->ID) {
+			if (print) printf("\n\tMISMATCH LAUNCH PTS: msSoln.launchPts[%d] != droneSolns[%d]->launchPts.second", d + 1, d);
+			droneSolns[d]->launchPts.second = msSoln.launchPts[d + 1];
+		}
+
+        for (auto& route : droneSolns[d]->routes) {
+            if (route[0]->ID != droneSolns[d]->launchPts.first->ID) {
+				if (print) printf("\n\tMISMATCH LAUNCH PTS: droneSolns[%d]->launchPts.first != droneSolns[%d]->routes[0]", d, d);
+				route[0] = droneSolns[d]->launchPts.first;
+			}
+            if (route[route.size() - 2]->ID != droneSolns[d]->launchPts.second->ID) {
+                if (print) printf("\n\tMISMATCH LAUNCH PTS: droneSolns[%d]->launchPts.second != droneSolns[%d]->routes[route.size() - 2]", d, d);
+                route[route.size() - 2] = droneSolns[d]->launchPts.second;
+            }
+            if (route[route.size() - 1]->ID != droneSolns[d]->launchPts.first->ID) {
+                if (print) printf("\n\tMISMATCH LAUNCH PTS: droneSolns[%d]->launchPts.first != droneSolns[%d]->routes[route.size() - 1]", d, d);
+                route[route.size() - 1] = droneSolns[d]->launchPts.first;
+            }
+        }
+	}
+}
+
 /// <summary>
 /// /// </summary>
 /// <param name="soln">: FullSoln incumbent</param>
@@ -133,8 +128,8 @@ void OUT_ClusterSwaps(const Problem& inst, FullSoln& soln, bool print = false) {
     swap(soln.msSoln.clusters[c.first]->reefs[findIndexByID(s.first, soln.msSoln.clusters[c.first]->reefs)],
         soln.msSoln.clusters[c.second]->reefs[findIndexByID(s.second, soln.msSoln.clusters[c.second]->reefs)]); // swap clusters
 
-    UpdateLaunchPts(soln, inst.ms.depot, print);
-
+    setLaunchPts(soln.msSoln, inst.weights);//UpdateLaunchPts(soln.msSoln, print);
+    match_ms_d_launchPts(soln.msSoln, soln.droneSolns, print); // match launchPts in msSoln with droneSolns
     // Gd update routes before assessing solution
     //PC NOTE: recalculating entire distance matrix every time is very inefficient - most of them won't change, just the ones involving changed launch points
     pair <vector<vector<double>>, vector<vector<double>>>    // dMatrix feeds into routes

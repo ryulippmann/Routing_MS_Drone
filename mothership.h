@@ -53,26 +53,6 @@ vector<vector<double>> calc_centMatrix(const Pt& depot, const vector<ClusterSoln
     return centroidMatrix;
 }
 
-//// returns dMatrix between launchPts including depot of order 1+(c+1 launchpts) 
-//vector<vector<double>> calc_launchPtMatrix(const vector<Pt*>& launchPts) {
-//	vector<vector<double>> launchPtMatrix;
-//    vector<double> depot_row;
-//    depot_row.push_back(0);
-//    for (int i = 0; i < launchPts.size(); i++) {		// for each cluster
-//		depot_row.push_back(calculatePtDistance(INST.ms.depot, *launchPts[i]));
-//	}
-//    launchPtMatrix.push_back(depot_row);
-//    for (int i = 0; i < launchPts.size(); i++) {		// for each cluster
-//        vector<double> row(launchPts.size() + 1);
-//        row[0] = depot_row[i + 1];
-//        for (int j = 0; j < launchPts.size(); j++) {	// for each cluster
-//			row[j + 1] = calculatePtDistance(*launchPts[i], *launchPts[j]);
-//		}
-//        launchPtMatrix.push_back(row);
-//	}
-//    return launchPtMatrix;
-//}
-
 // Function to find index of ClusterSoln* in vector by ClusterSoln->ID
 int findClusterByID(int targetID, const vector<ClusterSoln*>& myList) {
     for (int index = 0; index < myList.size(); index++) {
@@ -82,83 +62,35 @@ int findClusterByID(int targetID, const vector<ClusterSoln*>& myList) {
     return -1;  // Return a special value (e.g., -1) to indicate that the ID was not found
 }
 
-/// <summary>
-/// 
-/// </summary>
-/// <param name="centroids"></param>
-/// <param name="depot"></param>
-/// <param name="weights"> normalised</param>
-/// <returns></returns>
-vector<Pt*> SetWeightedLaunchPts(const vector<Pt>& centroids, Pt depot, const pair<double, double>& weights) {
-    
+void setLaunchPts(MSSoln& msSoln, const pair<double, double>& weights) {
+    const Pt depot = msSoln.ms.depot;
     pair<double, double> launchpt_weighting = make_pair(1, 2);
-    pair<double, double> weights_launchpts = make_pair(weights.first*launchpt_weighting.first, weights.second*launchpt_weighting.second);
-    weights_launchpts = normaliseWeights(weights_launchpts);
+    // launchpt_weighting HARD-CODED = (1,2)
 
-    double w_ms = weights_launchpts.first;// / (weights.first + 2 * weights.second);
-    double w_d = weights_launchpts.second;// / (weights.first + 2 * weights.second);
+    vector<Pt> centroids;
+    for (const auto& clust : msSoln.clusters) {
+        centroids.push_back(clust->getCentroid());
+    }
+
+    double w_ms = weights.first * launchpt_weighting.first;
+    double w_d = weights.second * launchpt_weighting.second;
+    normaliseWeights(w_ms, w_d);
     // this formulation takes into account the following destination, and the 'gravity' towards that point
 
     vector<Pt*> launchPts;
     launchPts.push_back(new Pt(
         w_ms * depot.x + w_d * centroids[0].x,
-        w_ms * depot.y + w_d * centroids[0].y));
-    for (int c = 0; c < centroids.size() - 1/*2*/; c++) {
+        w_ms * depot.y + w_d * centroids[0].y)); // depot to first centroid
+    for (int c = 0; c < centroids.size() - 1; c++) {
         launchPts.push_back(new Pt(
-            w_ms * launchPts[c]->x + w_d * (centroids[c + 1].x),// + centroids[c].x),
-            w_ms * launchPts[c]->y + w_d * (centroids[c + 1].y)));// +centroids[c].x)));
+            w_ms * launchPts[c]->x + w_d * (centroids[c + 1].x),
+            w_ms * launchPts[c]->y + w_d * (centroids[c + 1].y))); // centroid to centroid
     }
-    //launchPts.push_back(new Pt(
-    //    w_ms * launchPts.back()->x + w_d * (centroids.back().x),// + centroids[centroids.size() - 2].x),
-    //    w_ms * launchPts.back()->y + w_d * (centroids.back().y)));// +centroids[centroids.size() - 2].y)));
-
     launchPts.push_back(new Pt(
         w_ms * depot.x + w_d * launchPts.back()->x,
-        w_ms * depot.y + w_d * launchPts.back()->y));
-    return launchPts;
-}
-
-/// <summary>
-/// warning: this needs to be set before msSoln.getDist() is called
-/// returns dMatrix betweem launchPts including depot
-/// c clusters -> c+1 launchPts including depot
-/// </summary>
-/// <param name="msSoln"></param>
-/// <param name="print"></param>
-/// <returns></returns>
-void setLaunchPts(MSSoln& msSoln, const pair<double, double>& weights) {
-    const vector<ClusterSoln*> clusters = msSoln.clusters;
-    vector<Pt> cluster_centroids;
-    for (const auto& clust : clusters) { cluster_centroids.push_back(clust->getCentroid()); }
-    vector<Pt*> launchPts = SetWeightedLaunchPts(cluster_centroids, msSoln.ms.depot, weights);
+        w_ms * depot.y + w_d * launchPts.back()->y)); // last centroid to depot
 
     msSoln.launchPts = launchPts;
- //   vector<vector<double>> dMatrix_launchpt = msSoln.launchPt_dMatrix();
-	//if (print) {
- //       printf("\tID\t(  x  ,  y  )\n");
- //       cout << string(30, '-') << "\n";
- //       printf("\t%d\t( %2.2f, %2.2f)\n", msSoln.ms.depot.ID, msSoln.ms.depot.x, msSoln.ms.depot.y);
-	//	for (const auto& stop : msSoln.launchPts) { 
- //           printf("\t%d\t( %.2f, %.2f)\n", stop->ID, stop->x, stop->y);
- //       } 
- //       printf("\n");
- //       for (int i = 0; i < dMatrix_launchpt.size(); i++) {
- //           for (int j = 0; j < dMatrix_launchpt[i].size(); j++) {
- //               printf("\t%.2f", dMatrix_launchpt[i][j]);
- //           }
- //           printf("\n");
- //       } 
- //       printf("\n");
- //       cout << string(30, '-') << "\n";
- //       
- //       double total_dist = dMatrix_launchpt.back()[0];
- //       printf("\t%.2f ", total_dist);
- //       for (int i = 0; i < dMatrix_launchpt.size()-1; i++) {
-	//		printf("+\t%.2f ", dMatrix_launchpt[i][i+1]);
- //           total_dist += dMatrix_launchpt[i][i+1];
-	//	}
- //       printf("\n\t\t= %.2f", total_dist);
-	//}    
     return;
 }
 

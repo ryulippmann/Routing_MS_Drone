@@ -63,6 +63,18 @@ pair<double, double> normaliseWeights(pair<double, double> weights) {
 	else (weights = make_pair(0.5, 0.5)); // Default weights (0.5, 0.5)
 	return weights;
 }
+void normaliseWeights(double& weight_a, double& weight_b) {
+	double totalWeight = weight_a + weight_b; // Assuming weights is a pair<double, double>
+	if (totalWeight != 0.0) {	// Avoid division by zero
+		weight_a /= totalWeight;
+		weight_b /= totalWeight;
+	}
+	else {// Default weights (0.5, 0.5)
+		weight_a = 0.5;
+		weight_b = 0.5;
+	}
+	return;
+}
 
 const struct Problem {
 private:

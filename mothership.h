@@ -62,35 +62,142 @@ int findClusterByID(int targetID, const vector<ClusterSoln*>& myList) {
     return -1;  // Return a special value (e.g., -1) to indicate that the ID was not found
 }
 
+//void setLaunchPts(MSSoln& msSoln, bool print = false) {
+//    const Pt depot = msSoln.ms.depot;
+//    if (print) printf("\n---- SET LAUNCH POINTS ----\n\tID\t(  x  ,  y  )\n");
+//    if (msSoln.launchPts[0] == nullptr) { // create new objects
+//        vector<Pt*> launchPts;
+//        launchPts.push_back(new Pt(
+//            0.5 * (depot.x + msSoln.clusters[0]->getCentroid().x),
+//            0.5 * (depot.y + msSoln.clusters[0]->getCentroid().y))); // depot to first centroid
+//        for (int c = 0; c < msSoln.clusters.size() - 1; c++) {
+//            launchPts.push_back(new Pt(
+//                0.5 * (msSoln.clusters[c]->getCentroid().x + msSoln.clusters[c + 1]->getCentroid().x),
+//                0.5 * (msSoln.clusters[c]->getCentroid().y + msSoln.clusters[c + 1]->getCentroid().y))); // centroid to centroid
+//        }
+//        launchPts.push_back(new Pt(
+//            0.5 * (depot.x + msSoln.clusters.back()->getCentroid().x),
+//            0.5 * (depot.y + msSoln.clusters.back()->getCentroid().y))); // last centroid to depot
+//        msSoln.launchPts = launchPts;
+//    }
+//    else { // update existing objects
+//        msSoln.launchPts[0]->x = 0.5 * (depot.x + msSoln.clusters[0]->getCentroid().x);
+//        msSoln.launchPts[0]->y = 0.5 * (depot.y + msSoln.clusters[0]->getCentroid().y); // depot to first centroid
+//        for (int c = 0; c < msSoln.clusters.size() - 1; c++) { // sum adjacent clusters x,y's to calc launchpts 
+//            msSoln.launchPts[c + 1]->x = 0.5 * (msSoln.clusters[c]->getCentroid().x + msSoln.clusters[c + 1]->getCentroid().x);
+//            msSoln.launchPts[c + 1]->y = 0.5 * (msSoln.clusters[c]->getCentroid().y + msSoln.clusters[c + 1]->getCentroid().y);
+//        }
+//        msSoln.launchPts.back()->x = 0.5 * (depot.x + msSoln.clusters.back()->getCentroid().x);
+//        msSoln.launchPts.back()->y = 0.5 * (depot.y + msSoln.clusters.back()->getCentroid().y); // last centroid to depot
+//        if (print) {
+//            printf("\tID\t(  x  ,  y  )\n");
+//            cout << string(30, '-') << "\n";
+//            printf("\t%d\t( %2.2f, %2.2f)\n", depot.ID, depot.x, depot.y);
+//            for (const auto& stop : msSoln.launchPts) {
+//                printf("\t%d\t( %.2f, %.2f)\n", stop->ID, stop->x, stop->y);
+//            } printf("\n");
+//            cout << string(30, '-') << "\n";
+//            double total_dist = calculatePtDistance(depot, msSoln.launchPts[0]);
+//            printf("\t%.2f ", total_dist);
+//            for (int i = 0; i < msSoln.launchPts.size() - 1; i++) {
+//                double leg_dist = calculatePtDistance(msSoln.launchPts[i], msSoln.launchPts[i + 1]);
+//                printf("+\t%.2f ", leg_dist);
+//                total_dist += leg_dist;
+//            }
+//            printf("+\t%.2f ", calculatePtDistance(depot, msSoln.launchPts.back()));
+//            total_dist += calculatePtDistance(depot, msSoln.launchPts.back());
+//            printf("\n\t\t= %.2f", total_dist);
+//        }
+//    }
+//}
 void setLaunchPts(MSSoln& msSoln, const pair<double, double>& weights) {
     const Pt depot = msSoln.ms.depot;
-    pair<double, double> launchpt_weighting = make_pair(1, 2);
-    // launchpt_weighting HARD-CODED = (1,2)
+    pair<double, double> centroid_weighting = make_pair(1, 2);  // return trip: double drone weight
+    // centroid_weighting HARD-CODED = (1,2)
 
     vector<Pt> centroids;
     for (const auto& clust : msSoln.clusters) {
         centroids.push_back(clust->getCentroid());
     }
 
-    double w_ms = weights.first * launchpt_weighting.first;
-    double w_d = weights.second * launchpt_weighting.second;
+    double w_ms = weights.first * centroid_weighting.first;
+    double w_d = weights.second * centroid_weighting.second;
     normaliseWeights(w_ms, w_d);
     // this formulation takes into account the following destination, and the 'gravity' towards that point
 
-    vector<Pt*> launchPts;
-    launchPts.push_back(new Pt(
-        w_ms * depot.x + w_d * centroids[0].x,
-        w_ms * depot.y + w_d * centroids[0].y)); // depot to first centroid
-    for (int c = 0; c < centroids.size() - 1; c++) {
+    if (msSoln.launchPts[0] == nullptr) {
+        vector<Pt*> launchPts;
         launchPts.push_back(new Pt(
-            w_ms * launchPts[c]->x + w_d * (centroids[c + 1].x),
-            w_ms * launchPts[c]->y + w_d * (centroids[c + 1].y))); // centroid to centroid
+            w_ms * depot.x + w_d * centroids[0].x,
+            w_ms * depot.y + w_d * centroids[0].y)); // depot to first centroid
+        for (int c = 0; c < centroids.size() - 1; c++) {
+            launchPts.push_back(new Pt(
+                w_ms * launchPts[c]->x + w_d * (centroids[c + 1].x),
+                w_ms * launchPts[c]->y + w_d * (centroids[c + 1].y))); // centroid to centroid
+        }
+        launchPts.push_back(new Pt(
+            w_ms * launchPts.back()->x + w_d * depot.x,
+            w_ms * launchPts.back()->y + w_d * depot.y)); // last centroid to depot
+        msSoln.launchPts = launchPts;
     }
-    launchPts.push_back(new Pt(
-        w_ms * depot.x + w_d * launchPts.back()->x,
-        w_ms * depot.y + w_d * launchPts.back()->y)); // last centroid to depot
+	else {
+        msSoln.launchPts[0]->x = w_ms * depot.x + w_d * centroids[0].x;
+        msSoln.launchPts[0]->y = w_ms * depot.y + w_d * centroids[0].y; // depot to first centroid   
+        for (int c = 0; c < msSoln.clusters.size() - 1; c++) {
+            msSoln.launchPts[c + 1]->x = w_ms * msSoln.launchPts[c]->x + w_d * (centroids[c + 1].x);
+            msSoln.launchPts[c + 1]->y = w_ms * msSoln.launchPts[c]->y + w_d * (centroids[c + 1].y); // centroid to centroid
+        }
+        msSoln.launchPts.back()->x = w_ms * msSoln.launchPts[msSoln.launchPts.size() - 2]->x + w_d * depot.x;
+        msSoln.launchPts.back()->y = w_ms * msSoln.launchPts[msSoln.launchPts.size() - 2]->y + w_d * depot.y; // last centroid to depot
+    }
+    return;
+}
+void alt_setLaunchPts(MSSoln& msSoln, const pair<double, double>& weights) {
+    const Pt depot = msSoln.ms.depot;
+    pair<double, double> centroid_weighting = make_pair(1, 2);  // return trip: double drone weight
+    // centroid_weighting HARD-CODED = (1,2)
 
-    msSoln.launchPts = launchPts;
+    vector<Pt> centroids;
+    for (const auto& clust : msSoln.clusters) {
+        centroids.push_back(clust->getCentroid());
+    }
+
+    double w_ms = weights.first * centroid_weighting.first;
+    double w_d = weights.second * centroid_weighting.second;
+    normaliseWeights(w_ms, w_d);
+    // this formulation takes into account the following destination, and the 'gravity' towards that point
+
+    if (msSoln.launchPts[0] == nullptr) {
+        vector<Pt*> launchPts;
+        launchPts.push_back(new Pt(
+            w_ms * depot.x + w_d * centroids[0].x,
+            w_ms * depot.y + w_d * centroids[0].y)); // depot to first centroid
+        for (int c = 0; c < centroids.size() - 2; c++) {
+            launchPts.push_back(new Pt(
+                w_ms * launchPts[c]->x + w_d * (centroids[c].x + centroids[c + 1].x + centroids[c + 2].x) / 3,
+                w_ms * launchPts[c]->y + w_d * (centroids[c].y + centroids[c + 1].y + centroids[c + 2].y) / 3)); // centroid to centroid
+        }
+        launchPts.push_back(new Pt(
+            w_ms * launchPts.back()->x + w_d * (centroids[centroids.size() - 2].x + 2 * centroids.back().x) / 3,
+            w_ms * launchPts.back()->y + w_d * (centroids[centroids.size() - 2].y + 2 * centroids.back().y) / 3)); // last centroid to depot
+        launchPts.push_back(new Pt(
+            w_ms * launchPts.back()->x + w_d * depot.x,
+            w_ms * launchPts.back()->y + w_d * depot.y)); // last centroid to depot
+        msSoln.launchPts = launchPts;
+    }
+    else {
+        msSoln.launchPts[0]->x = w_ms * depot.x + w_d * centroids[0].x;
+        msSoln.launchPts[0]->y = w_ms * depot.y + w_d * centroids[0].y; // depot to first centroid   
+        for (int c = 0; c < msSoln.clusters.size() - 2; c++) {
+            msSoln.launchPts[c + 1]->x = w_ms * msSoln.launchPts[c]->x + w_d * (centroids[c].x + centroids[c + 1].x + centroids[c + 2].x) / 3;
+            msSoln.launchPts[c + 1]->y = w_ms * msSoln.launchPts[c]->y + w_d * (centroids[c].y + centroids[c + 1].y + centroids[c + 2].y) / 3; // centroid to centroid
+        }
+        msSoln.launchPts[msSoln.launchPts.size() - 2]->x = w_ms * msSoln.launchPts[msSoln.launchPts.size() - 3]->x + w_d * (centroids[centroids.size() - 2].x + 2 * centroids.back().x) / 3;
+        msSoln.launchPts[msSoln.launchPts.size() - 2]->y = w_ms * msSoln.launchPts[msSoln.launchPts.size() - 3]->y + w_d * (centroids[centroids.size() - 2].y + 2 * centroids.back().y) / 3; // last centroid to depot
+        
+        msSoln.launchPts.back()->x = w_ms * msSoln.launchPts.back()->x + w_d * depot.x;
+        msSoln.launchPts.back()->y = w_ms * msSoln.launchPts.back()->y + w_d * depot.y; // last centroid to depot
+    }
     return;
 }
 

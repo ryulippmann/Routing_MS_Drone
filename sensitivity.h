@@ -14,8 +14,12 @@
 FullSoln SwapShell(const Problem& inst, const FullSoln& soln_current, vector<double>& best_dists, int run_iteration, const string& folder_path = "", pair<int, double> sa_it_cr = make_pair(0, 0)) {
 	//SAparams                  (num_iter, init_temp, cooling_rate)
 	double init_temp = 0.2 * soln_current.getTotalDist(inst.weights);
-	if (sa_it_cr == make_pair(0, 0)) { sa_it_cr = make_pair(3 * pow(10, 4), 0.9995)/*8 * pow(10, 4), 0.9998)*//*5 * pow(10, 4), 0.9997)*/; }	//pow(10, 4), 0.999); }		//pow(10,3), 0.99); }	// 	   (pow(10,5), 0.9999); }	//
+	if (sa_it_cr == make_pair(0, 0)) { sa_it_cr = make_pair(2.5 * pow(10, 5), 0.99995);	}		//8 * pow(10, 4), 0.9998); } //5 * pow(10, 4), 0.9997/*3 * pow(10, 4), 0.9995*/);}//1.5 * pow(10, 6), 0.99999); }//pow(10, 4), 0.999); }  
 
+	if (csv_print) {
+		csvPrintStops(inst, folder_path, "reef_set");
+		csvPrints(soln_current, inst, "INIT", run_iteration, sa_it_cr.first, folder_path);
+	}
 	//\\//\\//\\//  Randomly run IN/OUT Swaps   //\\//\\//\\//
 	FullSoln best = SwapRandomly(inst, soln_current, SAparams(sa_it_cr.first, init_temp, sa_it_cr.second), folder_path + "/" + to_string(run_iteration),
 		print_detail, csv_print);
@@ -24,7 +28,7 @@ FullSoln SwapShell(const Problem& inst, const FullSoln& soln_current, vector<dou
 	printf("\n\t\tNEW_Swap distance:\t%.2f\n", best_dists.back());
 
 	//\\//\\//\\//  csv print (if solution updated)  //\\//\\//\\//
-	if (csv_print) { csvPrints(best, inst, "FINAL", run_iteration, folder_path); }
+	if (csv_print) { csvPrints(best, inst, "FINAL", run_iteration, sa_it_cr.first, folder_path); }
 	return best;
 }
 
@@ -58,10 +62,6 @@ vector<FullSoln> FullRun(const int& iter, const Problem& inst, const string& bat
 	//\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
 	FullSoln full_init(msSoln, droneSolns);
 	printf("Full Soln Dist:\t%.2f", full_init.getTotalDist(inst.weights, print_detail));
-	if (csv_print) {
-		csvPrintStops(inst, folder_path, "reef_set");
-		csvPrints(full_init, inst, "INIT", iter, folder_path);
-	}
 	////////////////////////////////
 	vector<FullSoln> fullSolns;
 	fullSolns.push_back(full_init);

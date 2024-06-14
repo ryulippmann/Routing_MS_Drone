@@ -5,7 +5,7 @@ import datetime
 import os
 import re
 
-path = 'outputs/24-06-13_13-33-21_FullRuns'
+path = 'outputs/24-06-14_10-29-43_FullRuns'
 
 print_plt = 1
 save_plt = 1
@@ -19,6 +19,8 @@ def plot_clusters(csv_file, print_plt, save_plt):
     kmeans_iters = int(reader._fieldnames[6])
     w_ms = float(reader._fieldnames[9])
     w_d = float(reader._fieldnames[12])
+    total_iters = int(reader._fieldnames[14])
+    # cooling_rate = float(reader._fieldnames[16])
 
     # Extract x, y, cluster ID from the data
     x = [float(row['X']) for row in data]
@@ -54,7 +56,7 @@ def plot_clusters(csv_file, print_plt, save_plt):
     for n, (ni, xi, yi) in enumerate(zip(node_id, x, y)):
         plt.annotate(f'{ni}', xy=(xi, yi), xycoords='data', ha='left', va='top', fontsize=10)
     # Annotate with kMeansIters
-    plt.annotate(f'kMeansIters: {kmeans_iters}', xy=(0.95, 0.05), xycoords='axes fraction', ha='right', va='top', fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
+    plt.annotate(f'kMeansIters: {kmeans_iters}\nSA_Iters:{total_iters}', xy=(0.95, 0.05), xycoords='axes fraction', ha='right', va='bottom', fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
 
     plt.legend(loc='upper right')    # Show the legend in top right corner
     plt.grid(True)

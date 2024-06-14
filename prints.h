@@ -148,14 +148,14 @@ void printDroneRoutes(const DroneSoln* drone) {
 /// <param name="clusters"></param>
 /// <param name="file_name"></param>
 /// <param name="kMeansIters"></param>
-void csvPrintClusters(const vector<ClusterSoln*>& clusters, const Problem& inst, string file_name="clusters", const string& in_folder = "") {
+void csvPrintClusters(const vector<ClusterSoln*>& clusters, const Problem& inst, string file_name="clusters", const string& in_folder = "", int no_iters=NULL) {
     ofstream outfile(in_folder + "/" + file_name + ".csv");
 
     if (!outfile.is_open()) {
         cerr << "Error: Unable to open clusters.csv for writing\n";
         return;
     }
-    outfile << "ReefID,X,Y,ClusterID,,kMeansIters," << inst.kMeansIters << ",,W_MS," << inst.weights.first << ",,W_D," << inst.weights.second << "\n";    // Write header
+    outfile << "ReefID,X,Y,ClusterID,,kMeansIters," << inst.kMeansIters << ",,W_MS," << inst.weights.first << ",,W_D," << inst.weights.second << ",Total_iters," << no_iters << "\n";    // Write header
 
     // Helper lambda function to write each reef's attributes
     auto writeReef = [&](const Pt* reef, int clusterID) {
@@ -199,7 +199,7 @@ void csvPrintMSRoutes(const vector<Pt*>& launch_route, const Pt& depot, string f
     ofstream outputFile(in_folder + "/" + file_name + ".csv");
     if (outputFile.is_open()) {
         outputFile << "X,Y,msDist," << msDist << "\n";                                 // skip header row
-        outputFile << depot.x << "," << depot.y << "\n";                  // output depot
+        outputFile << double(depot.x) << "," << double(depot.y) << "\n";                  // output depot
         for (const auto& stop : launch_route) {                // for each stop in route
                 outputFile << stop->x << "," << stop->y << "\n";                  // output each stop across each row
         }
@@ -248,7 +248,7 @@ string csvPrintSA(SAlog log, string file_name, const string& in_folder) {
 /// <param name="best_new"></param>
 /// <param name="file_suffix"></param>
 /// <param name="path"></param>
-void csvPrints(const FullSoln& best_new, const Problem& inst, string file_suffix, int run_iteration = NULL, string batch = NULL) { // csv output of the full solution - INIT and FINAL
+void csvPrints(const FullSoln& best_new, const Problem& inst, string file_suffix, int run_iteration, int no_iters, string batch = NULL) { // csv output of the full solution - INIT and FINAL
     string mod_time = getCurrentTime() + "_Full_" + file_suffix;
     string folder_path;
     if (!batch.empty()) {
@@ -279,7 +279,7 @@ void csvPrints(const FullSoln& best_new, const Problem& inst, string file_suffix
         }
     }
 
-    csvPrintClusters(best_new.msSoln.clusters, inst, "clusters", folder_path);
+    csvPrintClusters(best_new.msSoln.clusters, inst, "clusters", folder_path, no_iters);
     csvPrintLaunchPts(/*best_new.msSoln.*/launchPts, "launchPts", folder_path);//"launchPts_fullSoln_" + boolToString(in_out));
     csvPrintMSRoutes(best_new.msSoln.launchPts, best_new.msSoln.ms.depot, "ms_route", best_new.msSoln.getDist(), folder_path);//_"+boolToString(in_out));
     csvPrintDroneRoutes(total_routes, "drone_routes", folder_path, true);
@@ -295,7 +295,7 @@ void csvPrints(const FullSoln& best_new, const Problem& inst, string file_suffix
 /// <param name="in_out"></param>
 /// <param name="numUpdate"></param>
 /// <param name="folder"></param>
-void csvUpdate(const FullSoln& best_new, const Problem& inst, bool in_out, int numUpdate, string folder_path = "") {     // csv output of the full solution - on the fly every swap update
+void csvUpdate(const FullSoln& best_new, const Problem& inst, bool in_out, int numUpdate, int no_iters=NULL, string folder_path = "") {     // csv output of the full solution - on the fly every swap update
     //string mod_time = getCurrentTime();// +"_OUT";
     string mod_time = to_string(numUpdate);
     if (in_out) { mod_time += "_IN"; }
@@ -305,7 +305,7 @@ void csvUpdate(const FullSoln& best_new, const Problem& inst, bool in_out, int n
     for (const auto& vehicle : best_new.droneSolns) {
         for (const auto& route : vehicle->routes) { total_routes.push_back(route); }
     }
-    csvPrintClusters(best_new.msSoln.clusters, inst, "clusters", folder_path);
+    csvPrintClusters(best_new.msSoln.clusters, inst, "clusters", folder_path, no_iters);
     csvPrintLaunchPts(best_new.msSoln.launchPts, "launchPts", folder_path, false);//"launchPts_fullSoln_" + boolToString(in_out));
     csvPrintMSRoutes(best_new.msSoln.launchPts, best_new.msSoln.ms.depot, "ms_route", best_new.msSoln.getDist(), folder_path, false);//_"+boolToString(in_out));
     csvPrintDroneRoutes(total_routes, "drone_routes", folder_path);

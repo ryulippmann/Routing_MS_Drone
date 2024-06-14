@@ -271,7 +271,7 @@ FullSoln SwapRandomly(Problem inst, const FullSoln& soln_init, SAparams sa_param
                 dist_best = dist_proposed;
                 printf("\t%5.2f", dist_best);
                 if (csv_print && csv_update) {
-                    csvUpdate(*best_ptr, inst, in_out, iter_num, folder_path);
+                    csvUpdate(*best_ptr, inst, in_out, iter_num, sa_params.num_iterations, folder_path);
                 }
             }
         }

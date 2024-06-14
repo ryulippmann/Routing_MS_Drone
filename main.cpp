@@ -5,7 +5,7 @@ using namespace std;
 #include <utility>
 #include "class_prob.h"
 
-bool csv_print = 0;
+bool csv_print = 1;
 bool print_detail = 0;
 
 int Pt::count = 0;
@@ -43,7 +43,7 @@ int main()
 	bool flag_sens_weights = 0;
 	bool flag_sens_clusters = 0;
 	bool flag_sens_drones = 0;
-	int sens_iterations = 3;
+	int sens_iterations = 1;
 	if (flag_full_run + flag_sens_weights + flag_sens_clusters + flag_sens_drones != 1) {
 		cout << "Select exactly one sensitivity analysis option!" << endl;
 		return 0;
@@ -53,8 +53,8 @@ int main()
 	vector<vector<FullSoln>> fullSolns;
 
 	if (flag_full_run) {
-		int iter = 3;
-		for (int i = 0; i < iter; i++) {
+		//int iter = 3;
+		for (int i = 0; i < sens_iterations; i++) {
 			fullSolns.push_back(
 				FullRun(i, inst, inst.time + "_FullRuns")
 			);

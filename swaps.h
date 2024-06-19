@@ -19,16 +19,16 @@ bool accept_new_solution(double current_dist, double proposed_dist, double tempe
 /// <param name="size_a"></param>
 /// <param name="size_b">= -1</param>
 /// <param name="duplicate_rule">= True</param>
-/// <returns>pair of random indices [0, size_a) and [0, size_b) for swapping routes or stops</returns>
+/// <returns>pair of random indices [0, size_a - 1] and [0, size_b - 1] for swapping routes or stops</returns>
 pair<int, int> randSwapChoice(size_t size_a, /*int randomSeed = 12345, */size_t size_b = -1, bool duplicate_rule = true) {       // RANDOMLY CHOOSE WHICH d_route TO SWAP
     // if size = 2, and routes must be different, set one to 0, one to 1
     if (size_b == -1) { size_b = size_a; }
     int d_route_a = getRandomNumber(size_a/*, randomSeed*/);
     int d_route_b = getRandomNumber(size_b/*, randomSeed%10*/);
-    int count = 0;
+    //int count = 0;
     while (duplicate_rule && d_route_a == d_route_b) {        // if same routes chosen
         d_route_b = getRandomNumber(size_b/*, randomSeed + count*/);    // re-choose route to swap out TO   current d_routes
-        count++;
+        //count++;
     }
     return make_pair(d_route_a, d_route_b);
 }
@@ -180,7 +180,6 @@ void random_d_in_Swap(DroneSoln* drone, /*int iteration, */bool swap_print = fal
             for (const auto& node : d_route) { printf("%d\t", node); }
         }
     }
-    return;
 }
 
 /// <summary>
@@ -208,9 +207,72 @@ void IN_ClusterSwaps(const Problem& inst, FullSoln& soln, /*int iteration, *//*v
         printf("\nOriginal route:\t%.2f\n", soln.getTotalDist(inst.weights));
         for (const auto& drone : soln.droneSolns) { printDroneRoutes(drone); }
     }
-    return;
 }
 
+pair<int, int> random_route_swap(pair<DroneSoln*, DroneSoln*> drones, bool swap_print = false) {//, int iteration) { // d_route = ; tours = d_tours in this cluster
+    pair<int, int> d = randSwapChoice(drones.first->routes.size(),
+        drones.second->routes.size(), false);   // RANDOMLY CHOOSE WHICH d_route TO SWAP
+    // could choose by longest droneRoute
+
+    if (swap_print) printf("\nSwap between d_routes:\t%d\tand\t%d", d.first, d.second);
+
+    for (int r = 1; r < drones.first->routes[d.first].size() - 2; r++) { // for each stop in route (not launchPts)
+        pair<int, int> reefs_swap_ID = make_pair(
+            drones.first->routes[d.first][r]->ID,
+            drones.second->routes[d.second][r]->ID);
+
+        //swap reefs in cluster
+        swap(drones.first->cluster.reefs[findIndexByID(reefs_swap_ID.first, drones.first->cluster.reefs)],
+			drones.second->cluster.reefs[findIndexByID(reefs_swap_ID.second, drones.second->cluster.reefs)]);
+        //swap reefs in routes
+    	swap(drones.first->routes[d.first][r], drones.second->routes[d.second][r]);
+    }
+
+    if (swap_print) {
+        printf("\nSWAP:\td_routes\tindex\tnode\tReef_id\t\t(x,y)");
+        //printf("\nc\t%d\t\t%d\t%d\t(%.1f,%.1f)", d.first, from_stop, from_node->ID, from_node->x, from_node->y);
+        //printf("\nd\t%d\t\t%d\t%d\t(%.1f,%.1f)", d.second, to_stop, to_node->ID, to_node->x, to_node->y);
+    }
+    return d;
+}
+
+void sortieSwap(const Problem& inst, FullSoln& soln, bool print = false) {
+    if (print) printf("\n---- SORTIE SWAP ----");
+    printf("S");
+    pair<int, int> c = randSwapChoice(soln.msSoln.clusters.size());    // cluster pair to swap
+    if (print) printf("\tSwap clusters:\t\t%d\tand\t%d", c.first, c.second);
+    // swap reefs in DroneSoln routes and clusters. Return d_route indcies
+    /*pair <int, int> d = */
+    random_route_swap(make_pair(soln.droneSolns[c.first], soln.droneSolns[c.second]), print);
+
+    // update soln.msSoln.clusters with soln.droneSolns[].cluster.reefs for c.first and c.second
+    for (int r = 0; r < soln.msSoln.clusters[c.first]->reefs.size(); r++) {
+		soln.msSoln.clusters[c.first]->reefs[r] = soln.droneSolns[c.first]->cluster.reefs[r];
+		soln.msSoln.clusters[c.second]->reefs[r] = soln.droneSolns[c.second]->cluster.reefs[r];
+	}
+
+    setLaunchPts(soln.msSoln, inst.weights);//UpdateLaunchPts(soln.msSoln, print);
+    match_ms_d_launchPts(soln.msSoln, soln.droneSolns, print); // match launchPts in msSoln with droneSolns
+    // Gd update routes before assessing solution
+    //PC NOTE: recalculating entire distance matrix every time is very inefficient - most of them won't change, just the ones involving changed launch points
+    pair <vector<vector<double>>, vector<vector<double>>>    // dMatrix feeds into routes
+        dMatrix = make_pair(soln.droneSolns[c.first]->cluster.getdMatrix(make_pair(soln.msSoln.launchPts[c.first], soln.msSoln.launchPts[c.first + 1])),
+            soln.droneSolns[c.second]->cluster.getdMatrix(make_pair(soln.msSoln.launchPts[c.second], soln.msSoln.launchPts[c.second + 1])));
+    pair <vector<vector<Pt*>>, vector<vector<Pt*>>>
+        routes = make_pair(greedyDroneCluster(*soln.droneSolns[c.first], dMatrix.first),
+            greedyDroneCluster(*soln.droneSolns[c.second], dMatrix.second));
+
+    for (int d = 0; d < soln.droneSolns.size(); d++) {
+        if ((soln.msSoln.launchPts[d]->ID != soln.droneSolns[d]->launchPts.first->ID) *
+            (soln.msSoln.launchPts[d + 1]->ID != soln.droneSolns[d]->launchPts.second->ID))
+            printf("MISMATCH!");
+        for (int c = 0; c < soln.droneSolns[d]->routes.size(); c++) {
+            if (soln.droneSolns[d]->launchPts.first->ID != soln.droneSolns[d]->routes[c][0]->ID)
+                //(new_soln.droneSolns[d]->launchPts.second->ID != new_soln.droneSolns[d]->routes[c][new_soln.droneSolns[d]->routes[route.size() - 2]]->ID))
+                printf("MISMATCH!");
+        }
+    }
+}
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 
@@ -241,15 +303,19 @@ FullSoln SwapRandomly(Problem inst, const FullSoln& soln_init, SAparams sa_param
     for (int iter_num = 0; iter_num < sa_params.num_iterations + 1; ++iter_num) {
         if (best_ptr->msSoln.launchPts.size() == 0) { throw runtime_error("Launch points not set!"); break; }
         bool in_out = rand() % 2;
+        bool sortie;
         proposed_ptr = new FullSoln(*incumbent_ptr);
         double dist_incumbent = incumbent_ptr->getTotalDist(inst.weights);
-        printf("\n%6d\t%s\t%.2e\t%5.2f\t\t%5.2f\t", iter_num, in_out == 1 ? "I" : "O", temp, dist_best, dist_incumbent);
+        printf("\n%6d\t%s", iter_num, in_out == 1 ? "I" : "O");
         if (in_out) {
             IN_ClusterSwaps(inst, *proposed_ptr, print_stats);
         }
         else {
-            OUT_ClusterSwaps(inst, *proposed_ptr, print_stats);
+            sortie = rand() % 2;
+            if (sortie) sortieSwap(inst, *proposed_ptr, print_stats);
+			else OUT_ClusterSwaps(inst, *proposed_ptr, print_stats);
         }
+        printf("\t%.2e\t%5.2f\t\t%5.2f\t", temp, dist_best, dist_incumbent);
 
         for (int a = 0; a < proposed_ptr->msSoln.launchPts.size() - 1; a++) {
             if (proposed_ptr->msSoln.launchPts[a]->ID != proposed_ptr->droneSolns[a]->launchPts.first->ID) {
@@ -265,6 +331,9 @@ FullSoln SwapRandomly(Problem inst, const FullSoln& soln_init, SAparams sa_param
             dist_incumbent = dist_proposed;
             printf("\t%5.2f\t", dist_incumbent);
             if (dist_proposed < dist_best) {
+                if (!in_out && sortie) {
+                    printf("");
+                }
                 // update current best solution with new proposed solution
                 delete best_ptr;
                 best_ptr = new FullSoln(*proposed_ptr);

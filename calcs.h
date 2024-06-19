@@ -79,6 +79,11 @@ int findIndexByID(int targetID, const vector<Pt*>& myList) {
     return -1;  // Return indicator that ID was not found
 }
 
+/// <summary>
+/// get random number between 0 and 'size-1'
+/// </summary>
+/// <param name="size"></param>
+/// <returns></returns>
 int getRandomNumber(int size/*, int randomSeed = -1*/) {
     mt19937 gen(rd());
     uniform_int_distribution<int> dist(0, size - 1);

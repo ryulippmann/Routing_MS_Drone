@@ -14,8 +14,9 @@
 FullSoln SwapShell(const Problem& inst, const FullSoln& soln_current, vector<double>& best_dists, int run_iteration, const string& folder_path = "", pair<int, double> sa_it_cr = make_pair(0, 0)) {
 	//SAparams                  (num_iter, init_temp, cooling_rate)
 	double init_temp = 0.2 * soln_current.getTotalDist(inst.weights);
-	if (sa_it_cr == make_pair(0, 0)) { sa_it_cr = make_pair(2.5 * pow(10, 5), 0.99995);	}		//8 * pow(10, 4), 0.9998); } //5 * pow(10, 4), 0.9997/*3 * pow(10, 4), 0.9995*/);}//1.5 * pow(10, 6), 0.99999); }//pow(10, 4), 0.999); }  
-
+	if (sa_it_cr == make_pair(0, 0)) sa_it_cr = make_pair(/*8 * pow(10, 4), 0.9998);*/
+	2.5 * pow(10, 5), 0.99995);	
+	//5 * pow(10, 4), 0.9997/*3 * pow(10, 4), 0.9995*/);	//1.5 * pow(10, 6), 0.99999); //pow(10, 4), 0.999);
 	if (csv_print) {
 		csvPrintStops(inst, folder_path, "reef_set");
 		csvPrints(soln_current, inst, "INIT", run_iteration, sa_it_cr.first, folder_path);

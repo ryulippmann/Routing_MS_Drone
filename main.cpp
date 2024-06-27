@@ -5,8 +5,11 @@ using namespace std;
 #include <utility>
 #include "class_prob.h"
 
-bool csv_print = 1;
+bool csv_print = 0;
+bool csv_update = 0; // update csv file EACH IMPROVEMENT with new data
 bool print_detail = 0;
+bool print_general = 1;
+bool exe_script_run = 1;
 
 int Pt::count = 0;
 
@@ -30,6 +33,12 @@ int FullSoln::count = 0;
 
 int main()
 {
+	if (exe_script_run) {
+		csv_print = 1;
+		print_detail = 0;
+		print_general = 0;
+	}
+
 	const Problem inst =
 		//CreateInst(100, 5, 5, 4, make_pair(2,1), Pt(0, 0), pow(10, 0));
 		CreateInst(48, 4, 4, 3, make_pair(2, 1), Pt(0, 0), 0); //  Base case instance!
@@ -43,7 +52,7 @@ int main()
 	bool flag_sens_weights = 0;
 	bool flag_sens_clusters = 0;
 	bool flag_sens_drones = 0;
-	int sens_iterations = 1;
+	int sens_iterations = 10;
 	if (flag_full_run + flag_sens_weights + flag_sens_clusters + flag_sens_drones != 1) {
 		cout << "Select exactly one sensitivity analysis option!" << endl;
 		return 0;

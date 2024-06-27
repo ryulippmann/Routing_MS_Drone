@@ -5,14 +5,13 @@
 /// </summary>
 /// <param name="cluster"></param>
 /// <param name="launchPts"></param>
-/// <param name="printStops"></param>
 /// <returns></returns>
 vector<vector<Pt*>> DroneWithinClusterNearestNeighbour(const vector<Drone>& drones, const int& d_cap,
-    const ClusterSoln* cluster, const pair<Pt*, Pt*>& launchPts, bool printStops = false) {
+    const ClusterSoln* cluster, const pair<Pt*, Pt*>& launchPts) {
     int u = -1;                                         // initialise current reef index
     vector <double> route_dists(drones.size() + 2, 0.0);   // list of route dist for each vehicle
 
-    if (printStops) { cout << "\n\nNEAREST NEIGHBOUR\n"; }
+    if (print_detail) { cout << "\n\nNEAREST NEIGHBOUR\n"; }
     vector<vector<Pt*>> routes(drones.size(), vector<Pt*>(d_cap, nullptr));  // create routes to save in DroneSoln.routes
     vector<bool> visited(cluster->reefs.size(), false);
     const vector<vector<double>> dMatrix = cluster->getdMatrix(launchPts);                  // for u vector in dMatrix
@@ -50,7 +49,7 @@ vector<vector<Pt*>> DroneWithinClusterNearestNeighbour(const vector<Drone>& dron
         route_dist += dMatrix[u][v];
         row.push_back(launchPts.second);
 
-        if (printStops) {
+        if (print_detail) {
             cout << "Drone: " << d << "\tStops:\t";
             for (int i = 0; i < row.size(); i++) {
                 //print reef ID and index in cluster->reefs
@@ -63,14 +62,14 @@ vector<vector<Pt*>> DroneWithinClusterNearestNeighbour(const vector<Drone>& dron
         }
 
         row.push_back(row[0]);                  //append first stop to end of "row"
-        if (printStops) { printf("%d\t(%.2f, %.2f)\tdone!\n", row.back()->ID, row.back()->x, row.back()->y); }
+        if (print_detail) { printf("%d\t(%.2f, %.2f)\tdone!\n", row.back()->ID, row.back()->x, row.back()->y); }
 
         routes[d] = row;
         route_dists[d] = route_dist;                  // append distance of vehicle route
-        if (printStops) { cout << "Closed loop dist:\t" << route_dists[d] << "\n\n"; }
+        if (print_detail) { cout << "Closed loop dist:\t" << route_dists[d] << "\n\n"; }
     }//for(vehicles)
 
-    if (printStops) { cout << "Total vehicle route dist:\t" << sum(route_dists) << "\n"; }
+    if (print_detail) { cout << "Total vehicle route dist:\t" << sum(route_dists) << "\n"; }
     return routes;
 }//nearestNeighbour
 
@@ -79,17 +78,16 @@ vector<vector<Pt*>> DroneWithinClusterNearestNeighbour(const vector<Drone>& dron
 /// </summary>
 /// <param name="clustDroneSoln"> = drone solution for the cluster </param>
 /// <param name="dMatrix"></param>
-/// <param name="print"></param>
 /// <returns>
 /// vector of reef indices in cluster.reefs
 /// </returns>
-vector<vector<Pt*>> greedyDroneCluster(const DroneSoln& clustDroneSoln, const vector<vector<double>>& dMatrix, bool print = false) {
+vector<vector<Pt*>> greedyDroneCluster(const DroneSoln& clustDroneSoln, const vector<vector<double>>& dMatrix) {
     ClusterSoln cluster = clustDroneSoln.cluster;
     vector<vector<Pt*>> routes = clustDroneSoln.routes;
     pair<Pt*, Pt*> launchPts = clustDroneSoln.launchPts;
     double gd_2opt_dists;
 
-    if (print) printf("\n---- GREEDY TENDER CLUSTERS ----\n\tVehicle\t\tInitial\t\tGreedy 2-Opt\n");
+    if (print_detail) printf("\n---- GREEDY TENDER CLUSTERS ----\n\tVehicle\t\tInitial\t\tGreedy 2-Opt\n");
     for (int d = 0; d < routes.size(); d++) {       // for each drone in cluster
         vector<int> i_tour;                         // ai_tour = city_index for each tour -> nearest neighbour
         for (auto& pt : routes[d]) {                // return the index of every stop in route list
@@ -100,11 +98,11 @@ vector<vector<Pt*>> greedyDroneCluster(const DroneSoln& clustDroneSoln, const ve
         gd_2opt_dists = gd_out.first;
         vector<int> gd_route_id = gd_out.second;
         double route_dist = clustDroneSoln.getDroneRouteDist(d);
-        if (print) { printf("\t%d\t\t%7.3f  \t%7.3f\t\n", d, route_dist, gd_2opt_dists > 999999 ? 999999 : gd_2opt_dists); } // if gd_2opt_dists is too large, print 9999}
+        if (print_detail) { printf("\t%d\t\t%7.3f  \t%7.3f\t\n", d, route_dist, gd_2opt_dists > 999999 ? 999999 : gd_2opt_dists); } // if gd_2opt_dists is too large, print 9999}
         double improvement = route_dist - gd_2opt_dists;
 
         if (improvement > 0.0001 * route_dist) {                //if greedy solution is better than current
-            if (print) { printf("\t%.2f%%\tIMPROVEMENT\t\n", improvement * 100 / route_dist); }
+            if (print_detail) { printf("\t%.2f%%\tIMPROVEMENT\t\n", improvement * 100 / route_dist); }
             vector<Pt*> route_new;
             route_new.push_back(launchPts.first);                       // add launchPt to route
             for (int i = 1; i < gd_route_id.size() - 2; i++) {          // for each stop in gd_route_id
@@ -125,43 +123,44 @@ vector<vector<Pt*>> greedyDroneCluster(const DroneSoln& clustDroneSoln, const ve
 /// (Nearest Neighbour, then) Greedy 2-Opt added to droneSolns
 /// </summary>
 /// <param name="msSoln"></param>
-/// <param name="print"></param>
 /// <returns></returns>
-vector<DroneSoln> initDroneSoln(const Problem& inst, const MSSoln& msSoln, bool print = false) {   /*const vector<ClusterSoln*>& clusters, */
+vector<DroneSoln> initDroneSoln(const Problem& inst, const MSSoln& msSoln) {   /*const vector<ClusterSoln*>& clusters, */
     vector<DroneSoln> droneSolns;
-    cout << string(30, '-') << "\n";
-    printf("INITIALISE TENDER SOLUTIONS\n");
-    cout << string(30, '-') << "\n";
+    if (print_detail) {
+        cout << string(30, '-') << "\n";
+        printf("INITIALISE TENDER SOLUTIONS\n");
+        cout << string(30, '-') << "\n";
+    }
     for (int c = 0; c < msSoln.clusters.size(); c++) {		// for each cluster
         const pair<Pt*, Pt*> launchPts = make_pair(msSoln.launchPts[c], msSoln.launchPts[c + 1]);		// launchPts for cluster
         ClusterSoln* cluster = msSoln.clusters[c];												// cluster
-        if (print) {
+        if (print_general) {
             Pt centroid = cluster->getCentroid();	        // centroid for cluster	
             printf("\nCluster %d\tcentroid: (%.2f, %.2f)\n", cluster->ID, centroid.x, centroid.y);
         }
         // distance matrix for cluster
         vector<vector<double>> clusterMatrix = cluster->getdMatrix(launchPts);
-        if (print) { for (int i = 0; i < clusterMatrix.size(); i++) { for (int j = 0; j < clusterMatrix[i].size(); j++) { { printf("%.2f\t", abs(clusterMatrix[i][j]) < DBL_MAX ? clusterMatrix[i][j] : 9999); } } printf("\n"); } printf("\n"); }
+        if (print_detail) { for (int i = 0; i < clusterMatrix.size(); i++) { for (int j = 0; j < clusterMatrix[i].size(); j++) { { printf("%.2f\t", abs(clusterMatrix[i][j]) < DBL_MAX ? clusterMatrix[i][j] : 9999); } } printf("\n"); } printf("\n"); }
 
         // Dronesoln Nearest Neighbour
         DroneSoln droneSoln(*cluster,
-            DroneWithinClusterNearestNeighbour(inst.drones, inst.get_dCap(), cluster, launchPts, print)/*droneRoutes*/,
+            DroneWithinClusterNearestNeighbour(inst.drones, inst.get_dCap(), cluster, launchPts),
             launchPts);
 
         // Dronesoln Greedy 2-Opt update
-        droneSoln.routes = greedyDroneCluster(droneSoln, clusterMatrix, print);
+        droneSoln.routes = greedyDroneCluster(droneSoln, clusterMatrix);
         droneSolns.push_back(droneSoln);
         // print routes
-        //if (print) {
-        printf("CLUSTER %d:\tID: %d\t\t\t\tCluster dist: %.2f\n", c, droneSoln.cluster.ID, droneSoln.getDroneRouteDist(-1));
-        for (int i = 0; i < droneSoln.routes.size(); i++) {
-            printf("\t\t\tRoute %d:\n", i);
-            for (int j = 0; j < droneSoln.routes[i].size(); j++) {
-                printf("\t\t\t\t%d\t(%.2f, %.2f)\n", droneSoln.routes[i][j]->ID, droneSoln.routes[i][j]->x, droneSoln.routes[i][j]->y);
-            }// for each node in route
-        }// for each route
-        cout << string(30, '-') << "\n";
-        //}
+        if (print_general) {
+            printf("CLUSTER %d:\tID: %d\t\t\t\tCluster dist: %.2f\n", c, droneSoln.cluster.ID, droneSoln.getDroneRouteDist(-1));
+            for (int i = 0; i < droneSoln.routes.size(); i++) {
+                printf("\t\t\tRoute %d:\n", i);
+                for (int j = 0; j < droneSoln.routes[i].size(); j++) {
+                    printf("\t\t\t\t%d\t(%.2f, %.2f)\n", droneSoln.routes[i][j]->ID, droneSoln.routes[i][j]->x, droneSoln.routes[i][j]->y);
+                }// for each node in route
+            }// for each route
+            cout << string(30, '-') << "\n";
+        }
     }// for each cluster
     return droneSolns;
 }

@@ -207,13 +207,13 @@ int findMinIdx(const vector<ClusterSoln*>& clusters) {    //find min ID of all c
     return min_ID;
 }
 
-double clusterCentroidNearestNeighbour(MSSoln& msSoln, const pair<double, double>& weights, bool print = true) {
+double clusterCentroidNearestNeighbour(MSSoln& msSoln, const pair<double, double>& weights) {
     const vector<ClusterSoln*> clusters = msSoln.clusters;
     vector<ClusterSoln*> nearestCentroids(clusters.size(), nullptr);// Initialize the result vector
     vector<bool> visited(clusters.size(), 0);
     int u = 0;                                                  // initialise current index
     const vector<vector<double>> centroidMatrix = calc_centMatrix(msSoln.ms.depot, clusters, findMinIdx(clusters));
-    if (print) { printf("\n");
+    if (print_detail) { printf("\n");
 		for (int i = 0; i < centroidMatrix.size(); i++) {
 			for (int j = 0; j < centroidMatrix[i].size(); j++) { printf("\t%.2f", centroidMatrix[i][j]); }
 			printf("\n");
@@ -232,17 +232,17 @@ double clusterCentroidNearestNeighbour(MSSoln& msSoln, const pair<double, double
         u = v;                                              // Update new index of closest pt
         visited[u-1] = 1;                                   // Mark u=v(new) as visited.
         nearestCentroids[c] = clusters[v-1];                  // Add closest reef to solution
-        if (print) printf("\t%d\t%.2f\n", v, min);
+        if (print_detail) printf("\t%d\t%.2f\n", v, min);
     }//for(cluster)
     msSoln.clusters = nearestCentroids;				// Update clustSoln.clusters    
     setLaunchPts(msSoln, weights);                           // Update msSoln.launchPts
     double msDist = msSoln.getDist();               // Calc msSoln.dist from depot to launchPts!
-    printf("  =?=\t%.2f\n", msDist);
+    if (print_detail) printf("  =?=\t%.2f\n", msDist);
     return msDist;
 }//nearestNeighbour
 
-double greedyMSCluster(MSSoln& msSoln, const pair<double, double>& weights, bool print = true) {
-    if (print) printf("\n---- GREEDY M/S CLUSTERS ----\n");
+double greedyMSCluster(MSSoln& msSoln, const pair<double, double>& weights) {
+    if (print_detail) printf("\n---- GREEDY M/S CLUSTERS ----\n");
     printf("%.2f\n", msSoln.getDist());
     const vector<ClusterSoln*> clusters = msSoln.clusters;
     int n = clusters.size();
@@ -252,7 +252,7 @@ double greedyMSCluster(MSSoln& msSoln, const pair<double, double>& weights, bool
     const vector<vector<double>> centroidMatrix = calc_centMatrix(msSoln.ms.depot, clusters, min_clust_idx, true);
     
     // print centroidMatrix
-    if (print) {
+    if (print_detail) {
         printf("\n");
 		for (int i = 0; i < centroidMatrix.size(); i++) {
 			for (int j = 0; j < centroidMatrix[i].size(); j++) {
@@ -268,23 +268,23 @@ double greedyMSCluster(MSSoln& msSoln, const pair<double, double>& weights, bool
     }//for(i=from_pts)
 
     double route_dist = 0;//centroidMatrix[0][clusters[0]->ID + 1];
-    if (print) printf("\n");//\t % .2f", route_dist);
+    if (print_detail) printf("\n");//\t % .2f", route_dist);
     for (int i = 0; i < centroidMatrix.size() - 1; i++) {
         double ddd = centroidMatrix[i_tour[i]][i_tour[i + 1]];
-        if (print) printf("\t%.2f", ddd);
+        if (print_detail) printf("\t%.2f", ddd);
         route_dist += ddd;
     }//for(i=from_pts)
     route_dist += centroidMatrix[i_tour.back()][0];
-    if (print) printf("\t%.2f", centroidMatrix[i_tour.back()][0]);
-    if (print) printf("\n\t%.2f\t == total return dist:depot-centroids\n", route_dist);
+    if (print_detail) printf("\t%.2f", centroidMatrix[i_tour.back()][0]);
+    if (print_detail) printf("\n\t%.2f\t == total return dist:depot-centroids\n", route_dist);
 
     pair<double, vector<int>> gd_out = gd_local_2opt_search(i_tour.size(), centroidMatrix, i_tour, false);      // args = (int ai_n, vector<vector<double>> &ad_dist, vector<int> &ai_tour, bool ab_full_nbrhd)
     gd_2opt_dists = gd_out.first;
-    if (print) { printf("Vehicle\t\tInitial\t\tGreedy 2-Opt\n\t\t%7.3f  \t%7.3f\t", route_dist, gd_2opt_dists); }
+    if (print_detail) { printf("Vehicle\t\tInitial\t\tGreedy 2-Opt\n\t\t%7.3f  \t%7.3f\t", route_dist, gd_2opt_dists); }
     
     double improvement = route_dist - gd_2opt_dists;
     if (improvement > 0.0001 * route_dist) {                //if greedy solution is better than current
-        if (print) printf("\t%.2f%%\tIMPROVEMENT\t", improvement * 100 / route_dist);
+        if (print_detail) printf("\t%.2f%%\tIMPROVEMENT\t", improvement * 100 / route_dist);
         route_dist = gd_2opt_dists;
         
         // Find the index of 0 in proposed_tour
@@ -298,7 +298,7 @@ double greedyMSCluster(MSSoln& msSoln, const pair<double, double>& weights, bool
         for (size_t i = idx; i < p_tour.size(); ++i) { oriented_vector.push_back(p_tour[i]); }
         for (size_t i = 0; i < idx; ++i) { oriented_vector.push_back(p_tour[i]); }
 
-        if (print) {
+        if (print_detail) {
             printf("\n\t\t");
             for (const auto& stop : oriented_vector) { printf("\t%d", stop); }
             printf("\n\n");
@@ -312,7 +312,7 @@ double greedyMSCluster(MSSoln& msSoln, const pair<double, double>& weights, bool
             temp_clust.push_back(clusters[findClusterByID(oriented_vector[i] + min_clust_idx - 1, clusters)]);
 	    }
         msSoln.clusters = temp_clust;                        // UPDATE CLUSTER ORDER
-    } else if (print) { printf("\tNO IMPROVEMENT\n"); }//else
+    } else if (print_detail) { printf("\tNO IMPROVEMENT\n"); }//else
 
     setLaunchPts(msSoln, weights);
     double msDist = msSoln.getDist();
@@ -328,16 +328,16 @@ double greedyMSCluster(MSSoln& msSoln, const pair<double, double>& weights, bool
 /// <param name="msSoln"></param>
 /// <param name="csv_print"></param>
 /// <returns></returns>
-vector<pair<double, MSSoln>> initMsSoln(const vector<ClusterSoln*>& clusters, MSSoln& msSoln, pair<double, double> weights, bool print_detail = 0) {
+vector<pair<double, MSSoln>> initMsSoln(const vector<ClusterSoln*>& clusters, MSSoln& msSoln, pair<double, double> weights) {
 	vector<pair<double, MSSoln>> msSolns;
     double msDist=DBL_MAX;                      // No launchPts initialised yet
     msSolns.push_back(make_pair(msDist, msSoln));
 
-    msDist = clusterCentroidNearestNeighbour(msSoln, weights, print_detail);		// clusters ordered by NN
+    msDist = clusterCentroidNearestNeighbour(msSoln, weights);		// clusters ordered by NN
     msSolns.push_back(make_pair(msDist, msSoln));
-    msDist = greedyMSCluster(msSoln, weights, print_detail);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
+    msDist = greedyMSCluster(msSoln, weights);						// Improve using Gd 2-Opt: update clustSoln.clustOrder
     msSolns.push_back(make_pair(msDist, msSoln));
-    if (!print_detail) {
+    if (print_general) {
         printf("\tMS LaunchPts\n");
         for (const auto& launchPt : msSolns.back().second.launchPts) {
             printf("\t%d\t(%.2f, %.2f)\n", launchPt->ID, launchPt->x, launchPt->y);

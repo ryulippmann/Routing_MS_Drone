@@ -154,7 +154,7 @@ public:
 
 	// warning: launchPts need to be updated before this is called
 	// dist returned is the total return dist from depot to launchPts, not centroids!
-	double getDist(bool print = false) const {
+	double getDist() const {
 		if (launchPts.size() == 0) {
 			throw runtime_error("Launch points not set!");
 			return -1;
@@ -162,15 +162,15 @@ public:
 		double dist = 0;
 		double leg = sqrt(pow(this->ms.depot.x - launchPts[0]->x, 2) + pow(this->ms.depot.y - launchPts[0]->y, 2));
 		dist += leg;
-		if (print) printf("\nMS Dist: \t\t%.2f\t", leg);
+		if (print_detail) printf("\nMS Dist: \t\t%.2f\t", leg);
 		for (int c = 0; c < clusters.size(); c++) {
 			leg = sqrt(pow(launchPts[c]->x - launchPts[c + 1]->x, 2) + pow(launchPts[c]->y - launchPts[c + 1]->y, 2));
 			dist += leg;
-			if (print) printf("+  %.2f\t", leg);
+			if (print_detail) printf("+  %.2f\t", leg);
 		}
 		leg = sqrt(pow(this->ms.depot.x - launchPts[clusters.size()]->x, 2) + pow(this->ms.depot.y - launchPts[clusters.size()]->y, 2));
 		dist += leg;
-		if (print) printf("+ %.2f\t\nTotal Dist: \t%.2f\n", leg, dist);
+		if (print_detail) printf("+ %.2f\t\nTotal Dist: \t%.2f\n", leg, dist);
 		return dist;
 	}
 	vector<Pt*> getRoute() {			//update/check this! use mp's of centroids...
@@ -398,25 +398,24 @@ public:
 	/// Method to get the total distance of the solution.
 	/// Total dist = w_ms*(ms) + w_d*(sum(drone))
 	/// </summary>
-	/// <param name="print">= false</param>
 	/// <returns></returns>
-	double getTotalDist(pair<double, double> weights, bool print = false) const {
-		double dist_ms = weights.first * msSoln.getDist(print);
+	double getTotalDist(pair<double, double> weights) const {
+		double dist_ms = weights.first * msSoln.getDist();
 		double dist_drones = 0;
-		if (print) printf("\nWEIGHTED MS Dist: \t%.2f\t\t(w_ms = %.1f)\n\tw_d = %.1f", dist_ms, weights.first, weights.second);
+		if (print_detail) printf("\nWEIGHTED MS Dist: \t%.2f\t\t(w_ms = %.1f)\n\tw_d = %.1f", dist_ms, weights.first, weights.second);
 		for (auto& droneSoln : droneSolns) {
 			double dist_drone = 0;
-			if (print) printf("\nDroneSoln ID: \t%d\t\tDist:", droneSoln->ID);
+			if (print_detail) printf("\nDroneSoln ID: \t%d\t\tDist:", droneSoln->ID);
 			for (auto& route : droneSoln->routes) {
 				double leg = weights.second * droneSoln->getDroneRouteDist(route);
-				if (print) printf("\t+%.2f", leg);
+				if (print_detail) printf("\t+%.2f", leg);
 				dist_drone += leg;
 			}
-			if (print) printf("\t = %.2f", dist_drone);
+			if (print_detail) printf("\t = %.2f", dist_drone);
 			dist_drones += dist_drone;
 		}
 		double dist_total = dist_ms + dist_drones;
-		if (print) {
+		if (print_detail) {
 			printf("\nDrone Dist: \t\t%.2f\n\nTotal Dist: \t%.2f\n", dist_drones, dist_total);
 		}
 		return dist_total;

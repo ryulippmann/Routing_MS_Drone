@@ -14,19 +14,20 @@
 FullSoln SwapShell(const Problem& inst, const FullSoln& soln_current, vector<double>& best_dists, int run_iteration, const string& folder_path = "", pair<int, double> sa_it_cr = make_pair(0, 0)) {
 	//SAparams                  (num_iter, init_temp, cooling_rate)
 	double init_temp = 0.2 * soln_current.getTotalDist(inst.weights);
-	if (sa_it_cr == make_pair(0, 0)) sa_it_cr = make_pair(/*8 * pow(10, 4), 0.9998);*/
-	2.5 * pow(10, 5), 0.99995);	
-	//5 * pow(10, 4), 0.9997/*3 * pow(10, 4), 0.9995*/);	//1.5 * pow(10, 6), 0.99999); //pow(10, 4), 0.999);
+	if (sa_it_cr == make_pair(0, 0)) sa_it_cr = make_pair(
+	1 * pow(10, 5), 0.9999); 
+	//1.5 * pow(10, 5), 0.999925);
+	//2 * pow(10, 5), 0.99995);
+	printf("\n%d iterations\tc_r = %.3f%%", sa_it_cr.first, 100*sa_it_cr.second);
 	if (csv_print) {
 		csvPrintStops(inst, folder_path, "reef_set");
 		csvPrints(soln_current, inst, "INIT", run_iteration, sa_it_cr.first, folder_path);
 	}
 	//\\//\\//\\//  Randomly run IN/OUT Swaps   //\\//\\//\\//
-	FullSoln best = SwapRandomly(inst, soln_current, SAparams(sa_it_cr.first, init_temp, sa_it_cr.second), folder_path + "/" + to_string(run_iteration),
-		print_detail, csv_print);
-	printf("\nPrev Dist: \t\t%.2f", best_dists.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
+	FullSoln best = SwapRandomly(inst, soln_current, SAparams(sa_it_cr.first, init_temp, sa_it_cr.second), folder_path + "/" + to_string(run_iteration));
+	if (!exe_script_run) printf("\nPrev Dist: \t\t%.2f", best_dists.back());		//printf("\nIn_Swap Dist: \t%.2f", best_in.getTotalDist());
 	best_dists.push_back(best.getTotalDist(inst.weights));
-	printf("\n\t\tNEW_Swap distance:\t%.2f\n", best_dists.back());
+	if (!exe_script_run) printf("\n\t\tNEW_Swap distance:\t%.2f\n", best_dists.back());
 
 	//\\//\\//\\//  csv print (if solution updated)  //\\//\\//\\//
 	if (csv_print) { csvPrints(best, inst, "FINAL", run_iteration, sa_it_cr.first, folder_path); }
@@ -53,16 +54,16 @@ vector<FullSoln> FullRun(const int& iter, const Problem& inst, const string& bat
 
 	//\\//\\//\\//\\//  MsSoln Construction //\\//\\//\\//\\//
 	MSSoln msSoln(clusters, inst.ms);				// No launchPts initialised yet
-	vector<pair<double, MSSoln>> msSolns = initMsSoln(clusters, msSoln, inst.weights, print_detail);
+	vector<pair<double, MSSoln>> msSolns = initMsSoln(clusters, msSoln, inst.weights);
 
 	//\\//\\//\\//\\  DroneSoln Construction  \\//\\//\\//\\/
-	vector<DroneSoln> droneSolns = initDroneSoln(inst, msSoln, print_detail);
+	vector<DroneSoln> droneSolns = initDroneSoln(inst, msSoln);
 	//vector<DroneSoln*> ptr_droneSolns;
 	//for (const auto& soln : droneSolns) { ptr_droneSolns.push_back(new DroneSoln(soln)); } // Assuming DroneSoln has a copy constructor
 
 	//\\//\\//\\//\\/  FullSoln Construction  /\\//\\//\\//\\/
 	FullSoln full_init(msSoln, droneSolns);
-	printf("Full Soln Dist:\t%.2f", full_init.getTotalDist(inst.weights, print_detail));
+	if (print_general) printf("Full Soln Dist:\t%.2f", full_init.getTotalDist(inst.weights));
 	////////////////////////////////
 	vector<FullSoln> fullSolns;
 	fullSolns.push_back(full_init);
@@ -74,7 +75,7 @@ vector<FullSoln> FullRun(const int& iter, const Problem& inst, const string& bat
 
 	auto end_time = chrono::high_resolution_clock::now();
 	chrono::duration<double> elapsed = end_time - start_time;
-	writeRuntimeToFile(folder_path + "/runtime", iter, elapsed);
+	writeOpt_RuntimeToFile(folder_path + "/opts+runtime", iter, best_dist.back(), elapsed);
 	//printf("Run time: %d minutes %.2f seconds\n", static_cast<int>(elapsed.count()) / 60, fmod(elapsed.count(), 60));
 
 	return fullSolns;

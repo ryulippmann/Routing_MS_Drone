@@ -5,10 +5,10 @@ import datetime
 import os
 import re
 
-path = 'outputs/24-06-14_10-29-43_FullRuns'
+path = 'outputs/24-06-27_14-44-33_FullRuns'
 
 print_plt = 1
-save_plt = 1
+save_plt = 0
 
 def plot_clusters(csv_file, print_plt, save_plt):
     # Read CSV file and extract data
@@ -122,7 +122,7 @@ def plot_MS_route(csv_file, print_plt, save_plt, w_ms, color = 'k'):
     # else:
     plt.annotate(f'MS_dist = {dist:.2f}\n@w_ms = {w_ms}',   xy=(0.01, 1), xycoords='axes fraction', ha='left', va='top', fontsize=12, color = color, fontweight='bold')
     # Plot MS route on the existing plot
-    plt.plot(x, y, color, linestyle='-', linewidth=2)  # You can adjust color, linestyle, and linewidth as needed
+    plt.plot(x, y, color, linestyle='-', linewidth=2)  # adjust color, linestyle, and linewidth as needed
 
     # annotate plot with cluster path
     plt.annotate(f'MS_Path = {ms_path}', xy=(0.01, -0.075), xycoords='axes fraction', ha='left', va='top')##, fontsize=12, fontweight='bold')

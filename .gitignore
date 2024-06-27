@@ -15,6 +15,7 @@ plots/
 Py_plots/
 sa_output/
 Debugging/
+figs/
 
 # User-specific files
 *.rsuser
